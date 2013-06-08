@@ -391,7 +391,11 @@ int initialization(cl_device_type deviceType, cl_device_id* devices, cl_context*
     {
 	// Build the program.
 	//errorCode = clBuildProgram(*program, 1, &devices[ 0 ], "-I /home/support/evan/clSpMV_AMD/include", NULL, NULL );
-	errorCode = clBuildProgram(*program, 1, &devices[ 0 ], "-I /mnt/global/LCSE/gerlebacher/src/clSpMV_MIC/include", NULL, NULL );
+    char buildBuf[512];
+    char* clspmvPath = getenv("CLSPMVPATH");
+    sprintf(&buildBuf, "-I%s/include",clspmvPath);
+    printf("Building CL Kernel with args: %s\n", buildBuf);
+	errorCode = clBuildProgram(*program, 1, &devices[ 0 ], buildBuf, NULL, NULL );
 	if( errorCode != CL_SUCCESS )
 	{
 	    printf("Error: clBuildProgram() returned %d.\n", errorCode );
