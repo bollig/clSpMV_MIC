@@ -153,8 +153,8 @@ all: makedirectories single bench cocktail
 makedirectories:
 	$(VERBOSE)mkdir -p $(OBJDIR)
 	$(VERBOSE)mkdir -p $(TARGETDIR)
-	$(VERBOSE)cp $(ROOTDIR)/kernels/*.cl /tmp/ 
-	$(VERBOSE)cp $(ROOTDIR)/include/constant.h /tmp/ 
+	$(VERBOSE)cp $(ROOTDIR)/kernels/*.cl ${PWD}/tmp/ 
+	$(VERBOSE)cp $(ROOTDIR)/include/constant.h ${PWD}/tmp/ 
 
 single: $(COMMONOBJS) $(SINGLEOBJS)
 	$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_all $(COMMONOBJS) $(SINGLEOBJS) $(LIB)
