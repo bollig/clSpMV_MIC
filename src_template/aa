@@ -1,0 +1,72 @@
+
+    printf("\nMatInfo: Width %d Height %d NNZ %d\n", mat->matinfo.width, mat->matinfo.height, mat->matinfo.nnz);
+    int minoffset = mat->matinfo.width;
+    int maxoffset = -minoffset;
+    int nnz = mat->matinfo.nnz;
+    int lessn16 = 0;
+    int inn16 = 0;
+    int less16 = 0;
+    int large16 = 0;
+    for (int i = 0; i < nnz; i++)
+    {
+	int rowid = mat->coo_row_id[i];
+	int colid = mat->coo_col_id[i];
+	int diff = rowid - colid;
+	if (diff < minoffset)
+	    minoffset = diff;
+	if (diff > maxoffset)
+	    maxoffset = diff;
+	if (diff < -15)
+	    lessn16++;
+	else if (diff < 0)
+	    inn16++;
+	else if (diff < 16)
+	    less16++;
+	else
+	    large16++;
+    }
+    printf("Max Offset %d Min Offset %d\n", maxoffset, minoffset);
+    printf("Histogram: <-15: %d -15~-1 %d < 0-15 %d > 16 %d\n", lessn16, inn16, less16, large16);
+
+    if (!if_sorted_coo(mat))
+    {
+	assert(sort_coo(mat) == true);
+    }
+
+    int* cacheperrow = (int*)malloc(sizeof(int)*mat->matinfo.height);
+    int* elemperrow = (int*)malloc(sizeof(int)*mat->matinfo.height);
+    memset(cacheperrow, 0, sizeof(int)*mat->matinfo.height);
+    memset(elemperrow, 0, sizeof(int)*mat->matinfo.height);
+    int index = 0;
+    for (int i = 0; i < mat->matinfo.height; i++)
+    {
+	if (i < mat->coo_row_id[index])
+	    continue;
+	int firstline = mat->coo_col_id[index]/16;
+	cacheperrow[i] = 1;
+	elemperrow[i] = 1;
+	index++;
+	while (mat->coo_row_id[index] == i)
+	{
+	    int nextline = mat->coo_col_id[index]/16;
+	    if (nextline != firstline)
+	    {
+		firstline = nextline;
+		cacheperrow[i]++;
+	    }
+	    elemperrow[i]++;
+	    index++;
+	}
+    }
+    int maxcacheline = 0;
+    int mincacheline = 100000000;
+    int sum = 0;
+    for (int i = 0; i < mat->matinfo.height; i++)
+    {
+	if (cacheperrow[i] < mincacheline)
+	    mincacheline = cacheperrow[i];
+	if (cacheperrow[i] > maxcacheline)
+	    maxcacheline = cacheperrow[i];
+	sum += cacheperrow[i];
+    }
+    printf("Cacheline usage per row: max %d min %d avg %f\n", maxcacheline, mincacheline, (double)sum/(double)mat->matinfo.height);

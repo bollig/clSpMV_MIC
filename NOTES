@@ -1,0 +1,5 @@
+In spvm_all or spvm, must allow for kernels with double arguments. 
+That means I need if statements. 
+
+Now that I subclass, I get an error with the double precisio. WHY? 
+Problem with destructor
