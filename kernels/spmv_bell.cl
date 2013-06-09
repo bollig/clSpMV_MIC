@@ -15,10 +15,10 @@ __kernel void gpu_bell14(__global int* col_id, __global float4* data, int data_a
 		int vecid = col_id[vecoffset];
 		float4 matrixelem = data[matoffset];
 		float4 vecelem = vec[vecid];
-		//float4 tmp = matrixelem * vecelem; 
-		//accumulant = accumulant + tmp.x + tmp.y + tmp.z + tmp.w; // not ok (original version)
+		float4 tmp = matrixelem * vecelem; 
+		accumulant = accumulant + tmp.x + tmp.y + tmp.z + tmp.w; // not ok (original version)
 		//float tmp = dot(matrixelem, vecelem);
-		accumulant += dot(matrixelem, vecelem);
+		//accumulant += dot(matrixelem, vecelem);
 		//accumulant = accumulant + vecelem.x;  // not ok
 		//accumulant = accumulant + matoffset;  
 //		accumulant = accumulant + 3.;// ok

@@ -247,12 +247,12 @@ void BELL<T>::run()
 		printf("BELL best time %f ms best method %d GFLOPS %f", opttime*1000.0, optmethod, gflops);
 		printf("\n------------------------------------------------------------------------\n");
 
-		delete [] paddedvec;
-    	if (devColid) {clReleaseMemObject(devColid); printf("... release devColid\n");}
-    	if (devData) {clReleaseMemObject(devData); printf("... release devData\n");}
-    	if (devVec) {clReleaseMemObject(devVec); printf("... release devVec\n");}
+		//delete [] paddedvec;
+    	//if (devColid) {clReleaseMemObject(devColid); printf("... release devColid\n");}
+    	//if (devData) {clReleaseMemObject(devData); printf("... release devData\n");}
+    	//if (devVec) {clReleaseMemObject(devVec); printf("... release devVec\n");}
     	//if (devTexVec) clReleaseMemObject(devTexVec);
-	    if (devRes) {clReleaseMemObject(devRes); printf("... release devRes\n");}
+	    //if (devRes) {clReleaseMemObject(devRes); printf("... release devRes\n");}
 
     }}
 
