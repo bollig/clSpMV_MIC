@@ -8,7 +8,7 @@
 #include <string>
 
 #include "oclcommon.h"
-#include "class_base.h"
+#include "cl_base_class.h"
 
 using namespace std;
 
@@ -17,7 +17,7 @@ namespace spmv {
 #define USE(x) using BASE<T>::x
 
 template <typename T>
-class BELL : public BASE<T>
+class BELL : public BASE<T>, public CLBaseClass
 {
 public:
     USE(devices);
