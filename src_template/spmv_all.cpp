@@ -113,7 +113,9 @@ int main(int argc, char* argv[])
     {
 	printf("**** FIRST GET SINGLE PRECISION WORKING! ***\n");
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_bell.cl");
-	spmv::spmv_bell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
+	//spmv::spmv_bell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
+	// directory name not required. Read in at lower level using CL_KERNEL ENV variable
+	spmv::spmv_bell("spmv_bell.cl", &mat, dim2Size, ntimes, CONTEXTTYPE);
 	//sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_bell_d.cl");
 	//spmv::spmv_bell(clfilename, &mat_d, dim2Size, ntimes, CONTEXTTYPE);
     }

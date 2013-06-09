@@ -8,6 +8,8 @@
 
 #include "cl_base_class.h"
 
+using namespace std;
+
 // Static definition.
 cl::Context CLBaseClass::context;
 cl::CommandQueue CLBaseClass::queue;
@@ -186,8 +188,11 @@ void CLBaseClass::loadProgram(std::string& kernel_source, bool enable_fp64)
 }
 
 
-std::string CLBaseClass::loadFileContents(const char* filename, bool searchEnvDir) {
-
+//----------------------------------------------------------------------
+std::string CLBaseClass::loadFileContents(const char* filename, bool searchEnvDir)
+{
+	// The filename should contain NO path information
+//printf("** loadFileContents\n");
         if (searchEnvDir) {
                 char* kernel_dir = getenv("CL_KERNELS");
 
@@ -197,19 +202,24 @@ std::string CLBaseClass::loadFileContents(const char* filename, bool searchEnvDi
                 }
                 char kernel_path[PATH_MAX];
                 sprintf(kernel_path, "%s/%s", kernel_dir, filename);
+				//printf("kernel_path= %s\n", kernel_path);
 
                 std::ifstream ifs(kernel_path);
                 std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+				//printf("1. SOURCE: %s\n", str.c_str());  // THE SOURCE IS NOT BEING READ!!!
+				//printf("after 1. source, exit\n");exit(0);
                 return str;
         } else {
                 // Grab the whole file in one go using the iterators
                 std::ifstream ifs(filename);
                 std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+				//printf("2. SOURCE: %s\n", str.c_str());
                 return str;
         }
 }
 
 
+//----------------------------------------------------------------------
 // Split a string (for example, a list of extensions, given a character
 // deliminator)
 std::vector<std::string>& CLBaseClass::split(const std::string &s, char delim, std::vector<std::string> &elems) {
@@ -251,9 +261,114 @@ std::vector<std::string>& CLBaseClass::split(const std::string &s, const std::st
     return elems;
 }
 
+//----------------------------------------------------------------------
 std::vector<std::string> CLBaseClass::split(const std::string &s, const std::string delim, bool keep_substr) {
     std::vector<std::string> elems;
     return split(s, delim, elems, keep_substr);
 }
 
 
+//----------------------------------------------------------------------
+cl::Kernel CLBaseClass::loadKernel(const std::string& kernel_name, const std::string& kernel_source_file)
+{
+    //tm["loadAttach"]->start();
+
+	cl::Kernel kernel;
+	bool useDouble = false; // FOR NOW
+
+
+	#if 0
+    if (!this->getDeviceFP64Extension().compare("")){
+        useDouble = false;
+    }
+    if ((sizeof(FLOAT) == sizeof(float)) || !useDouble) {
+        useDouble = false;
+    }
+	#endif
+
+	cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+	cout << "++++++       LOAD KERNEL                           +++++++++\n";
+	cout << "kernel_name= " << kernel_name << endl;
+	cout << "kernel_source_file = " << kernel_source_file << endl;
+	cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+
+
+    // The true here specifies we search throught the dir specified by environment variable CL_KERNELS
+    std::string my_source = this->loadFileContents(kernel_source_file.c_str(), true);
+
+
+    //std::cout << "This is my kernel source: ...\n" << my_source << "\n...END\n";
+	//std::cout  << my_source  << std::endl;
+    this->loadProgram(my_source, useDouble);
+	std::cout << "after load Program \n";
+
+    try{
+        //std::cout << "Loading kernel \""<< kernel_name << "\" with double precision = " << useDouble << "\n";
+        kernel = cl::Kernel(program, kernel_name.c_str(), &err);
+        //std::cout << "Done attaching kernels!" << std::endl;
+    }
+    catch (cl::Error er) {
+        printf("[AttachKernel] ERROR: %s(%d)\n", er.what(), er.err());
+    }
+	//printf("gordon exit\n");exit(0);
+
+    //tm["loadAttach"]->end();
+
+	return(kernel);
+}
+//----------------------------------------------------------------------
+void CLBaseClass::enqueueKernel(const cl::Kernel& kernel, const cl::NDRange& tot_work_items, const cl::NDRange& items_per_workgroup, bool is_finish)
+{
+	cl_int err; // already defined in base opencl class
+	printf("before queue.enqueueNDRangeKernal\n");
+    err = queue.enqueueNDRangeKernel(kernel, /* offset */ cl::NullRange,
+            tot_work_items, items_per_workgroup, NULL, &event);
+
+	printf("after queue.enqueueNDRangeKernal\n");
+ 
+//END-START gives you hints on kind of “pure HW execution time”
+//10
+////the resolution of the events is 1e-09 sec
+//11
+//g_NDRangePureExecTimeMs = (cl_double)(end - start)*(cl_double)(1e-06); 
+//
+	std::vector<cl::Event> ve;
+	ve.push_back(event);
+
+	printf("after push_back\n");
+    if (err != CL_SUCCESS) {
+        std::cerr << "CommandQueue::enqueueNDRangeKernel()" \
+            " failed (" << err << ")\n";
+        std::cout << "FAILED TO ENQUEUE KERNEL" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+	if (is_finish) {
+		printf("wait for queue to finish\n");
+		try {
+    		err = queue.finish();
+			printf("finish, err= %d\n", err);
+        	//queue.flush(); // needed? (done by clwaitForEvents);
+    	} catch (cl::Error er) {
+        	printf("[enqueueKernel] ERROR: %s(%s)\n", er.what(), oclErrorString(er.err()));
+			exit(0);
+    	}
+		printf("err= %d\n", err);
+	}
+	printf("after queue finish\n");
+
+	try {
+		printf("before waitForEvents\n");
+		cl::Event::waitForEvents(ve);
+		printf("after waitForEvents\n");
+    } catch (cl::Error er) {
+        printf("[enqueueKernel] ERROR: %s(%s)\n", er.what(), oclErrorString(er.err()));
+		exit(0);
+    }
+	cl_ulong start = 0, end = 0;
+	event.getProfilingInfo(CL_PROFILING_COMMAND_START, &start);
+	event.getProfilingInfo(CL_PROFILING_COMMAND_END, &end);
+	printf("GPU execution time = %.2f ms\n", (float) (end-start)*1.e-6);
+	return; // TEMPORARY
+}
+//----------------------------------------------------------------------

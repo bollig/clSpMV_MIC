@@ -12,10 +12,14 @@
 class CLBaseClass 
 {
 public:
-        // We use static so all of our inheriting classes can share buffers
-        // across the context
-        static cl::Context context;
-        static cl::CommandQueue queue;
+	// We use static so all of our inheriting classes can share buffers
+	// across the context
+	static cl::Context context;
+	static cl::CommandQueue queue;
+
+	cl::Kernel loadKernel(const std::string& kernel_name, const std::string& kernel_source_file);
+	void enqueueKernel(const cl::Kernel& kernel, const cl::NDRange& tot_work_items, 
+				const cl::NDRange& items_per_workgroup, bool is_finish);
 
     protected:
         unsigned int deviceUsed;
@@ -149,6 +153,8 @@ class SuperBuffer {
 public:
 	cl::Buffer dev;
 	std::vector<T>* host;
+	T* host_ptr;
+	int size;
 	int error;
 	bool host_changed;
 	bool dev_changed;
@@ -159,6 +165,7 @@ public:
 	SuperBuffer(std::string name="") {
 		this->name = name;
 		host = 0;
+		host_ptr = 0;
 		printf("++++ Created empty SuperBuffer ++++ \n\n");
 	}
 	void create(std::vector<T>& host_) { // std::string name="") : host(&host_) {
@@ -166,6 +173,7 @@ public:
 		host_changed = true;
 		try {
 			host = &host_;
+			host_ptr = 0;
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
 		} catch (cl::Error er) {
 	    	printf("[cl::Buffer] ERROR: %s(%s)\n", er.what(), oclErrorString(er.err()));
@@ -177,6 +185,7 @@ public:
 		this->name = name;
 		dev_changed = false;
 		host_changed = true;
+		host_ptr = 0;
 		try {
 			printf("sizof(T)e: %d\n", sizeof(T));
 			printf("size: %d\n", sizeof(T)*host->size());
@@ -191,6 +200,7 @@ public:
 	void create(std::vector<T>* host_) { // std::string name="") : host(&host_) {
 		dev_changed = false;
 		host_changed = true;
+		host_ptr = 0;
 		try {
 			host = host_;
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
@@ -204,6 +214,7 @@ public:
 		this->name = name;
 		dev_changed = false;
 		host_changed = true;
+		host_ptr = 0;
 		try {
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
 			printf("Created SuperBuffer *** %s (size: %d bytes) ***\n\n", name.c_str(), host->size()*sizeof(T));
@@ -216,6 +227,8 @@ public:
 		dev_changed = false;
 		host_changed = true;
 		host = new std::vector<T>(size, 0); 
+		size = this->size;    // assert(host.size() == size)
+		host_ptr = 0;
 		try {
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
 		} catch (cl::Error er) {
@@ -230,6 +243,24 @@ public:
 		dev_changed = false;
 		host_changed = true;
 		host = new std::vector<T>(size, 0); // implicitly convert from int to double if necesary
+		host_ptr = 0;
+		try {
+			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
+			printf("Created SuperBuffer *** %s (size: %d bytes) ***\n\n", name.c_str(), size*sizeof(T));
+		} catch (cl::Error er) {
+	    	printf("[cl::Buffer] ERROR: %s(%s)\n", er.what(), oclErrorString(er.err()));
+			exit(0);
+		}
+	}
+	// SuperBuffer allocates the space
+	SuperBuffer(int size, T* ptr, std::string name="") {
+		printf("SuperBuffer(int size, std::string name=\n");
+		this->name = name;
+		dev_changed = false;
+		host_changed = true;
+		host = 0;
+		host_ptr = ptr;
+		this->size = size; // number elements
 		try {
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
 			printf("Created SuperBuffer *** %s (size: %d bytes) ***\n\n", name.c_str(), size*sizeof(T));

@@ -7,43 +7,14 @@
 #include <vector>
 #include <string>
 
+#include "cl_base_class.h"
 #include "oclcommon.h"
 
 namespace spmv {
 
-class VARS
-{
-public:
-    cl_device_id* devices;
-    cl_context context;
-	cl_command_queue cmdQueue;
-    cl_program program;
-	cl_int errorCode;
-
-    //Create device memory objects
-    cl_mem devColid;
-    cl_mem devData;
-    cl_mem devVec;
-    cl_mem devRes;
-    cl_mem devTexVec;
-
-
-	int ntimes;
-
-    int aligned_length;
-    int nnz;
-    int rownum;
-    int vecsize;
-    int ellnum;
-
-	double opttime;
-	int optmethod;
-
-    int dim2; // relates to workgroups
-};
 //----------------------------------------------------------------------
 template <typename T>
-class BASE 
+class BASE  : public CLBaseClass
 {
 protected:
     cl_device_id* devices;
@@ -59,6 +30,11 @@ protected:
     cl_mem devRes;
     cl_mem devTexVec;
 
+	SuperBuffer<int> supColid;
+	SuperBuffer<T> supData;
+	SuperBuffer<T> supVec;
+	SuperBuffer<T> supRes;
+
 	int ntimes;
 
     int aligned_length;
@@ -71,6 +47,7 @@ protected:
 	int optmethod;
 
     int dim2; // relates to workgroups
+	std::string filename;
 
 public:
     T* vec;
@@ -108,16 +85,19 @@ public:
 //template <typename T>
 //void spmv_ell_ocl_T(ell_matrix<int, T>* mat, T* vec, T* result, int dim2Size, double& opttime, int& optmethod, char* oclfilename, cl_device_type deviceType, T* coores, int ntimes)
 template <typename T>
-BASE<T>::BASE(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl_device_type deviceType, int ntimes)
+BASE<T>::BASE(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl_device_type deviceType, int ntimes) :
+          CLBaseClass()
 {
     devices = NULL;
     context = NULL;
     cmdQueue = NULL;
     program = NULL;
 
+	if (oclfilename) filename = oclfilename;
+
 	this->coo_mat = coo_mat;
 
-    assert(initialization(deviceType, devices, &context, &cmdQueue, &program, oclfilename) == 1);
+    //assert(initialization(deviceType, devices, &context, &cmdQueue, &program, oclfilename) == 1);
 
     errorCode = CL_SUCCESS;
 	this->ntimes = ntimes;

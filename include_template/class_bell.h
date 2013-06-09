@@ -8,16 +8,18 @@
 #include <string>
 
 #include "oclcommon.h"
-#include "cl_base_class.h"
+#include "cl_base_class.h" // SuperBuffer still undefined
+#include "class_base.h"
 
 using namespace std;
 
 namespace spmv {
 
 #define USE(x) using BASE<T>::x
+#define USECL(x) using CLBaseClass::x
 
 template <typename T>
-class BELL : public BASE<T>, public CLBaseClass
+class BELL : public BASE<T>
 {
 public:
     USE(devices);
@@ -32,6 +34,13 @@ public:
     USE(devVec);
     USE(devRes);
     USE(devTexVec);
+
+	USE(supColid);
+	USE(supData);
+	USE(supVec);
+	USE(supRes);
+
+	USE(filename);
 
 	USE(ntimes);
 
@@ -52,6 +61,8 @@ public:
     USE(coores);
 
 	USE(getKernelName);
+	USECL(loadKernel);
+	USECL(enqueueKernel);
 
     int bestbw;
     int bestbh;
@@ -82,7 +93,7 @@ public:
 
 //----------------------------------------------------------------------
 template <typename T>
-BELL<T>::BELL(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl_device_type deviceType, int ntimes) : 
+BELL<T>::BELL(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl_device_type deviceType, int ntimes) :
    BASE<T>(coo_mat, dim2Size, oclfilename, deviceType, ntimes)
 {
 // From spmv_bell.cpp
@@ -111,8 +122,8 @@ void BELL<T>::run()
 		cmdQueue = NULL;
     	program = NULL;
 		cl_device_type deviceType = CONTEXTTYPE;
-		char* oclfilename = "./kernels/spmv_bell.cl";
-    	assert(initialization(deviceType, devices, &context, &cmdQueue, &program, oclfilename) == 1);
+		//char* oclfilename = "./kernels/spmv_bell.cl";
+    	//assert(initialization(deviceType, devices, &context, &cmdQueue, &program, oclfilename) == 1);
 
 
 
@@ -167,22 +178,40 @@ void BELL<T>::run()
     	padveclen = findPaddedSize(vecsize, 8);   // change for double precision?
 		printf("*** vecsize= %d, padveclen= %d\n", vecsize, padveclen); // identical
 		assert(padveclen == vecsize);
-    	paddedvec = new T [padveclen]; // (T*)malloc(sizeof(T)*padveclen);
+    	//paddedvec = new T [padveclen]; // (T*)malloc(sizeof(T)*padveclen);
     	paddedvec_v.resize(padveclen);
     	//memset(paddedvec, 0, sizeof(T)*padveclen);
-    	memcpy(paddedvec, vec, sizeof(T)*vecsize);
-    	ALLOCATE_GPU_READ(devColid, mat.b4ell_col_id, sizeof(int)*col_align*b4ellnum); // ERROR
-    	ALLOCATE_GPU_READ(devData, mat.b4ell_data, sizeof(T)*data_align*bheight*width4num*b4ellnum);
+    	//memcpy(paddedvec, vec, sizeof(T)*vecsize);
+		for (int i=0; i < paddedvec_v.size(); i++) {   // use assign
+			paddedvec_v[i] = vec[i];
+		}
+
+
+		supColid = CLBaseClass::SuperBuffer<int>(col_align*b4ellnum);
+		supData = CLBaseClass::SuperBuffer<T>(data_align*bheight*width4num*b4ellnum);
+		for (int i=0; i < col_align*b4ellnum; i++) {
+			(*supColid.host)[i] = mat.b4ell_col_id[i];
+		}
+		for (int i=0; i < data_align*bheight*width4num*b4ellnum; i++) {
+			(*supData.host)[i] = mat.b4ell_data[i];
+		}
+		supVec = CLBaseClass::SuperBuffer<T>(paddedvec_v);
+		supVec.copyToDevice();
+    	//ALLOCATE_GPU_READ(devColid, mat.b4ell_col_id, sizeof(int)*col_align*b4ellnum); // ERROR
     	//ALLOCATE_GPU_READ(devData, mat.b4ell_data, sizeof(T)*data_align*bheight*width4num*b4ellnum);
-    	ALLOCATE_GPU_READ(devVec, paddedvec, sizeof(T)*padveclen);
+		supData.copyToDevice();
+		supColid.copyToDevice();
+    	//ALLOCATE_GPU_READ(devData, mat.b4ell_data, sizeof(T)*data_align*bheight*width4num*b4ellnum);
     	//ALLOCATE_GPU_READ(devVec, paddedvec, sizeof(T)*padveclen);
+    	//ALLOCATE_GPU_READ(devVec, paddedvec, sizeof(T)*padveclen);
+
     	int paddedres = findPaddedSize(rownum, 512);
-    	devRes = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(T)*paddedres, NULL, &errorCode); CHECKERROR;
+		supRes = CLBaseClass::SuperBuffer<T>(paddedres);
     	//devRes = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(T)*paddedres, NULL, &errorCode); CHECKERROR;
 		printf("rownum= %d, paddedres= %d\n", rownum, paddedres);
     	//errorCode = clEnqueueWriteBuffer(cmdQueue, devRes, CL_TRUE, 0, sizeof(T)*rownum, result, 0, NULL, NULL); CHECKERROR;
 		// TEMP
-    	errorCode = clEnqueueWriteBuffer(cmdQueue, devRes, CL_TRUE, 0, sizeof(T)*paddedres, result, 0, NULL, NULL); CHECKERROR;
+    	//errorCode = clEnqueueWriteBuffer(cmdQueue, devRes, CL_TRUE, 0, sizeof(T)*paddedres, result, 0, NULL, NULL); CHECKERROR;
     	//errorCode = clEnqueueWriteBuffer(cmdQueue, devRes, CL_TRUE, 0, sizeof(T)*rownum, result, 0, NULL, NULL); CHECKERROR;
 
 
@@ -248,20 +277,38 @@ void BELL<T>::method_0(int count)
 
 	std::string kernel_name = getKernelName(kernelname);
 	printf("****** kernel_name: %s ******\n", kernel_name.c_str());
+	printf("filename: %s\n", filename.c_str());
 
-	printf("Same ROUTINE CALLED TWICE ==> SEG ERROR\n");
+	cl::Kernel kernel = loadKernel(kernel_name, filename);
+
+	try {
+		int i=0; 
+		kernel.setArg(i++, supColid.dev);
+		kernel.setArg(i++, supData.dev);
+		kernel.setArg(i++, sizeof(int), &data_align4); // ERROR
+		kernel.setArg(i++, sizeof(int), &col_align);
+		kernel.setArg(i++, sizeof(int), &b4ellnum);
+		kernel.setArg(i++, supVec.dev);
+		kernel.setArg(i++, supRes.dev);
+		kernel.setArg(i++, sizeof(int), &blockrownum);
+    } catch (cl::Error er) {
+        printf("[setKernelArg] ERROR: %s(%s)\n", er.what(), CLBaseClass::oclErrorString(er.err()));
+		exit(0);
+    }
 
 
+	#if 0
 	cl_kernel csrKernel = NULL;
 	csrKernel = clCreateKernel(program, kernel_name.c_str(), &errorCode); CHECKERROR;
-	errorCode = clSetKernelArg(csrKernel, 0, sizeof(cl_mem), &devColid); CHECKERROR;
-	errorCode = clSetKernelArg(csrKernel, 1, sizeof(cl_mem), &devData); CHECKERROR;
+	errorCode = clSetKernelArg(csrKernel, 0, sizeof(cl_mem), &supColid.dev()); CHECKERROR;
+	errorCode = clSetKernelArg(csrKernel, 1, sizeof(cl_mem), &supData.dev()); CHECKERROR;
 	errorCode = clSetKernelArg(csrKernel, 2, sizeof(int),    &data_align4); CHECKERROR;
 	errorCode = clSetKernelArg(csrKernel, 3, sizeof(int),    &col_align); CHECKERROR;
 	errorCode = clSetKernelArg(csrKernel, 4, sizeof(int),    &b4ellnum); CHECKERROR;
-	errorCode = clSetKernelArg(csrKernel, 5, sizeof(cl_mem), &devVec); CHECKERROR;
-	errorCode = clSetKernelArg(csrKernel, 6, sizeof(cl_mem), &devRes); CHECKERROR;
+	errorCode = clSetKernelArg(csrKernel, 5, sizeof(cl_mem), &supVec.dev()); CHECKERROR;
+	errorCode = clSetKernelArg(csrKernel, 6, sizeof(cl_mem), &supRes.dev()); CHECKERROR;
 	errorCode = clSetKernelArg(csrKernel, 7, sizeof(int),    &blockrownum); CHECKERROR;
+	#endif
 
 //	Why would this be required if result = A*v? 
 //	errorCode = clEnqueueWriteBuffer(cmdQueue, devRes, CL_TRUE, 0, sizeof(T)*rownum, result, 0, NULL, NULL); CHECKERROR;
@@ -269,32 +316,39 @@ void BELL<T>::method_0(int count)
 	// Somehow, a HW error on the next line. NO IDEA WHY, and only on the 2nd pass through the loop. 
 	 printf("work_dim= %d\n", work_dim);
 	 printf(" globalsize= %d,%d, blocksize= %d,%d\n", globalsize[0], globalsize[1], blocksize[0], blocksize[1]); // <<REASON FOR ERROR
-	errorCode = clEnqueueNDRangeKernel(cmdQueue, csrKernel, work_dim, NULL, globalsize, blocksize, 0, NULL, NULL); CHECKERROR; // ERROR
-	clFinish(cmdQueue);
-		if (count == 2) exit(0);
-	vector<T> tmpresult(rownum);
+	//errorCode = clEnqueueNDRangeKernel(cmdQueue, csrKernel, work_dim, NULL, globalsize, blocksize, 0, NULL, NULL); CHECKERROR; // ERROR
+	//clFinish(cmdQueue);
+
+	enqueueKernel(kernel, cl::NDRange(globalsize[0],globalsize[1]), cl::NDRange(blocksize[0], blocksize[1]), true);
+	if (count == 2) exit(0);
 	
+	//vector<T> tmpresult(rownum);
 	//T* tmpresult = new T [rownum]; //(T*)malloc(sizeof(T)*rownum);
-	errorCode = clEnqueueReadBuffer(cmdQueue, devRes, CL_TRUE, 0, sizeof(T)*rownum, &tmpresult[0], 0, NULL, NULL); CHECKERROR;
-	clFinish(cmdQueue);
+	supRes.copyToHost();
+	//errorCode = clEnqueueReadBuffer(cmdQueue, devRes, CL_TRUE, 0, sizeof(T)*rownum, &tmpresult[0], 0, NULL, NULL); CHECKERROR;
+	//clFinish(cmdQueue);
 	for (int i=0; i < rownum; i++) {
-		if (fabs(tmpresult[i]-coores[i]) > 1.e-4) 
+		//if (fabs(tmpresult[i]-coores[i]) > 1.e-4) 
+		if (fabs(supRes[i]-coores[i]) > 1.e-4) 
 		//printf("meth 0, (%d),  tmpresult= %f, coores= %f\n", i, tmpresult[i], coores[i]);
 		;
 	}
-	two_vec_compare_T(coores, &tmpresult[0], rownum);
+	//two_vec_compare_T(coores, &tmpresult[0], rownum);
+	two_vec_compare_T(coores, &(*supRes.host)[0], rownum);
 	//delete [] tmpresult;// free(tmpresult);
 
 	for (int k = 0; k < 3; k++)
 	{
-	    errorCode = clEnqueueNDRangeKernel(cmdQueue, csrKernel, work_dim, NULL, globalsize, blocksize, 0, NULL, NULL); CHECKERROR;
+	    //errorCode = clEnqueueNDRangeKernel(cmdQueue, csrKernel, work_dim, NULL, globalsize, blocksize, 0, NULL, NULL); CHECKERROR;
+		enqueueKernel(kernel, cl::NDRange(globalsize[0],globalsize[1]), cl::NDRange(blocksize[0], blocksize[1]), true);
 	}
 	clFinish(cmdQueue);
 
 	double teststart = timestamp();
 	for (int i = 0; i < ntimes; i++)
 	{
-	    errorCode = clEnqueueNDRangeKernel(cmdQueue, csrKernel, work_dim, NULL, globalsize, blocksize, 0, NULL, NULL); CHECKERROR;
+		enqueueKernel(kernel, cl::NDRange(globalsize[0],globalsize[1]), cl::NDRange(blocksize[0], blocksize[1]), true);
+	    //errorCode = clEnqueueNDRangeKernel(cmdQueue, csrKernel, work_dim, NULL, globalsize, blocksize, 0, NULL, NULL); CHECKERROR;
 	}
 	clFinish(cmdQueue);
 	double testend = timestamp();
@@ -303,8 +357,8 @@ void BELL<T>::method_0(int count)
 	double gflops = (double)nnz*2/(time_in_sec/(double)ntimes)/(double)1e9;
 	printf("\nBELL %dx%d block cpu time %lf ms GFLOPS %lf code %d \n\n", bh, bw,  time_in_sec / (double) ntimes * 1000, gflops, methodid);
 
-	if (csrKernel)
-	    clReleaseKernel(csrKernel);
+	//if (csrKernel)
+	    //clReleaseKernel(csrKernel);
 
 	double onetime = time_in_sec / (double) ntimes;
 	if (onetime < opttime)
