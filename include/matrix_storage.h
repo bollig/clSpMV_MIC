@@ -327,8 +327,10 @@ struct b4ell_matrix
     dimType b4ell_float4_aligned;
     /** Column index, size: bell_block_num * bell_height_aligned */
     dimType* b4ell_col_id;
+    //std::vector<dimType> b4ell_col_id;
     /** Data, size: bell_block_num * bell_bwidth * bell_bheight * bell_height_aligned */
     dataType* b4ell_data;
+    //std::vector<dataType> b4ell_data;
 };
 
 /**

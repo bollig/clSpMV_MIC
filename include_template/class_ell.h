@@ -1,3 +1,6 @@
+//TODO (disable from Makefile)
+//FIX	two_vec_compare_T(coores, tmpresult, rownum);
+
 #ifndef __CLASS_SPMV_ELL_H__
 #define __CLASS_SPMV_ELL_H__
 
@@ -88,7 +91,8 @@ ELL<T>::ELL(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl_dev
     initVectorOne<int, T>(vec, coo_mat->matinfo.width);	
     initVectorZero<int, T>(result, coo_mat->matinfo.height);
     coores = (T*)malloc(sizeof(T)*coo_mat->matinfo.height);
-    spmv_only_T<T>(coo_mat, vec, coores);
+	// CHECKING Supposedly on CPU, but execution is on GPU!!
+    //spmv_only_T<T>(coo_mat, vec, coores);
 
 
     //Initialize values

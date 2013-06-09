@@ -195,6 +195,25 @@ void coo_spmv(coo_matrix<dimType, dataType>* mat, dataType* vec, dataType* resul
     }
 }
 
+template <class dimType, class T>
+void coo_spmv_T(coo_matrix<dimType, T>* mat, std::vector<T>& vec, std::vector<T>& result, dimType vec_size)
+{
+    //for (dimType i = (dimType)0; i < mat->matinfo.height; i++)
+	//result[i] = (dataType)0;
+	
+	assert(result.size() == vec.size());
+	assert(result.size() == vec_size);
+    dimType nnz = mat->matinfo.nnz;
+
+    for (dimType i = (dimType)0; i < nnz; i++)
+    {
+		dimType row = mat->coo_row_id[i];
+		dimType col = mat->coo_col_id[i];
+		T& data = mat->coo_data[i];
+		result[row] += data * vec[col];
+    }
+}
+
 template <class dimType, class dataType>
 void csr_spmv(csr_matrix<dimType, dataType>* mat, dataType* vec, dataType* result, dimType vec_size)
 {

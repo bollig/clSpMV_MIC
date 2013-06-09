@@ -21,7 +21,7 @@
 #include "mem_bandwidth.h"
 #endif
 
-#include "class_ell.h"
+//#include "class_ell.h" // renable when bell works
 #include "class_bell.h"
 
 
@@ -98,8 +98,10 @@ int main(int argc, char* argv[])
 	#endif
     else if (choice == 5)
     {
+	#if 0
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_ell.cl");
 	spmv::spmv_ell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
+	#endif
 	//spmv::spmv_ell(clfilename, &mat_d, dim2Size, ntimes, CONTEXTTYPE);
     }
 	#if 0

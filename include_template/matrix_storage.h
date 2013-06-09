@@ -359,14 +359,16 @@ public:
     /** aligned float4 block height */
     dimType b4ell_float4_aligned;
     /** Column index, size: bell_block_num * bell_height_aligned */
-    dimType* b4ell_col_id;
+    //dimType* b4ell_col_id;
+    std::vector<dimType> b4ell_col_id;
     /** Data, size: bell_block_num * bell_bwidth * bell_bheight * bell_height_aligned */
-    dataType* b4ell_data;
+    //dataType* b4ell_data;
+    std::vector<dataType> b4ell_data;
 
 	~b4ell_matrix() {
 		printf("** inside b4ell destructor ***\n");
-		if (b4ell_data) delete [] b4ell_data;
-		if (b4ell_col_id) delete [] b4ell_col_id;
+		//if (b4ell_data) delete [] b4ell_data;
+		//if (b4ell_col_id) delete [] b4ell_col_id;
 	}
 
 	void print() {
@@ -2214,12 +2216,14 @@ bool coo2b4ell( coo_matrix<dimType, dataType>* source,
     dest->b4ell_float4_aligned = newf4length;
 
     //dest->b4ell_col_id = (dimType*) malloc(sizeof(dimType)*newlength*ellnum);
-    dest->b4ell_col_id = new dimType [newlength*ellnum]; 
-	printf("===> col_id= %ld\n", (long) dest->b4ell_col_id);
+    //dest->b4ell_col_id = new dimType [newlength*ellnum]; 
+    dest->b4ell_col_id.resize(newlength*ellnum); 
+	//printf("===> col_id= %ld\n", (long) dest->b4ell_col_id);
 
     unsigned int bwidth4num = bwidth / 4;
     //dest->b4ell_data = (dataType*)malloc(sizeof(dataType)*newf4length*bheight*bwidth4num*ellnum);
-    dest->b4ell_data = new dataType [newf4length*bheight*bwidth4num*ellnum];
+    //dest->b4ell_data = new dataType [newf4length*bheight*bwidth4num*ellnum];
+    dest->b4ell_data.resize(newf4length*bheight*bwidth4num*ellnum);
 
     dimType newblockcolsize = newf4length * bwidth4num * bheight;
     dimType newblockw4size = newf4length * bheight;

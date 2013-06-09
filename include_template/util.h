@@ -4,6 +4,8 @@
 #include <cmath>
 #include <sys/time.h>
 #include "matrix_storage.h"
+#include <vector>
+#include <algorithm>
 
 double timestamp ();
 int findPaddedSize(int realSize, int alignment);
@@ -21,9 +23,12 @@ unsigned int getRand(unsigned int upper);
 
 //----------------------------------------------------------------------
 template <typename T>
-double distance_T(T* vec1, T* vec2, int size)
+double distance_T(std::vector<T>& vec1, std::vector<T>& vec2, int size)
 {
+	//printf("distance_T: size= %d, vec1.size= %d, vec2.size= %d\n", size, vec1.size(), vec2.size());
+	assert(size <= vec1.size() && size <= vec2.size());
 	double sum = 0.0f;
+
 	for (int i = 0; i < size; i++)
 	{
 		double tmp = vec1[i] - vec2[i];
@@ -33,7 +38,7 @@ double distance_T(T* vec1, T* vec2, int size)
 }
 //----------------------------------------------------------------------
 template <typename T>
-void two_vec_compare_T(T* coovec, T* newvec, int size) 
+void two_vec_compare_T(std::vector<T>& coovec, std::vector<T>& newvec, int size) 
 {
     double dist = distance_T(coovec, newvec, size);
 
@@ -41,45 +46,41 @@ void two_vec_compare_T(T* coovec, T* newvec, int size)
     int maxdiffid = 0;
     double maxratiodiff = 0.0f;
     int count = 0;
+
     for (int i = 0; i < size; i++)
     {
-	T tmpa = coovec[i];
-	if (tmpa < 0)
-	    tmpa *= (-1);
-	T tmpb = newvec[i];
-	if (tmpb < 0)
-	    tmpb *= (-1);
-	double diff = tmpa - tmpb;
-	if (diff < 0)
-	    diff *= (-1);
-	T maxab = (tmpa > tmpb)?tmpa:tmpb;
-	double ratio = 0.0f;
-	if (maxab > 0)
-	    ratio = diff / maxab;
-	if (diff > maxdiff)
-	{
-	    maxdiff = diff;
-	    maxdiffid = i;
-	}
-	if (ratio > maxratiodiff)
-	    maxratiodiff = ratio;
-	if (coovec[i] != newvec[i] && count < 10)
-	{
-	    printf("Error i %d coo res %f res %f \n", i, coovec[i], newvec[i]);
-	    count++;
-	}
+		T tmpa = coovec[i];
+		if (tmpa < 0) tmpa *= -1;
+		T tmpb = newvec[i];
+		if (tmpb < 0) tmpb *= -1;
+		double diff = tmpa - tmpb;
+		if (diff < 0) diff *= -1;
+		T maxab = (tmpa > tmpb)?tmpa:tmpb;
+		double ratio = maxab > 0 ? diff/maxab : 0.0;
+		if (diff > maxdiff)
+		{
+	    	maxdiff = diff;
+	    	maxdiffid = i;
+		}
+		if (ratio > maxratiodiff) maxratiodiff = ratio;
+
+		if (coovec[i] != newvec[i] && count < 10)
+		{
+	    	printf("Error i %d coo res %f res %f \n", i, coovec[i], newvec[i]);
+	    	count++;
+		}
     }
     printf("Max diff id %d coo res %f res %f \n", maxdiffid, coovec[maxdiffid], newvec[maxdiffid]);
     printf("\nCorrectness Check: Distance %e max diff %e max diff ratio %e vec size %d\n", dist, maxdiff, maxratiodiff, size);
 }
 //----------------------------------------------------------------------
 template <typename T>
-void spmv_only_T(coo_matrix<int, T>* mat, T* vec, T* coores)
+void spmv_only_T(coo_matrix<int, T>* mat, std::vector<T>& vec, std::vector<T>& coores)
 {
     int ressize = mat->matinfo.height;
-    for (int i = 0; i < ressize; i++)
-	coores[i] = (T)0;
-    coo_spmv<int, T>(mat, vec, coores, mat->matinfo.width);
+	assert(ressize == coores.size());
+	std::fill(coores.begin(), coores.end(), 0.);  // T is float or double
+    coo_spmv_T<int, T>(mat, vec, coores, mat->matinfo.width);
 }
 //----------------------------------------------------------------------
 template <typename T>
