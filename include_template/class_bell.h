@@ -132,12 +132,12 @@ void BELL<T>::run()
 	count++;
 
 
-		printf("++++++ for loop: bwidth= %d, bheight= %d ++++\n", bwidth, bheight);
+		//printf("++++++ for loop: bwidth= %d, bheight= %d ++++\n", bwidth, bheight);
 
 		//bwidth = 4; // run same case twice
 		//bheight = 1;
 
-		printf("\n\n** (before if) bwidth= %d, bheight= %d\n", bwidth, bheight);
+		//printf("\n\n** (before if) bwidth= %d, bheight= %d\n", bwidth, bheight);
 		//if (count > 1) exit(0);
 
 		bw = bwidth; // used in the method_i()
@@ -161,7 +161,7 @@ void BELL<T>::run()
     	bheight = mat.b4ell_bheight;
     	width4num = bwidth / 4;   // 8 in double precision?
     	padveclen = findPaddedSize(vecsize, 8);   // change for double precision?
-		printf("*** vecsize= %d, padveclen= %d\n", vecsize, padveclen); // identical
+		//printf("*** vecsize= %d, padveclen= %d\n", vecsize, padveclen); // identical
 		assert(padveclen == vecsize);
 
     	paddedvec_v.resize(padveclen);
@@ -171,25 +171,38 @@ void BELL<T>::run()
 		//}
 
 
-		supColid = CLBaseClass::SuperBuffer<int>(col_align*b4ellnum);
-		supData = CLBaseClass::SuperBuffer<T>(data_align*bheight*width4num*b4ellnum);
+		//supColid = CLBaseClass::SuperBuffer<int>(col_align*b4ellnum, "supColid");
+		supColid.setName("supColid");
+		supColid.create(col_align*b4ellnum);
 		std::copy(mat.b4ell_col_id.begin(), mat.b4ell_col_id.end(), supColid.host->begin());
+
+		// Dangerous if used with size argument due to destructor. Would only work if 
+		// all pointers were shared pointers. 
+		//supData = CLBaseClass::SuperBuffer<T>(data_align*bheight*width4num*b4ellnum, "supData");
+		supData.setName("supData");
+		supData.create(data_align*bheight*width4num*b4ellnum);
+		std::copy(mat.b4ell_data.begin(), mat.b4ell_data.end(), supData.host->begin());
 		//for (int i=0; i < col_align*b4ellnum; i++) {
 			//(*supColid.host)[i] = mat.b4ell_col_id[i];
 		//}
-		std::copy(mat.b4ell_data.begin(), mat.b4ell_data.end(), supData.host->begin());
 		//for (int i=0; i < data_align*bheight*width4num*b4ellnum; i++) {
 			//(*supData.host)[i] = mat.b4ell_data[i];
 		//}
 
-		supVec = CLBaseClass::SuperBuffer<T>(paddedvec_v);
+		//supVec = CLBaseClass::SuperBuffer<T>(paddedvec_v, "supVec");
+		supVec.create(paddedvec_v);
+		supVec.setName("supVec");
+
 		supVec.copyToDevice();
 		supData.copyToDevice();
 		supColid.copyToDevice();
 
     	int paddedres = findPaddedSize(rownum, 512);
-		supRes = CLBaseClass::SuperBuffer<T>(paddedres);
+		//supRes = CLBaseClass::SuperBuffer<T>(paddedres, "supRes");
+		supRes.create(paddedres);
+		supRes.setName("supRes");
 
+		#if 0
 		printf("\n\n** bw= %d, bh= %d\n", bw, bh);
 		printf("col_align= %d\n", col_align);
 		printf("data_align= %d\n", data_align);
@@ -199,6 +212,7 @@ void BELL<T>::run()
 		printf("width4num= %d\n", width4num);
 		printf("padveclen= %d\n", padveclen);
 		printf("paddedres= %d\n", paddedres);
+		#endif
 
 		method_0(count);
 
@@ -239,12 +253,12 @@ void BELL<T>::method_0(int count)
 
 	std::string kernel_name = getKernelName(kernelname);
 	printf("****** kernel_name: %s ******\n", kernel_name.c_str());
-	printf("filename: %s\n", filename.c_str());
+	//printf("filename: %s\n", filename.c_str());
 
 	// VERY INEFFICIENT. Should only compile each kernel once. 
 	cl::Kernel kernel = loadKernel(kernel_name, filename);
 
-	printf("after load kernel\n");
+	//printf("after load kernel\n");
 
 	try {
 		int i=0; 
@@ -268,7 +282,7 @@ void BELL<T>::method_0(int count)
 //	clFinish(cmdQueue);
     supRes.copyToDevice();
 	// Somehow, a HW error on the next line. NO IDEA WHY, and only on the 2nd pass through the loop. 
-	 printf("work_dim= %d\n", work_dim);
+	 //printf("work_dim= %d\n", work_dim);
 	 printf(" globalsize= %d,%d, blocksize= %d,%d\n", globalsize[0], globalsize[1], blocksize[0], blocksize[1]); // <<REASON FOR ERROR
 	//errorCode = clEnqueueNDRangeKernel(cmdQueue, csrKernel, work_dim, NULL, globalsize, blocksize, 0, NULL, NULL); CHECKERROR; // ERROR
 	//clFinish(cmdQueue);

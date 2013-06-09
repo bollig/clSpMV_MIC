@@ -7,6 +7,7 @@
 #include <CL/cl.hpp>
 #include <stdio.h>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 
 // A bunch of util methods borrowed from Ian's tutorial on opencl
 class CLBaseClass 
@@ -152,20 +153,34 @@ template <typename T>
 class SuperBuffer {
 public:
 	cl::Buffer dev;
+	//boost:shared_ptr<std::vector<T> >* host;
 	std::vector<T>* host;
 	T* host_ptr;
 	int size;
 	int error;
 	bool host_changed;
 	bool dev_changed;
+	bool delete_host; // true if responsible for deleting host;
 	std::string name;
 
 	// I cannot change pointer to host (cpu) data after creation
 	// // cost of CLBaseClass is high. Should only be called once. 
+	~SuperBuffer() {
+		printf("inside SuperBuffer(%s) destructor\n", name.c_str());
+		// host is managed by a boost shared pointer. In this way, when a SuperBuffer
+		// is copied to another, memory is managed correctly
+		if (delete_host && host) {
+			delete host; 
+			host = 0;
+			printf("delete host ptr\n");
+		}
+	}
+
 	SuperBuffer(std::string name="") {
 		this->name = name;
 		host = 0;
 		host_ptr = 0;
+		delete_host = false;
 		printf("++++ Created empty SuperBuffer ++++ \n\n");
 	}
 	void create(std::vector<T>& host_) { // std::string name="") : host(&host_) {
@@ -174,6 +189,7 @@ public:
 		try {
 			host = &host_;
 			host_ptr = 0;
+			delete_host = false;
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
 		} catch (cl::Error er) {
 	    	printf("[cl::Buffer] ERROR: %s(%s)\n", er.what(), oclErrorString(er.err()));
@@ -186,6 +202,7 @@ public:
 		dev_changed = false;
 		host_changed = true;
 		host_ptr = 0;
+		delete_host = false;
 		try {
 			printf("sizof(T)e: %d\n", sizeof(T));
 			printf("size: %d\n", sizeof(T)*host->size());
@@ -201,6 +218,7 @@ public:
 		dev_changed = false;
 		host_changed = true;
 		host_ptr = 0;
+		delete_host = false;
 		try {
 			host = host_;
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
@@ -214,6 +232,7 @@ public:
 		this->name = name;
 		dev_changed = false;
 		host_changed = true;
+		delete_host = false;
 		host_ptr = 0;
 		try {
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
@@ -229,6 +248,7 @@ public:
 		host = new std::vector<T>(size, 0); 
 		size = this->size;    // assert(host.size() == size)
 		host_ptr = 0;
+		delete_host = false;
 		try {
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
 		} catch (cl::Error er) {
@@ -244,6 +264,7 @@ public:
 		host_changed = true;
 		host = new std::vector<T>(size, 0); // implicitly convert from int to double if necesary
 		host_ptr = 0;
+		delete_host = true;
 		try {
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
 			printf("Created SuperBuffer *** %s (size: %d bytes) ***\n\n", name.c_str(), size*sizeof(T));
@@ -254,6 +275,7 @@ public:
 	}
 	// SuperBuffer allocates the space
 	SuperBuffer(int size, T* ptr, std::string name="") {
+	// NOT DEBUGGED
 		printf("SuperBuffer(int size, std::string name=\n");
 		this->name = name;
 		dev_changed = false;
@@ -330,6 +352,9 @@ public:
 		if (error != CL_SUCCESS) {
 			std::cerr << " enqueueWrite ERROR: " << error << std::endl;
 		}
+	}
+	void setName(std::string name) {
+		this->name = name;
 	}
 }; // end SuperBuffer subclass
 

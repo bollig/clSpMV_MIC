@@ -300,7 +300,6 @@ cl::Kernel CLBaseClass::loadKernel(const std::string& kernel_name, const std::st
     //std::cout << "This is my kernel source: ...\n" << my_source << "\n...END\n";
 	//std::cout  << my_source  << std::endl;
     this->loadProgram(my_source, useDouble);
-	std::cout << "after load Program \n";
 
     try{
         //std::cout << "Loading kernel \""<< kernel_name << "\" with double precision = " << useDouble << "\n";
@@ -320,11 +319,11 @@ cl::Kernel CLBaseClass::loadKernel(const std::string& kernel_name, const std::st
 void CLBaseClass::enqueueKernel(const cl::Kernel& kernel, const cl::NDRange& tot_work_items, const cl::NDRange& items_per_workgroup, bool is_finish)
 {
 	cl_int err; // already defined in base opencl class
-	printf("before queue.enqueueNDRangeKernal\n");
+	//printf("before queue.enqueueNDRangeKernal\n");
     err = queue.enqueueNDRangeKernel(kernel, /* offset */ cl::NullRange,
             tot_work_items, items_per_workgroup, NULL, &event);
 
-	printf("after queue.enqueueNDRangeKernal\n");
+	//printf("after queue.enqueueNDRangeKernal\n");
  
 //END-START gives you hints on kind of “pure HW execution time”
 //10
@@ -335,7 +334,6 @@ void CLBaseClass::enqueueKernel(const cl::Kernel& kernel, const cl::NDRange& tot
 	std::vector<cl::Event> ve;
 	ve.push_back(event);
 
-	printf("after push_back\n");
     if (err != CL_SUCCESS) {
         std::cerr << "CommandQueue::enqueueNDRangeKernel()" \
             " failed (" << err << ")\n";
@@ -344,23 +342,19 @@ void CLBaseClass::enqueueKernel(const cl::Kernel& kernel, const cl::NDRange& tot
     }
 
 	if (is_finish) {
-		printf("wait for queue to finish\n");
 		try {
     		err = queue.finish();
-			printf("finish, err= %d\n", err);
         	//queue.flush(); // needed? (done by clwaitForEvents);
     	} catch (cl::Error er) {
         	printf("[enqueueKernel] ERROR: %s(%s)\n", er.what(), oclErrorString(er.err()));
 			exit(0);
     	}
-		printf("err= %d\n", err);
 	}
-	printf("after queue finish\n");
 
 	try {
-		printf("before waitForEvents\n");
+		//printf("before waitForEvents\n");
 		cl::Event::waitForEvents(ve);
-		printf("after waitForEvents\n");
+		//printf("after waitForEvents\n");
     } catch (cl::Error er) {
         printf("[enqueueKernel] ERROR: %s(%s)\n", er.what(), oclErrorString(er.err()));
 		exit(0);
