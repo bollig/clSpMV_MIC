@@ -79,6 +79,7 @@ void spmv_only_T(coo_matrix<int, T>* mat, std::vector<T>& vec, std::vector<T>& c
 {
     int ressize = mat->matinfo.height;
 	assert(ressize == coores.size());
+	// fake data for debugging purposes
 	std::fill(coores.begin(), coores.end(), 0.);  // T is float or double
     coo_spmv_T<int, T>(mat, vec, coores, mat->matinfo.width);
 }

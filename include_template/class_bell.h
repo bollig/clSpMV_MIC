@@ -107,7 +107,11 @@ BELL<T>::BELL(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl_d
     result_v.resize(coo_mat->matinfo.height);
 	std::fill(result_v.begin(), result_v.end(), 0.);
     coores_v.resize(coo_mat->matinfo.height);
+	std::fill(coores_v.begin(), coores_v.end(), 7.);
     spmv_only_T<T>(coo_mat, vec_v, coores_v);   // matrix*vector, serial
+	for (int i=0; i < 10; i++) {
+		printf("coores_v[%d]= %f\n", i, coores_v[i]);
+	}
 }
 //----------------------------------------------------------------------
 template <typename T>

@@ -142,6 +142,10 @@ printf("inside ell constructor\n");
 	supVec.create(vec_v);
 	supVec.setName("supVec");
 
+	supColid.copyToDevice();
+	supData.copyToDevice();
+	supVec.copyToDevice();
+
     int paddedres = findPaddedSize(rownum, 512);
 	supRes.create(paddedres);
 	supRes.setName("supRes");

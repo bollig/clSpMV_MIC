@@ -96,17 +96,16 @@ SELL<T>::SELL(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl_d
    BASE<T>(coo_mat, dim2Size, oclfilename, deviceType, ntimes)
 {
     printMatInfo(coo_mat);
-    //float* vec = (float*)malloc(sizeof(float)*mat->matinfo.width);
-    //float* res = (float*)malloc(sizeof(float)*mat->matinfo.height);
-    //initVectorOne<int, float>(vec, mat->matinfo.width);	
-    //initVectorZero<int, float>(res, mat->matinfo.height);
     vec_v.resize(coo_mat->matinfo.width);
     result_v.resize(coo_mat->matinfo.height);
 	std::fill(vec_v.begin(), vec_v.end(), 1.);
 	std::fill(result_v.begin(), result_v.end(), 0.);
-    //float* coores = (float*)malloc(sizeof(float)*mat->matinfo.height);
     coores_v.resize(coo_mat->matinfo.height);
+	//std::fill(coores_v.begin(), coores_v.end(), 7.);
     spmv_only_T<T>(coo_mat, vec_v, coores_v);
+	for (int i=0; i < 10; i++) {
+		printf("coores_v[%d]= %f\n", i, coores_v[i]);
+	}
 
     //---------------
 
@@ -159,6 +158,8 @@ void SELL<T>::run()
 
 	supSlicePtr.create(slicenum+1);
 	supSlicePtr.setName("slicePtr");
+	std::copy(mat.sell_slice_ptr.begin(), mat.sell_slice_ptr.end(), supSlicePtr.host->begin());
+	//exit(0);
     //ALLOCATE_GPU_READ(devSlicePtr, mat.sell_slice_ptr, sizeof(int)*(slicenum + 1));
 
 	supColid.setName("supColid");
@@ -180,6 +181,11 @@ void SELL<T>::run()
 	supRes.setName("supRes");
     //devRes = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(T)*paddedres, NULL, &errorCode); CHECKERROR;
     //errorCode = clEnqueueWriteBuffer(cmdQueue, devRes, CL_TRUE, 0, sizeof(T)*rownum, result, 0, NULL, NULL); CHECKERROR;
+
+	supSlicePtr.copyToDevice();
+	supVec.copyToDevice();
+	supData.copyToDevice();
+	supColid.copyToDevice();
 
     //---------------------------------
     if (sliceheight == SELL_GROUP_SIZE) {

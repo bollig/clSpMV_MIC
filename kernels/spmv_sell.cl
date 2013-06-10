@@ -6,12 +6,15 @@ __kernel void gpu_sell_warp(__global int* slice_ptr, __global int* col_id, __glo
     int row = get_global_id(0);
     __local int lslice_ptr[SELL_GROUP_SIZE / WARPSIZE][2];
     int sliceid = row / WARPSIZE;
+
     if (sliceid >= slice_num) {
 		return;
 	}
+
     int localid = get_local_id(0);
     int warpid = localid / WARPSIZE;
     int laneid = localid % WARPSIZE;
+
     if (laneid < 2)
     {
 		lslice_ptr[warpid][laneid] = slice_ptr[sliceid + laneid];

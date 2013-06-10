@@ -202,7 +202,6 @@ void coo_spmv_T(coo_matrix<dimType, T>* mat, std::vector<T>& vec, std::vector<T>
 	//result[i] = (dataType)0;
 	
 	assert(result.size() == vec.size());
-	assert(result.size() == vec_size);
     dimType nnz = mat->matinfo.nnz;
 
     for (dimType i = (dimType)0; i < nnz; i++)
@@ -211,7 +210,11 @@ void coo_spmv_T(coo_matrix<dimType, T>* mat, std::vector<T>& vec, std::vector<T>
 		dimType col = mat->coo_col_id[i];
 		T& data = mat->coo_data[i];
 		result[row] += data * vec[col];
+		//printf("data= %f\n", data);
     }
+	//for (int i=0; i < result.size(); i++) {
+		//printf("coo_spmv_T::row[%d] = %f\n", i, result[i]);
+	//}
 }
 
 template <class dimType, class dataType>
