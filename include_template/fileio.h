@@ -2,6 +2,7 @@
 #define __MAT_IO__H__
 
 #include "matrix_storage.h"
+#include <algorithm>
 
 namespace spmv {
 
@@ -39,9 +40,12 @@ void ReadMMF(char* filename, coo_matrix<int, T>* mat)
     fscanf(infile, "%d %d", &width, &nnz);
     mat->matinfo.height = height;
     mat->matinfo.width = width;
-    int* rows = (int*)malloc(sizeof(int)*nnz);
-    int* cols = (int*)malloc(sizeof(int)*nnz);
-    T* data = (T*)malloc(sizeof(T)*nnz);
+	std::vector<int> rows(nnz);
+	std::vector<int> cols(nnz);
+	std::vector<T> data(nnz);
+    //int* rows = (int*)malloc(sizeof(int)*nnz);
+    //int* cols = (int*)malloc(sizeof(int)*nnz);
+    //T* data = (T*)malloc(sizeof(T)*nnz);
     int diaCount = 0;
     for (int i = 0; i < nnz; i++)
     {
@@ -65,9 +69,9 @@ void ReadMMF(char* filename, coo_matrix<int, T>* mat)
     {
         int newnnz = nnz * 2 - diaCount;
         mat->matinfo.nnz = newnnz;
-        mat->coo_row_id = (int*)malloc(sizeof(int)*newnnz);
-        mat->coo_col_id = (int*)malloc(sizeof(int)*newnnz);
-        mat->coo_data = (T*)malloc(sizeof(T)*newnnz);
+        mat->coo_row_id.resize(newnnz); // = (int*)malloc(sizeof(int)*newnnz);
+        mat->coo_col_id.resize(newnnz); // = (int*)malloc(sizeof(int)*newnnz);
+        mat->coo_data.resize(newnnz); // = (T*)malloc(sizeof(T)*newnnz);
         int matid = 0;
         for (int i = 0; i < nnz; i++)
         {
@@ -90,21 +94,24 @@ void ReadMMF(char* filename, coo_matrix<int, T>* mat)
     else
     {
         mat->matinfo.nnz = nnz;
-        mat->coo_row_id = (int*)malloc(sizeof(int)*nnz);
-        mat->coo_col_id = (int*)malloc(sizeof(int)*nnz);
-        mat->coo_data = (T*)malloc(sizeof(T)*nnz);
-        memcpy(mat->coo_row_id, rows, sizeof(int)*nnz);
-        memcpy(mat->coo_col_id, cols, sizeof(int)*nnz);
-        memcpy(mat->coo_data, data, sizeof(T)*nnz);
+        mat->coo_row_id.resize(nnz); // = (int*)malloc(sizeof(int)*nnz);
+        mat->coo_col_id.resize(nnz); // = (int*)malloc(sizeof(int)*nnz);
+        mat->coo_data.resize(nnz); // = (T*)malloc(sizeof(T)*nnz);
+		std::copy(rows.begin(), rows.end(), mat->coo_row_id.begin());
+		std::copy(cols.begin(), cols.end(), mat->coo_col_id.begin());
+		std::copy(data.begin(), data.end(), mat->coo_data.begin());
+        //memcpy(mat->coo_row_id, rows, sizeof(int)*nnz);
+        //memcpy(mat->coo_col_id, cols, sizeof(int)*nnz);
+        //memcpy(mat->coo_data, data, sizeof(T)*nnz);
         if (!if_sorted_coo<int, T>(mat))
             sort_coo<int, T>(mat);
         //assert(if_sorted_coo(mat) == true);
     }
     
     fclose(infile);
-    free(rows);
-    free(cols);
-    free(data);
+    //free(rows);
+    //free(cols);
+    //free(data);
 }
 
 };

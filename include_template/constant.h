@@ -3,6 +3,7 @@
 
 //For creating opencl gpu programs
 #define CONTEXTTYPE CL_DEVICE_TYPE_ACCELERATOR
+//#define CONTEXTTYPE CL_DEVICE_TYPE_GPU
 
 //For matrix_storage.h
 #define DIAINCSIZE 200

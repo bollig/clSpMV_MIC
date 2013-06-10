@@ -267,6 +267,7 @@ void bcsr_spmv(bcsr_matrix<dimType, dataType>* mat, dataType* vec, dataType* res
     }
 }
 
+#if 0
 template<class dimType, class dataType>
 void bell_spmv(bell_matrix<dimType, dataType>* mat, dataType* vec, dataType* result, dimType vec_size)
 {
@@ -294,8 +295,8 @@ void bell_spmv(bell_matrix<dimType, dataType>* mat, dataType* vec, dataType* res
 	    }
 	}
     }
-    
 }
+#endif
 
 
 template<class dimType, class dataType>
@@ -489,6 +490,7 @@ void doELL(coo_matrix<dimType, dataType>* mat, dataType* vec, dimType vec_size)
     free(result_ell);
 }
 
+#if 0
 template <class dimType, class dataType>
 void doBELL(coo_matrix<dimType, dataType>* mat, dataType* vec, dimType vec_size)
 {
@@ -512,6 +514,7 @@ void doBELL(coo_matrix<dimType, dataType>* mat, dataType* vec, dimType vec_size)
     free(result_coo);
     free(result_bell);
 }
+#endif
 
 
 template <class dimType, class dataType>
@@ -562,6 +565,7 @@ void doBCSR(coo_matrix<dimType, dataType>* mat, dataType* vec, dimType vec_size)
     free(result_bcsr);
 }
 
+#if 0
 template <class dimType, class offsetType, class dataType>
 void doExp(coo_matrix<dimType, dataType>* mat)
 {
@@ -582,6 +586,7 @@ void doExp(coo_matrix<dimType, dataType>* mat)
     
     free(vec);
 }
+#endif
 
 
 #endif

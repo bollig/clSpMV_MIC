@@ -6,31 +6,34 @@ __kernel void gpu_sell_warp(__global int* slice_ptr, __global int* col_id, __glo
     int row = get_global_id(0);
     __local int lslice_ptr[SELL_GROUP_SIZE / WARPSIZE][2];
     int sliceid = row / WARPSIZE;
-    if (sliceid >= slice_num)
-	return;
+    if (sliceid >= slice_num) {
+		return;
+	}
     int localid = get_local_id(0);
     int warpid = localid / WARPSIZE;
     int laneid = localid % WARPSIZE;
     if (laneid < 2)
     {
-	lslice_ptr[warpid][laneid] = slice_ptr[sliceid + laneid];
+		lslice_ptr[warpid][laneid] = slice_ptr[sliceid + laneid];
     }
 
     int start = lslice_ptr[warpid][0] + laneid;
     int end = lslice_ptr[warpid][1];
-    float accumulant = result[row];
+    //float accumulant = result[row];
+    float accumulant = 0.0;
     
     for (int i = start; i < end; i += WARPSIZE)
     {
-	int vecid = col_id[i];
-	float matrixelem = data[i];
-	float vecelem = vec[vecid];
-	accumulant = mad(matrixelem, vecelem, accumulant);
+		int vecid = col_id[i];
+		float matrixelem = data[i];
+		float vecelem = vec[vecid];
+		accumulant = mad(matrixelem, vecelem, accumulant);
     }
     
     result[row] = accumulant;
 }
 
+#if 1
 __kernel void gpu_sell_group(__global int* slice_ptr, __global int* col_id, __global float* data, __global float* vec, __global float* result, int slice_num)
 {
     __local int lslice_ptr[2];
@@ -46,7 +49,8 @@ __kernel void gpu_sell_group(__global int* slice_ptr, __global int* col_id, __gl
 
     int start = lslice_ptr[0] + localid;
     int end = lslice_ptr[1];
-    float accumulant = result[row];
+    //float accumulant = result[row];
+    float accumulant = 0.0;
     for (int i = start; i < end; i += size)
     {
 	int vecid = col_id[i];
@@ -57,7 +61,9 @@ __kernel void gpu_sell_group(__global int* slice_ptr, __global int* col_id, __gl
     
     result[row] = accumulant;
 }
+#endif
 
+#if 0
 __kernel void gpu_sell_warp_tx(__global int* slice_ptr, __global int* col_id, __global float* data, __read_only image2d_t vec, __global float* result, int slice_num)
 {
     __local int lslice_ptr[SELL_GROUP_SIZE / WARPSIZE][2];
@@ -93,7 +99,9 @@ __kernel void gpu_sell_warp_tx(__global int* slice_ptr, __global int* col_id, __
     
     result[row] = accumulant;
 }
+#endif
 
+#if 0
 __kernel void gpu_sell_group_tx(__global int* slice_ptr, __global int* col_id, __global float* data, __read_only image2d_t vec, __global float* result, int slice_num)
 {
     __local int lslice_ptr[2];
@@ -127,4 +135,5 @@ __kernel void gpu_sell_group_tx(__global int* slice_ptr, __global int* col_id, _
     
     result[row] = accumulant;
 }
+#endif
 

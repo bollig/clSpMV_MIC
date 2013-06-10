@@ -4,7 +4,8 @@
 __kernel void gpu_ell(__global int* col_id, __global float* data, int aligned_length, int ell_num, __global float* vec, __global float* result, int row_num)
 {
     int row = get_global_id(0);
-    float accumulant = result[row];
+    //float accumulant = result[row];
+    float accumulant = 0.0;
     int matoffset = row;
     for (int i = 0; i < ell_num; i++)
     {
@@ -21,7 +22,8 @@ __kernel void gpu_ell(__global int* col_id, __global float* data, int aligned_le
 __kernel void gpu_ell_v4(__global int4* col_id, __global float4* data, int aligned_length, int ell_num, __global float* vec, __global float4* result, int row_num)
 {
     int row = get_global_id(0);
-    float4 accumulant = result[row];
+    //float4 accumulant = result[row];
+    float4 accumulant = {0.,0.,0.,0.};
     int matoffset = row;
     for (int i = 0; i < ell_num; i++)
     {
@@ -39,6 +41,7 @@ __kernel void gpu_ell_v4(__global int4* col_id, __global float4* data, int align
     result[row] = accumulant;
 }
 
+#if 0
 __kernel void gpu_ell_tx(__global int* col_id, __global float* data, int aligned_length, int ell_num, __read_only image2d_t vec, __global float* result, int row_num)
 {
     int row = get_global_id(0);
@@ -61,7 +64,9 @@ __kernel void gpu_ell_tx(__global int* col_id, __global float* data, int aligned
     }
     result[row] = accumulant;
 }
+#endif
 
+#if 0
 __kernel void gpu_ell_v4_tx(__global int4* col_id, __global float4* data, int aligned_length, int ell_num, __read_only image2d_t vec, __global float4* result, int row_num)
 {
     int row = get_global_id(0);
@@ -101,4 +106,5 @@ __kernel void gpu_ell_v4_tx(__global int4* col_id, __global float4* data, int al
     }
     result[row] = accumulant;
 }
+#endif
 

@@ -22,6 +22,10 @@ struct matrixInfo
     /** Number of non zeros*/
     dimType nnz;
 
+	void print() {
+		printf("matrixInfo: width= %d, height= %d, nnz= %d\n", width, height, nnz);
+	}
+
 };
 
 //The original definition of diagonal format.
@@ -94,8 +98,9 @@ struct bdia_matrix
 };
 
 template <class dimType, class dataType>
-struct ell_matrix
+class ell_matrix
 {
+public:
     matrixInfo<dimType> matinfo;
 
      /** Number of elements per row*/
@@ -105,9 +110,22 @@ struct ell_matrix
 
     /** Padded column index, size ell_num * ell_height_aligned
      * (for each ell_num, store an ell_height_aligned consecutively.)*/
-    dimType* ell_col_id;
+    std::vector<dimType> ell_col_id;
+    std::vector<dataType> ell_data;
+    //dimType* ell_col_id;
     /** Padded data, size ell_num * ell_height_aligned.*/
-    dataType* ell_data;
+    //dataType* ell_data;
+
+	~ell_matrix() {
+		printf("** inside 4ell destructor ***\n");
+		//if (b4ell_data) delete [] b4ell_data;
+		//if (b4ell_col_id) delete [] b4ell_col_id;
+	}
+	void print() {
+		printf("ell matrix info\n");
+		matinfo.print();
+		printf("ell_num=%d, ell_height_aligned=%d\n", ell_num, ell_height_aligned);
+	}
 };
 
 
@@ -120,8 +138,9 @@ struct ell_matrix
  *  (sell_slice_ptr[i+1] - sell_slice_ptr[i]) / sell_slice_num;
  */
 template <class dimType, class dataType>
-struct sell_matrix
+class sell_matrix
 {
+public:
     matrixInfo<dimType> matinfo;
 
     /** The height of each slice. */
@@ -129,11 +148,28 @@ struct sell_matrix
     /**The number of slices in the format*/
     dimType sell_slice_num;
      /** The starting and ending index of each slice*/
-    dimType* sell_slice_ptr;
+    //dimType* sell_slice_ptr;
+	std::vector<dimType> sell_slice_ptr;
     /** Padded column index, size = sell_slice_ptr[sell_slice_num]*/
-    dimType* sell_col_id;
+    //dimType* sell_col_id;
+    std::vector<dimType> sell_col_id;
     /** Padded data, size = sell_slice_ptr[sell_slice_num]*/
-    dataType* sell_data;
+    //dataType* sell_data;
+    std::vector<dataType> sell_data;
+
+	sell_matrix() {
+    	init_mat_info(matinfo);
+	}
+
+	void print() {
+		printf("sell matrix info\n");
+		matinfo.print();
+		printf("sell_slice_height=%d, sell_slice_num=%d\n", sell_slice_height, sell_slice_num);
+	}
+
+	~sell_matrix() {
+		printf("inside sell_matrix destructor\n");
+	}
 };
 
 
@@ -145,39 +181,54 @@ public:
     matrixInfo<dimType> matinfo;
 
     /** Row index, size nnz*/
-    dimType* coo_row_id;
+    std::vector<dimType> coo_row_id;
     /** Column index, size nnz*/
-    dimType* coo_col_id;
+    std::vector<dimType> coo_col_id;
     /** Data, size nnz */
-    dataType* coo_data;
+    std::vector<dataType> coo_data;
 
 	coo_matrix() {
     	init_mat_info(matinfo);
-    	coo_row_id = NULL;
-    	coo_col_id = NULL;
-    	coo_data = NULL;
 	}
 
 	~coo_matrix() {
 		printf("*** inside coo_matrix destructor\n");
-    	if (coo_row_id != NULL) delete [] coo_row_id; //free(coo_row_id);
-    	if (coo_col_id != NULL) delete [] coo_col_id; //free(coo_col_id);
-    	if (coo_data != NULL) delete [] coo_data; //free(coo_data);
+	}
+
+	void print() {
+		printf("coo_matrix info\n");
+		matinfo.print();
+		printf("coo_row_id sz: %d, coo_col_id sz: %d, coo_data sz: %d\n", coo_row_id.size(), coo_col_id.size(), coo_data.size());
 	}
 };
 
 
 template <class dimType, class dataType>
-struct csr_matrix
+class csr_matrix
 {
+public:
     matrixInfo<dimType> matinfo;
 
     /** Row pointer, size height + 1*/
-    dimType* csr_row_ptr;
+    //dimType* csr_row_ptr;
+    std::vector<dimType> csr_row_ptr;
     /** Column index, size nnz*/
-    dimType* csr_col_id;
+    //dimType* csr_col_id;
+    std::vector<dimType> csr_col_id;
     /** Data, size nnz */
-    dataType* csr_data;
+    //dataType* csr_data;
+    std::vector<dataType> csr_data;
+
+	csr_matrix() {
+    	init_mat_info(matinfo);
+	}
+
+    ~csr_matrix() {
+	printf("inside csr_matrix destructor\n");
+    	//if (csr_row_ptr) delete [] csr_row_ptr;
+    	//if (csr_col_id) delete [] csr_col_id;
+    	//if (csr_row_data) delete [] csr_data;
+    }
 };
 
 
@@ -238,6 +289,7 @@ public:
  */
 
 
+#if 1
 template <class dimType, class dataType>
 class bell_matrix
 {
@@ -266,6 +318,7 @@ public:
     	if (bell_data) free(bell_data);
 	}
 };
+#endif
 
 /**
  * Only accept 1x4, 2x4, 4x4, 8x4, 1x8, 2x8, 4x8, 8x8 blocks
@@ -373,6 +426,7 @@ public:
 
 	void print() {
 		printf("b4ell matrix info\n");
+		matinfo.print();
 		printf("bwidth=%d, bheight=%d, row_num=%d, block_num=%d, height_aligned=%d, float4_aligned=%d\n", 
 		     b4ell_bwidth, b4ell_bheight, b4ell_row_num, b4ell_block_num, b4ell_height_aligned, b4ell_float4_aligned);
 	}
@@ -1333,12 +1387,17 @@ void coo2csr(coo_matrix<dimType, dataType>* source, csr_matrix<dimType, dataType
     dest->matinfo.nnz = source->matinfo.nnz;
 
     dimType nnz = source->matinfo.nnz;
-    dest->csr_row_ptr = (dimType*)malloc(sizeof(dimType)*(source->matinfo.height + 1));
-    dest->csr_col_id = (dimType*)malloc(sizeof(dimType)*nnz);
-    dest->csr_data = (dataType*)malloc(sizeof(dataType)*nnz);
+    //dest->csr_row_ptr = (dimType*)malloc(sizeof(dimType)*(source->matinfo.height + 1));
+    //dest->csr_col_id = (dimType*)malloc(sizeof(dimType)*nnz);
+    //dest->csr_data = (dataType*)malloc(sizeof(dataType)*nnz);
+    dest->csr_row_ptr.resize(source->matinfo.height + 1);
+    dest->csr_col_id.resize(nnz);
+    dest->csr_data.resize(nnz);
 
-    memcpy(dest->csr_data, source->coo_data, sizeof(dataType)*nnz);
-    memcpy(dest->csr_col_id, source->coo_col_id, sizeof(dimType)*nnz);
+	std::copy(source->coo_data.begin(), source->coo_data.end(), dest->csr_data.begin());
+    //memcpy(dest->csr_data, source->coo_data, sizeof(dataType)*nnz);
+	std::copy(source->coo_col_id.begin(), source->coo_col_id.end(), dest->csr_col_id.begin());
+    //memcpy(dest->csr_col_id, source->coo_col_id, sizeof(dimType)*nnz);
 
     dest->csr_row_ptr[0] = 0;
     dimType row = (dimType) 0;
@@ -1388,7 +1447,6 @@ void ell2coo(ell_matrix<dimType, dataType>* source, coo_matrix<dimType, dataType
 	}
     }
     assert(cooid == nnz);
-    
 }
 
 // if ellnum == 0, use the max number of nonzero per row as the ellnum value
@@ -1415,8 +1473,12 @@ void coo2ell(coo_matrix<dimType, dataType>* source, ell_matrix<dimType, dataType
     dimType newlength = aligned_length(source->matinfo.height, alignment);
     dest->ell_height_aligned = newlength;
 
-    dest->ell_col_id = (dimType*)malloc(sizeof(dimType)*newlength*ellnum);
-    dest->ell_data = (dataType*)malloc(sizeof(dataType)*newlength*ellnum);
+    //dest->ell_col_id = (dimType*)malloc(sizeof(dimType)*newlength*ellnum);
+    //dest->ell_data = (dataType*)malloc(sizeof(dataType)*newlength*ellnum);
+
+    dest->ell_col_id.resize(newlength*ellnum);
+    dest->ell_data.resize(newlength*ellnum);
+
     for (dimType i = (dimType)0; i < newlength * ellnum; i++)
     {
 	dest->ell_col_id[i] = (dimType)0;
@@ -1444,7 +1506,7 @@ void coo2ell(coo_matrix<dimType, dataType>* source, ell_matrix<dimType, dataType
 	}
     }
 
-    free_csr_matrix(csrmat);
+    //free_csr_matrix(csrmat);
 
 }
 
@@ -1456,10 +1518,12 @@ void coo2sell(coo_matrix<dimType, dataType>* source, sell_matrix<dimType, dataTy
     dest->matinfo.width = source->matinfo.width;
     dest->matinfo.height = source->matinfo.height;
     dest->matinfo.nnz = source->matinfo.nnz;
+	printf("dest: width= %d, height=%d, nnz= %d\n", dest->matinfo.width, dest->matinfo.height, dest->matinfo.nnz);
 
     dimType nnz = source->matinfo.nnz;
     dest->sell_slice_height = sliceheight;
     dimType height = source->matinfo.height;
+	printf("coo2sell, height= %d\n", height);
     dimType slicenum = height / sliceheight;
     if (height % sliceheight != 0)
 	slicenum++;
@@ -1488,7 +1552,8 @@ void coo2sell(coo_matrix<dimType, dataType>* source, sell_matrix<dimType, dataTy
     vector<dimType*> colid(slicenum, NULL);
     vector<dataType*> data(slicenum, NULL);
     vector<dimType> slicesize(slicenum, 0);
-    dest->sell_slice_ptr = (dimType*)malloc(sizeof(dimType)*(slicenum + 1));
+    //dest->sell_slice_ptr = (dimType*)malloc(sizeof(dimType)*(slicenum + 1));
+    dest->sell_slice_ptr.resize(slicenum + 1);
     dest->sell_slice_ptr[0] = 0;
     
     for (dimType i = (dimType)0; i < slicenum; i++)
@@ -1502,8 +1567,9 @@ void coo2sell(coo_matrix<dimType, dataType>* source, sell_matrix<dimType, dataTy
 	}
 	dimType newsize = dest->sell_slice_ptr[i] + maxwidth * sliceheight;
 	dest->sell_slice_ptr[i + 1] = newsize;
-	colid[i] = (dimType*)malloc(sizeof(dimType)*maxwidth*sliceheight);
-	data[i] = (dataType*)malloc(sizeof(dataType)*maxwidth*sliceheight);
+	colid[i] = new dimType [maxwidth*sliceheight]; //(dimType*)malloc(sizeof(dimType)*maxwidth*sliceheight);
+	data[i] = new dataType [maxwidth*sliceheight];
+	//data[i] = (dataType*)malloc(sizeof(dataType)*maxwidth*sliceheight);
 	colid[i][0] = (dimType)0;
 	slicesize[i] = maxwidth*sliceheight;
 	
@@ -1514,18 +1580,18 @@ void coo2sell(coo_matrix<dimType, dataType>* source, sell_matrix<dimType, dataTy
 	    dimType end = csr_row_ptr[j + 1];
 	    for (dimType k = start; k < end; k++)
 	    {
-		colid[i][(k - start) * sliceheight + j - offset] = source->coo_col_id[k];
-		data[i][(k - start) * sliceheight + j - offset] = source->coo_data[k];
+			colid[i][(k - start) * sliceheight + j - offset] = source->coo_col_id[k];
+			data[i][(k - start) * sliceheight + j - offset] = source->coo_data[k];
 	    }
 	    
 	    for (dimType k = end; k < start + maxwidth; k++)
 	    {
-		dimType cpyid = (k-start)*sliceheight+j - offset;
-		if (cpyid >= sliceheight)
-		    colid[i][cpyid] = colid[i][cpyid - sliceheight];
-		else
-		    colid[i][cpyid] = colid[i][0];
-		data[i][cpyid] = (dataType)0;
+			dimType cpyid = (k-start)*sliceheight+j - offset;
+			if (cpyid >= sliceheight)
+		    	colid[i][cpyid] = colid[i][cpyid - sliceheight];
+			else
+		    	colid[i][cpyid] = colid[i][0];
+			data[i][cpyid] = (dataType)0;
 	    }
 	    
 	}
@@ -1548,8 +1614,10 @@ void coo2sell(coo_matrix<dimType, dataType>* source, sell_matrix<dimType, dataTy
     }
 
     dimType totalsize = dest->sell_slice_ptr[slicenum];
-    dest->sell_col_id = (dimType*)malloc(sizeof(dimType)*totalsize);
-    dest->sell_data = (dataType*)malloc(sizeof(dataType)*totalsize);
+    //dest->sell_col_id = (dimType*)malloc(sizeof(dimType)*totalsize);
+    //dest->sell_data = (dataType*)malloc(sizeof(dataType)*totalsize);
+    dest->sell_col_id.resize(totalsize);
+    dest->sell_data.resize(totalsize);
     dimType index = (dimType)0;
     for (dimType i = 0; i < slicenum; i++)
     {
@@ -1562,8 +1630,8 @@ void coo2sell(coo_matrix<dimType, dataType>* source, sell_matrix<dimType, dataTy
     }
     for (dimType i = 0; i < slicenum; i++)
     {
-	free(colid[i]);
-	free(data[i]);
+		free(colid[i]);
+		free(data[i]);
     }
 }
 
@@ -1955,6 +2023,7 @@ bool coo2b4csr( coo_matrix<dimType, dataType>* source,
 }
 //------------------------
 
+#if 0
 template <class dimType, class dataType>
 void bell2coo(bell_matrix<dimType, dataType>* source, coo_matrix<dimType, dataType>* dest)
 {
@@ -1994,7 +2063,9 @@ void bell2coo(bell_matrix<dimType, dataType>* source, coo_matrix<dimType, dataTy
 	assert(sort_coo(dest) == true);
     }
 }
+#endif
 
+#if 0
 template <class dimType, class dataType>
 void coo2bell(coo_matrix<dimType, dataType>* source, bell_matrix<dimType, dataType>* dest, unsigned int bwidth, unsigned int bheight, dimType alignment, dimType ellnum)
 {
@@ -2064,6 +2135,7 @@ void coo2bell(coo_matrix<dimType, dataType>* source, bell_matrix<dimType, dataTy
     //free_bcsr_matrix(bcsrmat);
 
 }
+#endif
 
 //-----------------------------
 // On Nvidia Divice, the global memory should be padded to a multiple of 128 bytes, or 32 floats. 

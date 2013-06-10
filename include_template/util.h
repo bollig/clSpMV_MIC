@@ -17,7 +17,7 @@ void spmv_only(coo_matrix<int, float>* mat, float* vec, float* coores);
 
 void two_vec_compare(float* coovec, float* newvec, int size);
 
-void rearrange_bell_4col(bell_matrix<int, float>* mat, int alignment);
+//void rearrange_bell_4col(bell_matrix<int, float>* mat, int alignment);
 unsigned int getRandMax();
 unsigned int getRand(unsigned int upper);
 

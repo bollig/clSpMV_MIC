@@ -21,8 +21,9 @@
 #include "mem_bandwidth.h"
 #endif
 
-//#include "class_ell.h" // renable when bell works
+#include "class_ell.h" // renable when bell works
 #include "class_bell.h"
+#include "class_sell.h"
 
 
 
@@ -32,22 +33,22 @@ int main(int argc, char* argv[])
 {
     if (argc < 2)
     {
-	printf("\nUsage: spmv_all input_matrix.mtx method execution_times");
-	printf("\nThe matrix needs to be in the matrix market format");
-	printf("\nThe method is the format you want to use:");
-	printf("\n\tMethod 0: mesure the memory bandwidth and kernel launch overhead only");
-	printf("\n\tMethod 1: use the csr matrix format, using the scalar implementations");
-	printf("\n\tMethod 2: use the csr matrix format, using the vector implementations");
-	printf("\n\tMethod 3: use the bdia matrix format");
-	printf("\n\tMethod 4: use the dia matrix format");
-	printf("\n\tMethod 5: use the ell matrix format");
-	printf("\n\tMethod 6: use the coo matrix format");
-	printf("\n\tMethod 7: use the bell matrix format");
-	printf("\n\tMethod 8: use the bcsr matrix format");
-	printf("\n\tMethod 9: use the sell matrix format");
-	printf("\n\tMethod 10: use the sbell matrix format");
-	printf("\nThe execution_times refers to how many times of SpMV you want to do to benchmark the execution time\n");
-	return 0;
+		printf("\nUsage: spmv_all input_matrix.mtx method execution_times");
+		printf("\nThe matrix needs to be in the matrix market format");
+		printf("\nThe method is the format you want to use:");
+		printf("\n\tMethod 0: mesure the memory bandwidth and kernel launch overhead only");
+		printf("\n\tMethod 1: use the csr matrix format, using the scalar implementations");
+		printf("\n\tMethod 2: use the csr matrix format, using the vector implementations");
+		printf("\n\tMethod 3: use the bdia matrix format");
+		printf("\n\tMethod 4: use the dia matrix format");
+		printf("\n\tMethod 5: use the ell matrix format");
+		printf("\n\tMethod 6: use the coo matrix format");
+		printf("\n\tMethod 7: use the bell matrix format");
+		printf("\n\tMethod 8: use the bcsr matrix format");
+		printf("\n\tMethod 9: use the sell matrix format");
+		printf("\n\tMethod 10: use the sbell matrix format");
+		printf("\nThe execution_times refers to how many times of SpMV you want to do to benchmark the execution time\n");
+		return 0;
     }
 
     char* filename = argv[1];
@@ -65,6 +66,8 @@ int main(int argc, char* argv[])
     //init_coo_matrix(mat_d);
     spmv::ReadMMF(filename, &mat);
     //spmv::ReadMMF(filename, &mat_d);
+	printf("READ INPUT FILE: \n");
+	mat.print();
 
     char* clspmvpath = getenv("CLSPMVPATH");
     char clfilename[1000];
@@ -98,9 +101,11 @@ int main(int argc, char* argv[])
 	#endif
     else if (choice == 5)
     {
-	#if 0
+	#if 1
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_ell.cl");
-	spmv::spmv_ell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
+	printf("befpre spmv_ell\n");
+	spmv::spmv_ell("spmv_ell.cl", &mat, dim2Size, ntimes, CONTEXTTYPE);
+	//spmv::spmv_ell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
 	#endif
 	//spmv::spmv_ell(clfilename, &mat_d, dim2Size, ntimes, CONTEXTTYPE);
     }
@@ -113,7 +118,7 @@ int main(int argc, char* argv[])
 	#endif
     else if (choice == 7)
     {
-	printf("**** FIRST GET SINGLE PRECISION WORKING! ***\n");
+	//printf("**** FIRST GET SINGLE PRECISION WORKING! ***\n");
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_bell.cl");
 	//spmv::spmv_bell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
 	// directory name not required. Read in at lower level using CL_KERNEL ENV variable
@@ -127,11 +132,14 @@ int main(int argc, char* argv[])
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_bcsr.cl");
 	spmv_bcsr(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
     }
+	#endif
     else if (choice == 9)
     {
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_sell.cl");
-	spmv_sell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
+	//spmv_sell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
+	spmv::spmv_sell("spmv_sell.cl", &mat, dim2Size, ntimes, CONTEXTTYPE);
     }
+	#if 0
     else if (choice == 10)
     {
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_sbell.cl");

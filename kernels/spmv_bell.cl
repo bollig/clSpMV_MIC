@@ -1,7 +1,6 @@
 #include "constant.h"
 
 
-//__kernel void gpu_bell14(__global int* col_id, __global float4* data, int data_align, int col_align, int bell_num, __global float4* vec, __global float* result, int row_num)
 __kernel void gpu_bell14(__global int* col_id, __global float4* data, int data_align, int col_align, int bell_num, __global float4* vec, __global float* result, int row_num)
 {
     int row = get_global_id(0);
@@ -33,7 +32,7 @@ __kernel void gpu_bell14_mad(__global int* col_id, __global float4* data, int da
 {
     int row = get_global_id(0);
     float4 accumulant = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant.x = result[row];
+    //accumulant.x = result[row];
     int vecoffset = row;
     int matoffset = row;
     for (int i = 0; i < bell_num; i++)
@@ -112,8 +111,8 @@ __kernel void gpu_bell24(__global int* col_id, __global float4* data, int data_a
     int row = get_global_id(0) * 2;
 	//printf("1. row %d\n", row);
 	//printf("tid %d, tid %d\n", get_global_id(0), get_global_id(0));
-    float accumulant1 = result[row];
-    float accumulant2 = result[row + 1];
+    float accumulant1 = 0.0; //result[row];
+    float accumulant2 = 0.0; //result[row + 1];
     int vecoffset = get_global_id(0);
     int matoffset = get_global_id(0);
 
@@ -124,12 +123,10 @@ __kernel void gpu_bell24(__global int* col_id, __global float4* data, int data_a
 		float4 vecelem = vec[vecid];
 		float4 tmp = matrixelem * vecelem;
 		accumulant1 = accumulant1 + tmp.x + tmp.y + tmp.z + tmp.w;
-		#if 0
 		matoffset += data_align;
 		matrixelem = data[matoffset];
 		tmp = matrixelem * vecelem;
 		accumulant2 = accumulant2 + tmp.x + tmp.y + tmp.z + tmp.w;
-		#endif
 		matoffset += data_align;
 		vecoffset += col_align;
     }
@@ -144,9 +141,9 @@ __kernel void gpu_bell24_mad(__global int* col_id, __global float4* data, int da
 {
     int row = get_global_id(0) * 2;
     float4 accumulant1 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant1.x = result[row];
+    //accumulant1.x = result[row];
     float4 accumulant2 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant2.x = result[row + 1];
+    //accumulant2.x = result[row + 1];
     int vecoffset = get_global_id(0);
     int matoffset = get_global_id(0);
     for (int i = 0; i < bell_num; i++)
@@ -238,7 +235,8 @@ __kernel void gpu_bell24_mad_tx(__global int* col_id, __global float4* data, int
 __kernel void gpu_bell44(__global int* col_id, __global float4* data, int data_align, int col_align, int bell_num, __global float4* vec, __global float4* result, int row_num)
 {
     int row = get_global_id(0);
-    float4 accumulants = result[row];
+    //float4 accumulants = result[row];
+    float4 accumulants = {0.0f, 0.0f, 0.0f, 0.0f};
     int vecoffset = row;
     int matoffset = row;
     for (int i = 0; i < bell_num; i++)
@@ -266,18 +264,18 @@ __kernel void gpu_bell44(__global int* col_id, __global float4* data, int data_a
     result[row] = accumulants;
 }
 
-#if 0
+#if 1
 __kernel void gpu_bell44_mad(__global int* col_id, __global float4* data, int data_align, int col_align, int bell_num, __global float4* vec, __global float* result, int row_num)
 {
     int row = get_global_id(0) * 4;
     float4 accumulant1 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant1.x = result[row];
+    //accumulant1.x = result[row];
     float4 accumulant2 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant2.x = result[row + 1];
+    //accumulant2.x = result[row + 1];
     float4 accumulant3 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant3.x = result[row + 2];
+    //accumulant3.x = result[row + 2];
     float4 accumulant4 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant4.x = result[row + 3];
+    //accumulant4.x = result[row + 3];
     int vecoffset = get_global_id(0);
     int matoffset = get_global_id(0);
     for (int i = 0; i < bell_num; i++)
@@ -397,8 +395,10 @@ __kernel void gpu_bell84(__global int* col_id, __global float4* data, int data_a
 {
     int row = get_global_id(0);
     int doublerow = row * 2;
-    float4 accumulant1 = result[doublerow];
-    float4 accumulant2 = result[doublerow + 1];
+    float4 accumulant1 = {0.0f, 0.0f, 0.0f, 0.0f};;
+    float4 accumulant2 = {0.0f, 0.0f, 0.0f, 0.0f};
+    //float4 accumulant1 = result[doublerow];
+    //float4 accumulant2 = result[doublerow + 1];
     int vecoffset = row;
     int matoffset = row;
     for (int i = 0; i < bell_num; i++)
@@ -447,21 +447,21 @@ __kernel void gpu_bell84_mad(__global int* col_id, __global float4* data, int da
 {
     int row = get_global_id(0) * 8;
     float4 accumulant1 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant1.x = result[row];
+    //accumulant1.x = result[row];
     float4 accumulant2 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant2.x = result[row + 1];
+    //accumulant2.x = result[row + 1];
     float4 accumulant3 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant3.x = result[row + 2];
+    //accumulant3.x = result[row + 2];
     float4 accumulant4 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant4.x = result[row + 3];
+    //accumulant4.x = result[row + 3];
     float4 accumulant5 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant5.x = result[row + 4];
+    //accumulant5.x = result[row + 4];
     float4 accumulant6 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant6.x = result[row + 5];
+    //accumulant6.x = result[row + 5];
     float4 accumulant7 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant7.x = result[row + 6];
+    //accumulant7.x = result[row + 6];
     float4 accumulant8 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant8.x = result[row + 7];
+    //accumulant8.x = result[row + 7];
     int vecoffset = get_global_id(0);
     int matoffset = get_global_id(0);
     for (int i = 0; i < bell_num; i++)
@@ -639,7 +639,8 @@ __kernel void gpu_bell84_mad_tx(__global int* col_id, __global float4* data, int
 __kernel void gpu_bell18(__global int* col_id, __global float4* data, int data_align, int col_align, int bell_num, __global float4* vec, __global float* result, int row_num)
 {
     int row = get_global_id(0);
-    float accumulant = result[row];
+    //float accumulant = result[row];
+    float accumulant = 0.0;
     int vecoffset = row;
     int matoffset = row;
     for (int i = 0; i < bell_num; i++)
@@ -665,7 +666,8 @@ __kernel void gpu_bell18_mad(__global int* col_id, __global float4* data, int da
 {
     int row = get_global_id(0);
     float4 accumulant = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant.x = result[row];
+    //accumulant.x = result[row];
+    accumulant.x = 0.0;
     int vecoffset = row;
     int matoffset = row;
     for (int i = 0; i < bell_num; i++)
@@ -760,8 +762,10 @@ __kernel void gpu_bell18_mad_tx(__global int* col_id, __global float4* data, int
 __kernel void gpu_bell28(__global int* col_id, __global float4* data, int data_align, int col_align, int bell_num, __global float4* vec, __global float* result, int row_num)
 {
     int row = get_global_id(0) * 2;
-    float accumulant1 = result[row];
-    float accumulant2 = result[row + 1];
+    //float accumulant1 = result[row];
+    //float accumulant2 = result[row + 1];
+    float accumulant1 = 0.0;
+    float accumulant2 = 0.0;
     int vecoffset = get_global_id(0);
     int matoffset = get_global_id(0);
     for (int i = 0; i < bell_num; i++)
@@ -797,9 +801,9 @@ __kernel void gpu_bell28_mad(__global int* col_id, __global float4* data, int da
 {
     int row = get_global_id(0) * 2;
     float4 accumulant1 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant1.x = result[row];
+    //accumulant1.x = result[row];
     float4 accumulant2 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant2.x = result[row + 1];
+    //accumulant2.x = result[row + 1];
     int vecoffset = get_global_id(0);
     int matoffset = get_global_id(0);
     for (int i = 0; i < bell_num; i++)
@@ -923,7 +927,8 @@ __kernel void gpu_bell28_mad_tx(__global int* col_id, __global float4* data, int
 __kernel void gpu_bell48(__global int* col_id, __global float4* data, int data_align, int col_align, int bell_num, __global float4* vec, __global float4* result, int row_num)
 {
     int row = get_global_id(0);
-    float4 accumulants = result[row];
+    //float4 accumulants = result[row];
+    float4 accumulants = {0.0f, 0.0f, 0.0f, 0.0f};
     int vecoffset = row;
     int matoffset = row;
     for (int i = 0; i < bell_num; i++)
@@ -974,13 +979,13 @@ __kernel void gpu_bell48_mad(__global int* col_id, __global float4* data, int da
 {
     int row = get_global_id(0) * 4;
     float4 accumulant1 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant1.x = result[row];
+    //accumulant1.x = result[row];
     float4 accumulant2 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant2.x = result[row + 1];
+    //accumulant2.x = result[row + 1];
     float4 accumulant3 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant3.x = result[row + 2];
+    //accumulant3.x = result[row + 2];
     float4 accumulant4 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant4.x = result[row + 3];
+    //accumulant4.x = result[row + 3];
     int vecoffset = get_global_id(0);
     int matoffset = get_global_id(0);
     for (int i = 0; i < bell_num; i++)
@@ -1151,8 +1156,10 @@ __kernel void gpu_bell88(__global int* col_id, __global float4* data, int data_a
 {
     int row = get_global_id(0);
     int doublerow = row * 2;
-    float4 accumulant1 = result[doublerow];
-    float4 accumulant2 = result[doublerow + 1];
+    //float4 accumulant1 = result[doublerow];
+    //float4 accumulant2 = result[doublerow + 1];
+    float4 accumulant1 = {0.0f, 0.0f, 0.0f, 0.0f};
+    float4 accumulant2 = {0.0f, 0.0f, 0.0f, 0.0f};
     int vecoffset = row;
     int matoffset = row;
     for (int i = 0; i < bell_num; i++)
@@ -1236,21 +1243,21 @@ __kernel void gpu_bell88_mad(__global int* col_id, __global float4* data, int da
 {
     int row = get_global_id(0) * 8;
     float4 accumulant1 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant1.x = result[row];
+    //accumulant1.x = result[row];
     float4 accumulant2 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant2.x = result[row + 1];
+    //accumulant2.x = result[row + 1];
     float4 accumulant3 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant3.x = result[row + 2];
+    //accumulant3.x = result[row + 2];
     float4 accumulant4 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant4.x = result[row + 3];
+    //accumulant4.x = result[row + 3];
     float4 accumulant5 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant5.x = result[row + 4];
+    //accumulant5.x = result[row + 4];
     float4 accumulant6 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant6.x = result[row + 5];
+    //accumulant6.x = result[row + 5];
     float4 accumulant7 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant7.x = result[row + 6];
+    //accumulant7.x = result[row + 6];
     float4 accumulant8 = {0.0f, 0.0f, 0.0f, 0.0f};
-    accumulant8.x = result[row + 7];
+    //accumulant8.x = result[row + 7];
     int vecoffset = get_global_id(0);
     int matoffset = get_global_id(0);
     for (int i = 0; i < bell_num; i++)

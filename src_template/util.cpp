@@ -33,7 +33,8 @@ void pad_csr(csr_matrix<int, float>* source, csr_matrix<int, float>* dest, int a
 	using namespace std;	
 	dest->matinfo.height = source->matinfo.height;
 	dest->matinfo.width = source->matinfo.width;
-	dest->csr_row_ptr = (int*)malloc(sizeof(int)*(source->matinfo.height+1));
+	//dest->csr_row_ptr = (int*)malloc(sizeof(int)*(source->matinfo.height+1));
+	dest->csr_row_ptr.resize(source->matinfo.height+1);
 	vector<int> padcol;
 	vector<float> paddata;
 	padcol.reserve(source->matinfo.nnz*2);
@@ -61,8 +62,10 @@ void pad_csr(csr_matrix<int, float>* source, csr_matrix<int, float>* dest, int a
 			paddata.push_back(0.0f);
 		}
 	}
-	dest->csr_col_id = (int*)malloc(sizeof(int)*padcol.size());
-	dest->csr_data = (float*)malloc(sizeof(float)*paddata.size());
+	//dest->csr_col_id = (int*)malloc(sizeof(int)*padcol.size());
+	//dest->csr_data = (float*)malloc(sizeof(float)*paddata.size());
+	dest->csr_col_id.resize(padcol.size());
+	dest->csr_data.resize(paddata.size());
 	dest->matinfo.nnz = padcol.size();
 	for (unsigned int i = 0; i < padcol.size(); i++)
 	{

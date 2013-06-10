@@ -63,9 +63,9 @@ public:
 	~BASE() {
 		printf("inside base destructor\n");
     	//free_ell_matrix(mat);
-    	free(vec);
-    	free(result);
-    	free(coores);
+    	//free(vec);
+    	//free(result);
+    	//free(coores);
 	}
 	virtual void method_0() { printf("method 0 not implemented\n"); }
 	virtual void method_1() { printf("method 1 not implemented\n"); }

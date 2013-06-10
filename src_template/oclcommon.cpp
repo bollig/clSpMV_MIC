@@ -1,3 +1,4 @@
+#include <string>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -393,7 +394,11 @@ int initialization(cl_device_type deviceType, cl_device_id* devices, cl_context*
     {
 	// Build the program.
 	//errorCode = clBuildProgram(*program, 1, &devices[ 0 ], "-I /home/support/evan/clSpMV_AMD/include", NULL, NULL );
-	errorCode = clBuildProgram(*program, 1, &devices[ 0 ], "-I /mnt/global/LCSE/gerlebacher/src/clSpMV_MIC/include", NULL, NULL );
+	//errorCode = clBuildProgram(*program, 1, &devices[ 0 ], "-I /mnt/global/LCSE/gerlebacher/src/clSpMV_MIC/include", NULL, NULL );
+	std::string clspmvpath = getenv("CLSPMVPATH");
+	clspmvpath += "/include_template";
+	std::string options = "-I/" + clspmvpath;
+	errorCode = clBuildProgram(*program, 1, &devices[ 0 ], options.c_str(), NULL, NULL );
 	if( errorCode != CL_SUCCESS )
 	{
 	    printf("Error: clBuildProgram() returned %d.\n", errorCode );
