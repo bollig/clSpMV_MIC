@@ -5,6 +5,11 @@ if [ $HOSTNAME = "S2" ] ; then
 	export CL_DEVICE_TYPE="CL_DEVICE_TYPE_ACCELERATOR"
 	export CLSPMVPATH=/mnt/global/LCSE/gerlebacher/src/clSpMV_MIC
 	export CL_KERNELS=${CLSPMVPATH}/kernels
+if [ $HOSTNAME = "casiornis" ] ; then
+	echo "Casiornis"
+	export CL_DEVICE_TYPE="CL_DEVICE_TYPE_ACCELERATOR"
+	export CLSPMVPATH=/home/bollige/gerlebac/src/clSpMV_MIC
+	export CL_KERNELS=${CLSPMVPATH}/kernels
 elif [ $HOSTNAME = "Gordons-MacBook-Pro.local" ] ; then
 	echo "Home Mac"
 	export CL_DEVICE_TYPE="CL_DEVICE_TYPE_GPU"
