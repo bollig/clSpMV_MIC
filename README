@@ -26,6 +26,29 @@ please copy the .cl kernels to the /tmp/directory. If the executable says it
 cannot find some constants, please copy the include/constant.h file to the /tmp/ 
 directory. 
 
+Changes by Gordon Erlebacher
+The current implemenation program also uses an environment vairable, CL_KERNELS, which points to the kernels/
+directory. For example: 
+
+    export CL_KERNELS=/Users/erlebach/Documents/src/spmv_mic/kernels
+
+Don't forget to change CONTEXTTYPE in constant.h 
+
+   #define CONTEXTTYPE CL_DEVICE_TYPE_ACCELERATOR
+  //#define CONTEXTTYPE CL_DEVICE_TYPE_GPU
+
+and 
+        context = cl::Context(CL_DEVICE_TYPE_GPU, properties);
+        //context = cl::Context(CL_DEVICE_TYPE_ACCELERATOR, properties);
+
+Set up environment 
+CL_DEVICE_TYPE to either CL_DEVICE_GPU or CL_DEVICE_ACCELERATOR . The proper device type will 
+be set in src_template/cl_base_class.cpp . 
+
+I have not yet automated constant.h, which must be adjusted every time I change computer and update from my 
+repository. 
+
+
 
 #############################################################
 #	Executables

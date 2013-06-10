@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <vector>
 #include <stdlib.h>
+#include <string.h>
 
 #include <limits.h>
 
@@ -34,9 +35,20 @@ CLBaseClass::CLBaseClass(int rank) {
         cl_context_properties properties[] =
         { CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[0])(), 0};
 
+		char* device_type = getenv("CL_DEVICE_TYPE");
+		printf("device_type= %s\n", device_type);
         std::cout << "Creating cl::Context (only selecting GPU devices)" << std::endl;
-        //context = cl::Context(CL_DEVICE_TYPE_GPU, properties);
-        context = cl::Context(CL_DEVICE_TYPE_ACCELERATOR, properties);
+
+		if (!strcmp(device_type, "CL_DEVICE_TYPE_GPU")) {
+        	context = cl::Context(CL_DEVICE_TYPE_GPU, properties);
+			printf("GPU device\n");
+		} else if (!strcmp(device_type, "CL_DEVICE_TYPE_ACCELERATOR")) {
+        	context = cl::Context(CL_DEVICE_TYPE_ACCELERATOR, properties);
+			printf("ACCELERATOR device\n");
+		} else {
+			printf("device_type %s not valid\n", device_type);
+			exit(1);
+		}
         // This prevents the context from being created again
         contextCreated++;
     }

@@ -13,21 +13,28 @@ OCLROOTDIR := /opt/intel/opencl
 OCLCOMMONDIR ?= $(OCLROOTDIR)
 OCLBINDIR ?= $(OCLROOTDIR)/bin/
 OCLLIBDIR     := $(OCLCOMMONDIR)/lib64
+OPENCLLIB := -framework OpenCL
 
 SRCDIR     ?= ./src_template
 ROOTDIR    ?= .
 ROOTOBJDIR ?= obj
 BINDIR     ?= $(ROOTDIR)/linux
-#INCDIR	?= $(ROOTDIR)/include
+#INCDIR	?= $(ROOTDIR)/include_template
 
-OPENCLDIR  = /opt/intel/opencl-1.2-3.0.67279/include  #GE
-INCDIR	= -I$(ROOTDIR)/include_template  -I$(OPENCLDIR) -I.
+//OPENCLDIR  = /opt/intel/opencl-1.2-3.0.67279/include  #GE
+OPENCLDIR  = /System/Library/Frameworks/OpenCL.framework/Headers/
+//OPENCLDIR  = /Users/erlebach/EnjaParticles_aa/EnjaParticles/opencl10/
+CL_INC = -I/System/Library/Frameworks/OpenCL.framework/Headers
+INCDIR	= -I. -I$(ROOTDIR)/include_template  ${CL_INC}
+
+# GPU or ACCELERATOR
+DEFINES = -DCL_DEVICE_TYPE_DEF=CL_DEVICE_TYPE_ACCELERATOR
 
 
 # Add source files here
 # C/C++ source files (compiled with gcc / c++)
-#COMMONFILES		:= util.cpp fileio.cpp oclcommon.cpp
-COMMONFILES		:= util.cpp oclcommon.cpp cl_base_class.cpp
+#COMMONFILES		:= util.cpp fileio.cpp oclcommon.cpp 
+COMMONFILES		:= util.cpp  cl_base_class.cpp oclcommon.cpp
 #SINGLEFILES		:= mem_bandwidth.cpp spmv_csr_scalar.cpp spmv_csr_vector.cpp spmv_bdia.cpp spmv_dia.cpp spmv_ell.cpp spmv_coo.cpp spmv_bell.cpp spmv_bcsr.cpp spmv_sell.cpp spmv_sbell.cpp spmv_all.cpp
 SINGLEFILES		:=  spmv_all.cpp 
 #BENCHFILES    		:= bench_bdia.cpp bench_dia.cpp bench_bell.cpp bench_sbell.cpp bench_bcsr.cpp bench_sell.cpp bench_ell.cpp bench_csr.cpp bench_coo.cpp bench_overhead.cpp
@@ -43,12 +50,12 @@ OSARCH= $(shell uname -m)
 
 
 # Compilers
-CXX        := g++ -g
-CC         := gcc
-LINK       := g++ -g
+CXX        := g++ -g 
+CC         := gcc -g
+LINK       := g++ -fPIC -g
 
 # Includes
-INCLUDES  += $(INCDIR) -I$(OCLCOMMONDIR)/include
+INCLUDES  += $(INCDIR) 
 
 ifeq "$(strip $(HP_64))" ""
 	MACHINE := 32
@@ -94,6 +101,9 @@ CFLAGS    := $(CWARN_FLAGS)
 # Common flags
 COMMONFLAGS += $(INCLUDES) -DUNIX
 
+# Define Flags
+DEFINEFLAGS += ${DEFINES} 
+
 # Debug/release configuration
 ifeq ($(dbg),1)
 	COMMONFLAGS += -g
@@ -109,8 +119,9 @@ endif
 
 
 # Libs
-LIB       := ${USRLIBDIR} -L/opt/intel/opencl-1.2-3.0.67279/lib64/ -L${OCLLIBDIR}
-LIB += -lintelocl -lOpenCL ${OPENGLLIB} ${LIB} 
+#LIB       := ${USRLIBDIR} -L/opt/intel/opencl-1.2-3.0.67279/lib64/ -L${OCLLIBDIR}
+LIB       := ${USRLIBDIR} ${OPENCLLIB} -L${OCLLIBDIR}
+LIB += ${OPENGLLIB} ${LIB} 
 
 
 # Lib/exe configuration
@@ -132,8 +143,8 @@ else
 endif
 
 # Add common flags
-CXXFLAGS  += $(COMMONFLAGS)
-CFLAGS    += $(COMMONFLAGS)
+CXXFLAGS  += $(COMMONFLAGS) $(DEFINEFLAGS)
+CFLAGS    += $(COMMONFLAGS) $(DEFINEFLAGS)
 
 
 ################################################################################
@@ -158,11 +169,14 @@ $(OBJDIR)/%.cpp.o : $(SRCDIR)/%.cpp $(C_DEPS)
 
 all: makedirectories single bench cocktail
 
+
 makedirectories:
+	# Access to OpenCL headers from current directory
+	-$(VERBOSE)ln -s /System/Library/Frameworks/OpenCL.framework/Headers CL 
 	$(VERBOSE)mkdir -p $(OBJDIR)
 	$(VERBOSE)mkdir -p $(TARGETDIR)
 	$(VERBOSE)cp $(ROOTDIR)/kernels/*.cl /tmp/ 
-	$(VERBOSE)cp $(ROOTDIR)/include/constant.h /tmp/ 
+	$(VERBOSE)cp $(ROOTDIR)/include_template/constant.h /tmp/ 
 
 single: $(COMMONOBJS) $(SINGLEOBJS) 
 	$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_all $(COMMONOBJS) $(SINGLEOBJS) $(LIB)

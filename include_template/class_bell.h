@@ -199,7 +199,7 @@ void BELL<T>::run()
 		printf("paddedres= %d\n", paddedres);
 		#endif
 
-		//method_0(count); // works alone
+		method_0(count); // works alone
 		method_1();
 		//method_2(); // images. Not support on mic
 		//method_3(); // images
