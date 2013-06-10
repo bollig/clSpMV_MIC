@@ -33,7 +33,7 @@ __kernel void gpu_sell_warp(__global int* slice_ptr, __global int* col_id, __glo
     result[row] = accumulant;
 }
 
-#if 1
+//----------------------------------------------------------------------
 __kernel void gpu_sell_group(__global int* slice_ptr, __global int* col_id, __global float* data, __global float* vec, __global float* result, int slice_num)
 {
     __local int lslice_ptr[2];
@@ -61,7 +61,7 @@ __kernel void gpu_sell_group(__global int* slice_ptr, __global int* col_id, __gl
     
     result[row] = accumulant;
 }
-#endif
+//----------------------------------------------------------------------
 
 #if 0
 __kernel void gpu_sell_warp_tx(__global int* slice_ptr, __global int* col_id, __global float* data, __read_only image2d_t vec, __global float* result, int slice_num)
