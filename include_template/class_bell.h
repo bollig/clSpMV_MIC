@@ -147,6 +147,7 @@ void BELL<T>::run()
 		opttime = 10000.0f;
 		optmethod = 0;
 
+
     	col_align = mat.b4ell_height_aligned;
     	data_align = mat.b4ell_float4_aligned;
     	nnz = mat.matinfo.nnz;

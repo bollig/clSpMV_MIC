@@ -443,8 +443,9 @@ public:
  * 
  */
 template <class dimType, class dataType>
-struct sbell_matrix
+class sbell_matrix
 {
+public:
     matrixInfo<dimType> matinfo;
 
     /** block width*/
@@ -458,11 +459,29 @@ struct sbell_matrix
     /** Number of blocked rows, eqaul to ceil(matinfo.height/bell_bheight) */
     dimType sbell_row_num;
     /** The starting and ending index of each blocked row, size sbell_slice_num + 1*/
-    dimType* sbell_slice_ptr;
+    //dimType* sbell_slice_ptr;
+    std::vector<dimType> sbell_slice_ptr;
     /** Column index, size: sbell_slice_ptr[sbell_slice_num] */
-    dimType* sbell_col_id;
+    //dimType* sbell_col_id;
+    std::vector<dimType> sbell_col_id;
     /** Data, size: sbell_slice_ptr[sbell_slice_num] * bwidth * bheight */
-    dataType* sbell_data;
+    //dataType* sbell_data;
+    std::vector<dataType> sbell_data;
+
+	sbell_matrix() {
+    	init_mat_info(matinfo);
+	}
+
+	~sbell_matrix() {
+		printf("Inside sbell destructor\n");
+	}
+
+	void print() {
+		printf("sbell matrix info\n");
+		matinfo.print();
+		printf("sbell_bwidth=%d, sbell_bheight=%d, sbell_slice_height=%d, sbell_slice_num=%d, sbell_row_num=%d\n", sbell_bwidth, sbell_bheight, sbell_slice_height, sbell_slice_num, sbell_row_num);
+	}
+
 };
 
 /** Initialization routines*/
@@ -2472,7 +2491,8 @@ bool coo2sbell(coo_matrix<dimType, dataType>* source, sbell_matrix<dimType, data
     assert(blockrowptr[blockrowptr.size() - 1] == blockcolid.size());
     assert(blockrowptr[blockrowptr.size() - 1] * bwidth * bheight == blockdata.size());
 
-    dest->sbell_slice_ptr = (dimType*)malloc(sizeof(dimType)*(slicenum+1));
+    //dest->sbell_slice_ptr = (dimType*)malloc(sizeof(dimType)*(slicenum+1));
+    dest->sbell_slice_ptr.resize(slicenum+1);
     dest->sbell_slice_ptr[0] = 0;
     vector<dimType> slicewidth(slicenum, 0);
     for (dimType i = (dimType)0; i < slicenum; i++)
@@ -2491,15 +2511,19 @@ bool coo2sbell(coo_matrix<dimType, dataType>* source, sbell_matrix<dimType, data
     dimType totalsize = dest->sbell_slice_ptr[slicenum];
     if (totalsize > (MAX_MEM_OBJ/(bwidth*bheight*sizeof(dataType))))
     {
-	if (dest->sbell_slice_ptr)
-	    free(dest->sbell_slice_ptr);
-	printf("SBELL too large totalsize %d bwidth %d bheight %d\n", totalsize, bwidth, bheight);
-	return false;
+	//if (dest->sbell_slice_ptr)
+	    //free(dest->sbell_slice_ptr);
+		printf("SBELL too large totalsize %d bwidth %d bheight %d\n", totalsize, bwidth, bheight);
+		return false;
     }
-    dest->sbell_col_id = (dimType*)malloc(sizeof(dimType)*totalsize);
-    dest->sbell_data = (dataType*)malloc(sizeof(dataType)*totalsize*bwidth*bheight);
-    memset(dest->sbell_col_id, 0, sizeof(dimType)*totalsize);
-    memset(dest->sbell_data, 0, sizeof(dataType)*totalsize*bwidth*bheight);
+    //dest->sbell_col_id = (dimType*)malloc(sizeof(dimType)*totalsize);
+    //dest->sbell_data = (dataType*)malloc(sizeof(dataType)*totalsize*bwidth*bheight);
+    //memset(dest->sbell_col_id, 0, sizeof(dimType)*totalsize);
+    //memset(dest->sbell_data, 0, sizeof(dataType)*totalsize*bwidth*bheight);
+    dest->sbell_col_id.resize(totalsize);
+    dest->sbell_data.resize(totalsize*bwidth*bheight);
+	std::fill(dest->sbell_col_id.begin(), dest->sbell_col_id.end(), 0.);
+	std::fill(dest->sbell_data.begin(), dest->sbell_data.end(), 0.);
 
     unsigned int bwidth4num = bwidth / 4;
 

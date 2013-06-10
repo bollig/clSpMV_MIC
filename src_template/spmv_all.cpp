@@ -24,6 +24,7 @@
 #include "class_ell.h" // renable when bell works
 #include "class_bell.h"
 #include "class_sell.h"
+#include "class_sbell.h"
 
 
 
@@ -139,11 +140,11 @@ int main(int argc, char* argv[])
 	//spmv_sell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
 	spmv::spmv_sell("spmv_sell.cl", &mat, dim2Size, ntimes, CONTEXTTYPE);
     }
-	#if 0
+	#if 1
     else if (choice == 10)
     {
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_sbell.cl");
-	spmv_sbell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
+	spmv::spmv_sbell("spmv_sbell.cl", &mat, dim2Size, ntimes, CONTEXTTYPE);
     }
 	#endif
 

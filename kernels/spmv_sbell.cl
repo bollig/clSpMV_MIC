@@ -33,6 +33,7 @@ __kernel void gpu_sbell14(__global int* slice_ptr, __global int* col_id, __globa
 }
 
 
+#if 0
 __kernel void gpu_sbell14_tx(__global int* slice_ptr, __global int* col_id, __global float4* data, __read_only image2d_t vec, __global float* result, int slice_num)
 {
     int row = get_global_id(0);
@@ -68,6 +69,7 @@ __kernel void gpu_sbell14_tx(__global int* slice_ptr, __global int* col_id, __gl
     }
     result[row] = accumulant.x + accumulant.y + accumulant.z + accumulant.w;
 }
+#endif
 
 
 __kernel void gpu_sbell24(__global int* slice_ptr, __global int* col_id, __global float4* data, __global float4* vec, __global float* result, int slice_num)
@@ -112,6 +114,7 @@ __kernel void gpu_sbell24(__global int* slice_ptr, __global int* col_id, __globa
 }
 
 
+#if 0
 __kernel void gpu_sbell24_tx(__global int* slice_ptr, __global int* col_id, __global float4* data, __read_only image2d_t vec, __global float* result, int slice_num)
 {
     int row = get_global_id(0);
@@ -158,6 +161,7 @@ __kernel void gpu_sbell24_tx(__global int* slice_ptr, __global int* col_id, __gl
     result[row] = accumulant.x + accumulant.y + accumulant.z + accumulant.w;
     result[row + 1] = accumulant2.x + accumulant2.y + accumulant2.z + accumulant2.w;
 }
+#endif
 
 
 __kernel void gpu_sbell44(__global int* slice_ptr, __global int* col_id, __global float4* data, __global float4* vec, __global float4* result, int slice_num)
@@ -210,6 +214,7 @@ __kernel void gpu_sbell44(__global int* slice_ptr, __global int* col_id, __globa
 }
 
 
+#if 0
 __kernel void gpu_sbell44_tx(__global int* slice_ptr, __global int* col_id, __global float4* data, __read_only image2d_t vec, __global float4* result, int slice_num)
 {
     int row = get_global_id(0);
@@ -263,6 +268,7 @@ __kernel void gpu_sbell44_tx(__global int* slice_ptr, __global int* col_id, __gl
     }
     result[row] = accumulant;
 }
+#endif
 
 
 __kernel void gpu_sbell84(__global int* slice_ptr, __global int* col_id, __global float4* data, __global float4* vec, __global float4* result, int slice_num)
@@ -337,6 +343,7 @@ __kernel void gpu_sbell84(__global int* slice_ptr, __global int* col_id, __globa
 }
 
 
+#if 0
 __kernel void gpu_sbell84_tx(__global int* slice_ptr, __global int* col_id, __global float4* data, __read_only image2d_t vec, __global float4* result, int slice_num)
 {
     int row = get_global_id(0);
@@ -413,6 +420,7 @@ __kernel void gpu_sbell84_tx(__global int* slice_ptr, __global int* col_id, __gl
     result[row] = accumulant;
     result[row + 1] = accumulant2;
 }
+#endif
 
 
 __kernel void gpu_sbell18(__global int* slice_ptr, __global int* col_id, __global float4* data, __global float4* vec, __global float* result, int slice_num)
@@ -454,6 +462,7 @@ __kernel void gpu_sbell18(__global int* slice_ptr, __global int* col_id, __globa
 }
 
 
+#if 0
 __kernel void gpu_sbell18_tx(__global int* slice_ptr, __global int* col_id, __global float4* data, __read_only image2d_t vec, __global float* result, int slice_num)
 {
     int row = get_global_id(0);
@@ -500,6 +509,7 @@ __kernel void gpu_sbell18_tx(__global int* slice_ptr, __global int* col_id, __gl
     }
     result[row] = accumulant.x + accumulant.y + accumulant.z + accumulant.w;
 }
+#endif
 
 __kernel void gpu_sbell28(__global int* slice_ptr, __global int* col_id, __global float4* data, __global float4* vec, __global float* result, int slice_num)
 {
@@ -552,6 +562,7 @@ __kernel void gpu_sbell28(__global int* slice_ptr, __global int* col_id, __globa
 }
 
 
+#if 0
 __kernel void gpu_sbell28_tx(__global int* slice_ptr, __global int* col_id, __global float4* data, __read_only image2d_t vec, __global float* result, int slice_num)
 {
     int row = get_global_id(0);
@@ -610,6 +621,7 @@ __kernel void gpu_sbell28_tx(__global int* slice_ptr, __global int* col_id, __gl
     result[row] = accumulant.x + accumulant.y + accumulant.z + accumulant.w;
     result[row + 1] = accumulant2.x + accumulant2.y + accumulant2.z + accumulant2.w;
 }
+#endif
 
 __kernel void gpu_sbell48(__global int* slice_ptr, __global int* col_id, __global float4* data, __global float4* vec, __global float4* result, int slice_num)
 {
@@ -681,6 +693,7 @@ __kernel void gpu_sbell48(__global int* slice_ptr, __global int* col_id, __globa
 }
 
 
+#if 0
 __kernel void gpu_sbell48_tx(__global int* slice_ptr, __global int* col_id, __global float4* data, __read_only image2d_t vec, __global float4* result, int slice_num)
 {
     int row = get_global_id(0);
@@ -758,6 +771,7 @@ __kernel void gpu_sbell48_tx(__global int* slice_ptr, __global int* col_id, __gl
     }
     result[row] = accumulant;
 }
+#endif
 
 __kernel void gpu_sbell88(__global int* slice_ptr, __global int* col_id, __global float4* data, __global float4* vec, __global float4* result, int slice_num)
 {
@@ -872,6 +886,7 @@ __kernel void gpu_sbell88(__global int* slice_ptr, __global int* col_id, __globa
 }
 
 
+#if 0
 __kernel void gpu_sbell88_tx(__global int* slice_ptr, __global int* col_id, __global float4* data, __read_only image2d_t vec, __global float4* result, int slice_num)
 {
     int row = get_global_id(0);
@@ -992,4 +1007,5 @@ __kernel void gpu_sbell88_tx(__global int* slice_ptr, __global int* col_id, __gl
     result[row] = accumulant;
     result[row + 1] = accumulant2;
 }
+#endif
 

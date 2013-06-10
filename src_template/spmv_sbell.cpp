@@ -53,7 +53,7 @@ void spmv_sbell_ocl(sbell_matrix<int, float>* mat, float* vec, float* result, in
     ALLOCATE_GPU_READ(devColid, mat->sbell_col_id, sizeof(int)*totalsize);
     ALLOCATE_GPU_READ(devData, mat->sbell_data, sizeof(float)*totalsize*bwidth*bheight);
     ALLOCATE_GPU_READ(devVec, paddedvec, sizeof(float)*padveclen);
-    int paddedres = findPaddedSize(rownum, SELL_GROUP_SIZE * bheight);
+    int paddedres = findPaddedSize(rownum, SELL_GROUP_SIZE * bheight);   // ERROR? BSELL_GROUP_SIZE in constant.h?
     devRes = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(float)*paddedres, NULL, &errorCode); CHECKERROR;
     errorCode = clEnqueueWriteBuffer(cmdQueue, devRes, CL_TRUE, 0, sizeof(float)*rownum, result, 0, NULL, NULL); CHECKERROR;
     const cl_image_format floatFormat =
