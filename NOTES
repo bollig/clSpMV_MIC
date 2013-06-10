@@ -3,3 +3,13 @@ That means I need if statements.
 
 Now that I subclass, I get an error with the double precisio. WHY? 
 Problem with destructor
+
+June 10, 2013
+Cascade: cases 7,9,10 run without error. 
+         case 5 has errors.  <<<<<
+
+Frodo (MIC): cases 7,9,10 run without error. 
+         case 5 has no errors
+
+Gordo_mac (GPU): cases 7,9,10 run without error. 
+         case 5 has no errors

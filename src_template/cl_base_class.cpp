@@ -37,12 +37,13 @@ CLBaseClass::CLBaseClass(int rank) {
 
 		char* device_type = getenv("CL_DEVICE_TYPE");
 		printf("device_type= %s\n", device_type);
-        std::cout << "Creating cl::Context (only selecting GPU devices)" << std::endl;
 
 		if (!strcmp(device_type, "CL_DEVICE_TYPE_GPU")) {
+			printf("setup GPU\n");
         	context = cl::Context(CL_DEVICE_TYPE_GPU, properties);
 			printf("GPU device\n");
 		} else if (!strcmp(device_type, "CL_DEVICE_TYPE_ACCELERATOR")) {
+			printf("setup accelerator\n");
         	context = cl::Context(CL_DEVICE_TYPE_ACCELERATOR, properties);
 			printf("ACCELERATOR device\n");
 		} else {
