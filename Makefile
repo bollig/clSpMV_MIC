@@ -23,6 +23,8 @@ BINDIR     ?= $(ROOTDIR)/linux
 OPENCLDIR  = /opt/intel/opencl-1.2-3.0.67279/include  #GE
 INCDIR	= -I$(ROOTDIR)/include_template  -I$(OPENCLDIR) -I.
 
+# GPU or ACCELERATOR
+DEFINES = -DCL_DEVICE_TYPE_DEF=CL_DEVICE_TYPE_ACCELERATOR
 
 # Add source files here
 # C/C++ source files (compiled with gcc / c++)
@@ -94,6 +96,9 @@ CFLAGS    := $(CWARN_FLAGS)
 # Common flags
 COMMONFLAGS += $(INCLUDES) -DUNIX
 
+# Define Flags
+DEFINEFLAGS += ${DEFINES} 
+
 # Debug/release configuration
 ifeq ($(dbg),1)
 	COMMONFLAGS += -g
@@ -132,8 +137,8 @@ else
 endif
 
 # Add common flags
-CXXFLAGS  += $(COMMONFLAGS)
-CFLAGS    += $(COMMONFLAGS)
+CXXFLAGS  += $(COMMONFLAGS) $(DEFINEFLAGS)
+CFLAGS    += $(COMMONFLAGS) $(DEFINEFLAGS)
 
 
 ################################################################################
