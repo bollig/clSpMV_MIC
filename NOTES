@@ -14,3 +14,5 @@ Frodo (MIC): cases 7,9,10 run without error.
 
 Gordo_mac (GPU): cases 7,9,10 run without error. 
          case 5 has no errors
+
+case5: method0, method1 work (on mac)

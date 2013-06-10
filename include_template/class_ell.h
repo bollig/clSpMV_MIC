@@ -108,12 +108,9 @@ printf("inside ell constructor\n");
     result_v.resize(coo_mat->matinfo.height);
 	std::fill(vec_v.begin(), vec_v.end(), 1.);
 	std::fill(result_v.begin(), result_v.end(), 0.);
-    //initVectorOne<int, T>(vec, coo_mat->matinfo.width);	
-    //initVectorZero<int, T>(result, coo_mat->matinfo.height);
-    //coores = (T*)malloc(sizeof(T)*coo_mat->matinfo.height);
     coores_v.resize(coo_mat->matinfo.height);
 	// CHECKING Supposedly on CPU, but execution is on GPU!!
-    //spmv_only_T<T>(coo_mat, vec, coores);
+    spmv_only_T<T>(coo_mat, vec_v, coores_v);
 
 
     //Initialize values
@@ -156,7 +153,7 @@ printf("inside ell constructor\n");
 template <typename T>
 void ELL<T>::method_0()
 {
-	printf("inside method_0\n");
+	printf("============== METHOD 0 ===================\n");
 	int methodid = 0;
 	cl_uint work_dim = 2;
 	size_t blocksize[] = {WORK_GROUP_SIZE, 1};
@@ -184,15 +181,13 @@ void ELL<T>::method_0()
 	enqueueKernel(kernel, cl::NDRange(globalsize[0],globalsize[1]), cl::NDRange(blocksize[0], blocksize[1]), true);
 	supRes.copyToHost();
 	two_vec_compare_T(coores_v, *supRes.host, rownum);
-	//free(tmpresult);
-	for (int k = 0; k < 3; k++)
-	{
+
+	for (int k = 0; k < 3; k++) {
 		enqueueKernel(kernel, cl::NDRange(globalsize[0],globalsize[1]), cl::NDRange(blocksize[0], blocksize[1]), true);
 	}
 
 	double teststart = timestamp();
-	for (int i = 0; i < ntimes; i++)
-	{
+	for (int i = 0; i < ntimes; i++) {
 		enqueueKernel(kernel, cl::NDRange(globalsize[0],globalsize[1]), cl::NDRange(blocksize[0], blocksize[1]), true);
 	}
 
@@ -222,21 +217,19 @@ void ELL<T>::method_0()
 template <typename T>
 void ELL<T>::method_1()
 {
-#if 1
+	printf("============== METHOD 1 ===================\n");
 	int methodid = 1;
 	cl_uint work_dim = 2;
 	size_t blocksize[] = {WORK_GROUP_SIZE, 1};
 	int row4num = rownum / 4;
-	if (rownum % 4 != 0)
-	    row4num++;
+	if (rownum % 4 != 0) row4num++;
 	int aligned4 = aligned_length / 4;
 	int row4 = rownum / 4;
-	if (rownum % 4 != 0)
-	    row4++;
+	if (rownum % 4 != 0) row4++;
 	int gsize = ((row4num + WORK_GROUP_SIZE - 1)/WORK_GROUP_SIZE)*WORK_GROUP_SIZE;
 	size_t globalsize[] = {gsize, dim2};
 
-	std::string kernel_name = getKernelName("gpu_ell");
+	std::string kernel_name = getKernelName("gpu_ell_v4");
 	printf("****** kernel_name: %s ******\n", kernel_name.c_str());
 	cl::Kernel kernel = loadKernel(kernel_name, filename);
 
@@ -254,50 +247,20 @@ void ELL<T>::method_1()
 		exit(0);
     }
 
-
-	#if 0
-	cl_kernel csrKernel = NULL;
-	std::string kernel_name = getKernelName("gpu_ell_v4");
-	printf("****** kernel_name: %s ******\n", kernel_name.c_str());
-	csrKernel = clCreateKernel(program, kernel_name.c_str(), &errorCode); CHECKERROR;
-	errorCode = clSetKernelArg(csrKernel, 0, sizeof(cl_mem), &devColid); CHECKERROR;
-	errorCode = clSetKernelArg(csrKernel, 1, sizeof(cl_mem), &devData); CHECKERROR;
-	errorCode = clSetKernelArg(csrKernel, 2, sizeof(int),    &aligned4); CHECKERROR;
-	errorCode = clSetKernelArg(csrKernel, 3, sizeof(int),    &ellnum); CHECKERROR;
-	errorCode = clSetKernelArg(csrKernel, 4, sizeof(cl_mem), &devVec); CHECKERROR;
-	errorCode = clSetKernelArg(csrKernel, 5, sizeof(cl_mem), &devRes); CHECKERROR;
-	errorCode = clSetKernelArg(csrKernel, 6, sizeof(int),    &row4); CHECKERROR;
-
-	errorCode = clEnqueueWriteBuffer(cmdQueue, devRes, CL_TRUE, 0, sizeof(T)*rownum, result, 0, NULL, NULL); CHECKERROR;
-	clFinish(cmdQueue);
-	#endif
-
 	enqueueKernel(kernel, cl::NDRange(globalsize[0],globalsize[1]), cl::NDRange(blocksize[0], blocksize[1]), true);
 	supRes.copyToHost();
 	two_vec_compare_T(coores_v, *supRes.host, rownum);
 
-	//errorCode = clEnqueueNDRangeKernel(cmdQueue, csrKernel, work_dim, NULL, globalsize, blocksize, 0, NULL, NULL); CHECKERROR;
-	//clFinish(cmdQueue);
-	//T* tmpresult = (T*)malloc(sizeof(T)*rownum);
-	//errorCode = clEnqueueReadBuffer(cmdQueue, devRes, CL_TRUE, 0, sizeof(T)*rownum, tmpresult, 0, NULL, NULL); CHECKERROR;
-	//clFinish(cmdQueue);
-	//two_vec_compare_T(coores, tmpresult, rownum);
-	//free(tmpresult);
-
-	for (int k = 0; k < 3; k++)
-	{
+	for (int k = 0; k < 3; k++) {
 		enqueueKernel(kernel, cl::NDRange(globalsize[0],globalsize[1]), cl::NDRange(blocksize[0], blocksize[1]), true);
-	    //errorCode = clEnqueueNDRangeKernel(cmdQueue, csrKernel, work_dim, NULL, globalsize, blocksize, 0, NULL, NULL); CHECKERROR;
 	}
-	clFinish(cmdQueue);
 
 	double teststart = timestamp();
 	for (int i = 0; i < ntimes; i++)
 	{
 		enqueueKernel(kernel, cl::NDRange(globalsize[0],globalsize[1]), cl::NDRange(blocksize[0], blocksize[1]), true);
-	    //errorCode = clEnqueueNDRangeKernel(cmdQueue, csrKernel, work_dim, NULL, globalsize, blocksize, 0, NULL, NULL); CHECKERROR;
 	}
-	clFinish(cmdQueue);
+
 	double testend = timestamp();
 	double time_in_sec = (testend - teststart)/(double)dim2;
 	printf("ntimes= %d, time_in_msec= %f, nnz= %d\n", ntimes, time_in_sec*1000., nnz);
@@ -308,39 +271,13 @@ void ELL<T>::method_1()
 		printf("\nELL double4 cpu time %lf ms GFLOPS %lf code %d \n\n",   time_in_sec / (double) ntimes * 1000, gflops, methodid);
 	}
 
-	//if (csrKernel) {
-	    //clReleaseKernel(csrKernel);
-	//}
-
 	double onetime = time_in_sec / (double) ntimes;
 
 	if (onetime < opttime) {
 	    opttime = onetime;
 	    optmethod = methodid;
 	}
-#endif
 }
-//----------------------------------------------------------------------
-
-	#if 0
-    //Clean up
-    if (image2dVec)
-	free(image2dVec);
-
-    if (devColid)
-	clReleaseMemObject(devColid);
-    if (devData)
-	clReleaseMemObject(devData);
-    if (devVec)
-	clReleaseMemObject(devVec);
-    if (devTexVec)
-	clReleaseMemObject(devTexVec);
-    if (devRes)
-	clReleaseMemObject(devRes);
-
-
-    freeObjects(devices, &context, &cmdQueue, &program);
-	#endif
 //----------------------------------------------------------------------
 
 #if 1
@@ -348,7 +285,7 @@ template <typename  T>
 void spmv_ell(char* oclfilename, coo_matrix<int, T>* coo_mat, int dim2Size, int ntimes, cl_device_type deviceType)
 {
 
-	printf("GORDON, spmv_ell\n");
+	printf("** GORDON, spmv_ell\n");
 	ELL<T> ell_ocl(coo_mat, dim2Size, oclfilename, deviceType, ntimes);
 
 	//spmv_ell_ocl_T<T>(&ellmat, vec, res, dim2Size, opttime1, optmethod1, oclfilename, deviceType, coores, ntimes);
@@ -364,8 +301,8 @@ void spmv_ell(char* oclfilename, coo_matrix<int, T>* coo_mat, int dim2Size, int 
 	printf("ELL best time %f ms best method %d", opttime*1000.0, optmethod);
 	printf("\n------------------------------------------------------------------------\n");
 }
-//----------------------------------------------------------------------
 #endif
+//----------------------------------------------------------------------
 
 }; // namespace
 
