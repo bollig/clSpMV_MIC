@@ -14,12 +14,9 @@ def run_cases(file):
 file = "accelerator.mtx"
 run_cases(file)
 
-file = "one_million.mtx"
+file = "nod1e6_sten10.mtx"
 run_cases(file)
 
-file = "thirtytwo_million.mtx"
+file = "nod1e6_sten32.mtx"
 run_cases(file)
-
-
-
-
+#----------------------------------------------------------------------

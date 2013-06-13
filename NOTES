@@ -1,7 +1,7 @@
 In spvm_all or spvm, must allow for kernels with double arguments. 
 That means I need if statements. 
 
-Now that I subclass, I get an error with the double precisio. WHY? 
+Now that I subclass, I get an error with the double precision. WHY? 
 Problem with destructor
 
 ----------------------------------------------------------------------
@@ -17,3 +17,22 @@ Gordo_mac (GPU): cases 7,9,10 run without error.
 
 case5: method0, method1 work (on mac)
 case5: method0, method1 work (on cascade)
+----------------------------------------------------------------------
+Run different cases: 
+Stencils: 10, 32, 64
+Single and double precision
+On K-20 and mic
+Using SPMV (ell,bell,spell,sell), ViennaCL, my OpenCL
+Perhaps try a OpenMP implementation.
+Single versus double precision. 
+
+Compare with FD and spectral.: 
+  Perhaps cost per point? 
+  GFLOP ==> percentage of peak
+
+Based on nb workgroups size. 
+with and without vectorization (add pragma: vec_hint<double4> on MIC)
+
+Study cost of memory transfers on the different architectures (user perspective)
+Study use when combined with using the derivatives (which incures more memory bandwidth)
+----------------------------------------------------------------------
