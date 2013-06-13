@@ -109,9 +109,11 @@ BELL<T>::BELL(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl_d
     coores_v.resize(coo_mat->matinfo.height);
 	std::fill(coores_v.begin(), coores_v.end(), 7.);
     spmv_only_T<T>(coo_mat, vec_v, coores_v);   // matrix*vector, serial
+	#if 0
 	for (int i=0; i < 10; i++) {
 		printf("coores_v[%d]= %f\n", i, coores_v[i]);
 	}
+	#endif
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -212,7 +214,8 @@ void BELL<T>::run()
 		double gflops = (double)nnz*2/opttime/(double)1e9;
 		printf("BELL info: block row num %d ell num %d \n", mat.b4ell_row_num, mat.b4ell_block_num);
 		printf("\n------------------------------------------------------------------------\n");
-		printf("BELL best time %f ms best method %d GFLOPS %f", opttime*1000.0, optmethod, gflops);
+		char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
+		printf("BELL %s best time %f ms best method %d GFLOPS %f", format, opttime*1000.0, optmethod, gflops);
 		printf("\n------------------------------------------------------------------------\n");
     }}
 
@@ -283,8 +286,9 @@ void BELL<T>::method_0(int count)
 	double testend = timestamp();
 	double time_in_sec = (testend - teststart)/(double)dim2;
 	printf("ntimes= %d, time_in_msec= %f, nnz= %d\n", ntimes, time_in_sec*1000., nnz);
+	char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
 	double gflops = (double)nnz*2/(time_in_sec/(double)ntimes)/(double)1e9;
-	printf("\nBELL %dx%d block cpu time %lf ms GFLOPS %lf code %d \n\n", bh, bw,  time_in_sec / (double) ntimes * 1000, gflops, methodid);
+	printf("\nBELL %s %dx%d block cpu time %lf ms GFLOPS %lf code %d \n\n", format, bh, bw,  time_in_sec / (double) ntimes * 1000, gflops, methodid);
 
 
 	double onetime = time_in_sec / (double) ntimes;
@@ -345,7 +349,8 @@ void BELL<T>::method_1()
 	double testend = timestamp();
 	double time_in_sec = (testend - teststart)/(double)dim2;
 	double gflops = (double)nnz*2/(time_in_sec/(double)ntimes)/(double)1e9;
-	printf("\nBELL %dx%d block mad cpu time %lf ms GFLOPS %lf code %d \n\n", bh, bw,  time_in_sec / (double) ntimes * 1000, gflops, methodid);
+	char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
+	printf("\nBELL %s %dx%d block mad cpu time %lf ms GFLOPS %lf code %d \n\n", format, bh, bw,  time_in_sec / (double) ntimes * 1000, gflops, methodid);
 
 
 	double onetime = time_in_sec / (double) ntimes;

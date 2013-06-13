@@ -17,16 +17,17 @@ cl::CommandQueue CLBaseClass::queue;
 int CLBaseClass::contextCreated = 0;
 
 //----------------------------------------------------------------------
-CLBaseClass::CLBaseClass(int rank) {
-    printf("Initialize OpenCL object and context\n");
+CLBaseClass::CLBaseClass(int rank)
+{
+    //printf("Initialize OpenCL object and context\n");
 
     if (!contextCreated) {
         //setup devices and context
         std::vector<cl::Platform> platforms;
         std::cout << "Getting the platform" << std::endl;
         err = cl::Platform::get(&platforms);
-        std::cout << "GOT PLATFORM" << std::endl;
-        printf("cl::Platform::get(): %s\n", oclErrorString(err));
+        //std::cout << "GOT PLATFORM" << std::endl;
+        //printf("cl::Platform::get(): %s\n", oclErrorString(err));
         if (platforms.size() == 0) {
             printf("Platform size 0\n");
         }
@@ -36,16 +37,16 @@ CLBaseClass::CLBaseClass(int rank) {
         { CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[0])(), 0};
 
 		char* device_type = getenv("CL_DEVICE_TYPE");
-		printf("device_type= %s\n", device_type);
+		//printf("device_type= %s\n", device_type);
 
 		if (!strcmp(device_type, "CL_DEVICE_TYPE_GPU")) {
-			printf("setup GPU\n");
+		//	printf("setup GPU\n");
         	context = cl::Context(CL_DEVICE_TYPE_GPU, properties);
-			printf("GPU device\n");
+			//printf("GPU device\n");
 		} else if (!strcmp(device_type, "CL_DEVICE_TYPE_ACCELERATOR")) {
-			printf("setup accelerator\n");
+			//printf("setup accelerator\n");
         	context = cl::Context(CL_DEVICE_TYPE_ACCELERATOR, properties);
-			printf("ACCELERATOR device\n");
+			//printf("ACCELERATOR device\n");
 		} else {
 			printf("device_type %s not valid\n", device_type);
 			exit(1);
@@ -77,7 +78,7 @@ CLBaseClass::CLBaseClass(int rank) {
     catch (cl::Error er) {
         printf("[initialize] ERROR: %s(%d)\n", er.what(), er.err());
     }
-    std::cout << "Done with cl::Context setup..." << std::endl;
+    //std::cout << "Done with cl::Context setup..." << std::endl;
 }
 
 //----------------------------------------------------------------------
@@ -116,7 +117,7 @@ std::string CLBaseClass::getDeviceFP64Extension(int device_id) {
     std::string ext = "";
     for (d = d_exts.begin(); d != d_exts.end(); d++) {
         if ((*d).find("fp64") != std::string::npos) {
-            std::cout << "FOUND MATCHING FP64 EXTENSION: " << *d << std::endl;
+            //std::cout << "FOUND MATCHING FP64 EXTENSION: " << *d << std::endl;
             ext = *d;
             count ++;
         }
@@ -138,14 +139,15 @@ void CLBaseClass::loadProgram(std::string& kernel_source, bool enable_fp64)
 
     std::string updated_source(kernel_source);
 
-//    if (enable_fp64)
+    if (enable_fp64)
     {
+		printf("[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS\n");
         updated_source = addExtension(kernel_source, getDeviceFP64Extension(deviceUsed), enable_fp64);
     }
 
     // std::cout << updated_source << std::endl;
     pl = updated_source.size();
-    printf("[CLBaseClass] building kernel source of size: %d\n", pl);
+    //printf("[CLBaseClass] building kernel source of size: %d\n", pl);
 //    printf("KERNEL: \n %s\n", updated_source.c_str());
     try
     {
@@ -185,7 +187,7 @@ void CLBaseClass::loadProgram(std::string& kernel_source, bool enable_fp64)
             std::endl;
         exit(EXIT_FAILURE);
     }
-    printf("[CLBaseClass] done building program\n");
+    //printf("[CLBaseClass] done building program\n");
 
 #if 0
     std::cout << "Build Status: " <<
@@ -280,14 +282,15 @@ std::vector<std::string> CLBaseClass::split(const std::string &s, const std::str
     return split(s, delim, elems, keep_substr);
 }
 
-
 //----------------------------------------------------------------------
 cl::Kernel CLBaseClass::loadKernel(const std::string& kernel_name, const std::string& kernel_source_file)
 {
     //tm["loadAttach"]->start();
 
 	cl::Kernel kernel;
-	bool useDouble = false; // FOR NOW
+
+	// if useDouble is true, does that affect float performance? 
+	bool useDouble = true; // FOR NOW
 
 
 	#if 0

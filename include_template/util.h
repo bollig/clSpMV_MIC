@@ -64,13 +64,15 @@ void two_vec_compare_T(std::vector<T>& coovec, std::vector<T>& newvec, int size)
 		}
 		if (ratio > maxratiodiff) maxratiodiff = ratio;
 
+		#if 0
 		if (coovec[i] != newvec[i] && count < 10)
 		{
 	    	printf("Error i %d coo res %f res %f \n", i, coovec[i], newvec[i]);
 	    	count++;
 		}
+		#endif
     }
-    printf("Max diff id %d coo res %f res %f \n", maxdiffid, coovec[maxdiffid], newvec[maxdiffid]);
+    //printf("Max diff id %d coo res %f res %f \n", maxdiffid, coovec[maxdiffid], newvec[maxdiffid]);
     printf("\nCorrectness Check: Distance %e max diff %e max diff ratio %e vec size %d\n", dist, maxdiff, maxratiodiff, size);
 }
 //----------------------------------------------------------------------

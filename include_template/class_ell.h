@@ -98,7 +98,7 @@ ELL<T>::ELL(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl_dev
    BASE<T>(coo_mat, dim2Size, oclfilename, deviceType, ntimes)
 {
 	// Create matrices
-printf("inside ell constructor\n");
+//printf("inside ell constructor\n");
     printMatInfo_T(coo_mat);
     ell_matrix<int, T> mat;
     coo2ell<int, T>(coo_mat, &mat, GPU_ALIGNMENT, 0);
@@ -164,14 +164,22 @@ void ELL<T>::method_0()
 	printf("****** kernel_name: %s ******\n", kernel_name.c_str());
 	cl::Kernel kernel = loadKernel(kernel_name, filename);
 
+	printf("**** method_0, sizeof(T): %d\n", sizeof(T));
+
 	try {
 		int i=0; 
+		printf("1\n");
 		kernel.setArg(i++, supColid.dev);
+		printf("2\n");
 		kernel.setArg(i++, supData.dev);
+		printf("3\n");
 		kernel.setArg(i++, sizeof(int), &aligned_length); // ERROR
 		kernel.setArg(i++, sizeof(int), &ellnum);
+		printf("4\n");
 		kernel.setArg(i++, supVec.dev);
+		printf("5\n");
 		kernel.setArg(i++, supRes.dev);
+		printf("6\n");
 		kernel.setArg(i++, sizeof(int), &rownum);
     } catch (cl::Error er) {
         printf("[setKernelArg] ERROR: %s(%s)\n", er.what(), CLBaseClass::oclErrorString(er.err()));

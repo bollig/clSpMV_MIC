@@ -61,7 +61,7 @@ public:
 public:
 	BASE(coo_matrix<int, T>* mat, int dim2Size, char* oclfilename, cl_device_type deviceType, int ntimes);
 	~BASE() {
-		printf("inside base destructor\n");
+		//printf("inside base destructor\n");
     	//free_ell_matrix(mat);
     	//free(vec);
     	//free(result);

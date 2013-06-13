@@ -117,7 +117,7 @@ public:
     //dataType* ell_data;
 
 	~ell_matrix() {
-		printf("** inside 4ell destructor ***\n");
+		//printf("** inside 4ell destructor ***\n");
 		//if (b4ell_data) delete [] b4ell_data;
 		//if (b4ell_col_id) delete [] b4ell_col_id;
 	}
@@ -162,13 +162,13 @@ public:
 	}
 
 	void print() {
-		printf("sell matrix info\n");
+		//printf("sell matrix info\n");
 		matinfo.print();
-		printf("sell_slice_height=%d, sell_slice_num=%d\n", sell_slice_height, sell_slice_num);
+		//printf("sell_slice_height=%d, sell_slice_num=%d\n", sell_slice_height, sell_slice_num);
 	}
 
 	~sell_matrix() {
-		printf("inside sell_matrix destructor\n");
+		//printf("inside sell_matrix destructor\n");
 	}
 };
 
@@ -192,7 +192,7 @@ public:
 	}
 
 	~coo_matrix() {
-		printf("*** inside coo_matrix destructor\n");
+		//printf("*** inside coo_matrix destructor\n");
 	}
 
 	void print() {
@@ -224,7 +224,7 @@ public:
 	}
 
     ~csr_matrix() {
-	printf("inside csr_matrix destructor\n");
+		//printf("inside csr_matrix destructor\n");
     	//if (csr_row_ptr) delete [] csr_row_ptr;
     	//if (csr_col_id) delete [] csr_col_id;
     	//if (csr_row_data) delete [] csr_data;
@@ -265,8 +265,8 @@ public:
     dataType* bcsr_data;
 
 	~bcsr_matrix() {
-		printf("inside bcsr_destructor\n");
-		printf("inside bcsr_destructor\n");
+		//printf("inside bcsr_destructor\n");
+		//printf("inside bcsr_destructor\n");
 		if (bcsr_row_ptr) {delete [] bcsr_row_ptr; bcsr_row_ptr = 0;}
 		//if (bcsr_col_ptr) {delete [] bcsr_col_ptr; bcsr_col_ptr = 0;} // GE ERROR
 		if (bcsr_col_id) {delete [] bcsr_col_id; bcsr_col_id = 0;}
@@ -419,7 +419,7 @@ public:
     std::vector<dataType> b4ell_data;
 
 	~b4ell_matrix() {
-		printf("** inside b4ell destructor ***\n");
+		//printf("** inside b4ell destructor ***\n");
 		//if (b4ell_data) delete [] b4ell_data;
 		//if (b4ell_col_id) delete [] b4ell_col_id;
 	}
@@ -473,7 +473,7 @@ public:
 	}
 
 	~sbell_matrix() {
-		printf("Inside sbell destructor\n");
+		//printf("inside sbell destructor\n");
 	}
 
 	void print() {

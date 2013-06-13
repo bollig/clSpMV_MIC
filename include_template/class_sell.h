@@ -95,7 +95,7 @@ template <typename T>
 SELL<T>::SELL(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl_device_type deviceType, int ntimes) : 
    BASE<T>(coo_mat, dim2Size, oclfilename, deviceType, ntimes)
 {
-    printMatInfo(coo_mat);
+    printMatInfo_T(coo_mat);
     vec_v.resize(coo_mat->matinfo.width);
     result_v.resize(coo_mat->matinfo.height);
 	std::fill(vec_v.begin(), vec_v.end(), 1.);
@@ -103,9 +103,11 @@ SELL<T>::SELL(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl_d
     coores_v.resize(coo_mat->matinfo.height);
 	//std::fill(coores_v.begin(), coores_v.end(), 7.);
     spmv_only_T<T>(coo_mat, vec_v, coores_v);
+	#if 0
 	for (int i=0; i < 10; i++) {
 		printf("coores_v[%d]= %f\n", i, coores_v[i]);
 	}
+	#endif
 
     //---------------
 
@@ -122,9 +124,9 @@ void SELL<T>::run()
 	optmethod = 0;
 
 	sliceheight = WARPSIZE;
-	sell_matrix<int, float> mat;
+	sell_matrix<int, T> mat;
 	coo_mat->print();
-	coo2sell<int, float>(coo_mat, &mat, sliceheight);
+	coo2sell<int, T>(coo_mat, &mat, sliceheight);
 	mat.print();
 
     nnz = mat.matinfo.nnz;
@@ -154,7 +156,7 @@ void SELL<T>::run()
     slicenum = mat.sell_slice_num;
     datasize = mat.sell_slice_ptr[slicenum];
 
-    const cl_image_format floatFormat = { CL_R, CL_FLOAT, };
+    //const cl_image_format floatFormat = { CL_R, CL_FLOAT, };
 
 	supSlicePtr.create(slicenum+1);
 	supSlicePtr.setName("slicePtr");
@@ -202,9 +204,11 @@ void SELL<T>::run()
 	//int optmethod = sell_ocl.getOptMethod();
 
 	double gflops = (double)nnz*2/opttime/(double)1e9;
+	char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
 	printf("\n------------------------------------------------------------------------\n");
-	printf("SELL best time %f ms best method %d GFLOPS %f", opttime*1000.0, optmethod, gflops);
+	printf("SELL %s best time %f ms best method %d GFLOPS %f", format, opttime*1000.0, optmethod, gflops);
 	printf("\n------------------------------------------------------------------------\n");
+
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -254,7 +258,8 @@ void SELL<T>::method_0_warp()
 	double testend = timestamp();
 	double time_in_sec = (testend - teststart)/(double)dim2;
 	double gflops = (double)nnz*2/(time_in_sec/(double)ntimes)/(double)1e9;
-	printf("\nSELL cpu warp time %lf ms GFLOPS %lf code %d \n\n",   time_in_sec / (double) ntimes * 1000, gflops, methodid);
+	char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
+	printf("\nSELL %s cpu warp time %lf ms GFLOPS %lf code %d \n\n",   format, time_in_sec / (double) ntimes * 1000, gflops, methodid);
 
 	double onetime = time_in_sec / (double) ntimes;
 	if (onetime < opttime)
@@ -312,7 +317,8 @@ void SELL<T>::method_0_group()
 	double testend = timestamp();
 	double time_in_sec = (testend - teststart)/(double)dim2;
 	double gflops = (double)nnz*2/(time_in_sec/(double)ntimes)/(double)1e9;
-	printf("\nSELL cpu group time %lf ms GFLOPS %lf code %d \n\n",   time_in_sec / (double) ntimes * 1000, gflops, methodid);
+	char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
+	printf("\nSELL %s cpu group time %lf ms GFLOPS %lf code %d \n\n",   format, time_in_sec / (double) ntimes * 1000, gflops, methodid);
 
 	double onetime = time_in_sec / (double) ntimes;
 	if (onetime < opttime)

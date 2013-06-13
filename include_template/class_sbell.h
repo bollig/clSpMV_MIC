@@ -111,9 +111,11 @@ SBELL<T>::SBELL(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl
     coores_v.resize(coo_mat->matinfo.height);
 	std::fill(coores_v.begin(), coores_v.end(), 7.);
     spmv_only_T<T>(coo_mat, vec_v, coores_v);   // matrix*vector, serial
+	#if 0
 	for (int i=0; i < 10; i++) {
 		printf("coores_v[%d]= %f\n", i, coores_v[i]);
 	}
+	#endif
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -230,9 +232,10 @@ void SBELL<T>::run()
 	    	bestbh = bheight;
 		}
 		double gflops = (double)nnz*2/opttime/(double)1e9;
+		char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
 		printf("SBELL info: block row num %d slice num %d total block num %d \n", mat.sbell_row_num, mat.sbell_slice_num, mat.sbell_slice_ptr[mat.sbell_slice_num]);
 		printf("\n------------------------------------------------------------------------\n");
-		printf("SBELL best time %f ms best method %d GFLOPS %f", opttime*1000.0, optmethod, gflops);
+		printf("SBELL %s best time %f ms best method %d GFLOPS %f", format, opttime*1000.0, optmethod, gflops);
 		printf("\n------------------------------------------------------------------------\n");
     }}
 
@@ -299,7 +302,8 @@ void SBELL<T>::method_0() // FOR SBELL
 	double time_in_sec = (testend - teststart)/(double)dim2;
 	printf("ntimes= %d, time_in_msec= %f, nnz= %d\n", ntimes, time_in_sec*1000., nnz);
 	double gflops = (double)nnz*2/(time_in_sec/(double)ntimes)/(double)1e9;
-	printf("\nBELL %dx%d block cpu time %lf ms GFLOPS %lf code %d \n\n", bh, bw,  time_in_sec / (double) ntimes * 1000, gflops, methodid);
+	char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
+	printf("\nBELL %s  %dx%d block cpu time %lf ms GFLOPS %lf code %d \n\n", format, bh, bw,  time_in_sec / (double) ntimes * 1000, gflops, methodid);
 
 
 	double onetime = time_in_sec / (double) ntimes;

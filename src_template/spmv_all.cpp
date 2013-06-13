@@ -62,11 +62,11 @@ int main(int argc, char* argv[])
 	ntimes = atoi(argv[3]);
 
     coo_matrix<int, float> mat;
-    //coo_matrix<int, double> mat_d;
+    coo_matrix<int, double> mat_d;
     //init_coo_matrix(mat);
     //init_coo_matrix(mat_d);
     spmv::ReadMMF(filename, &mat);
-    //spmv::ReadMMF(filename, &mat_d);
+    spmv::ReadMMF(filename, &mat_d);
 	printf("READ INPUT FILE: \n");
 	mat.print();
 
@@ -106,6 +106,7 @@ int main(int argc, char* argv[])
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_ell.cl");
 	printf("befpre spmv_ell\n");
 	spmv::spmv_ell("spmv_ell.cl", &mat, dim2Size, ntimes, CONTEXTTYPE);
+	spmv::spmv_ell("spmv_ell_d.cl", &mat_d, dim2Size, ntimes, CONTEXTTYPE);
 	//spmv::spmv_ell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
 	#endif
 	//spmv::spmv_ell(clfilename, &mat_d, dim2Size, ntimes, CONTEXTTYPE);
@@ -123,7 +124,8 @@ int main(int argc, char* argv[])
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_bell.cl");
 	//spmv::spmv_bell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
 	// directory name not required. Read in at lower level using CL_KERNEL ENV variable
-	spmv::spmv_bell("spmv_bell.cl", &mat, dim2Size, ntimes, CONTEXTTYPE);
+	//spmv::spmv_bell("spmv_bell.cl", &mat, dim2Size, ntimes, CONTEXTTYPE);
+	spmv::spmv_bell("spmv_bell_d.cl", &mat_d, dim2Size, ntimes, CONTEXTTYPE);
 	//sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_bell_d.cl");
 	//spmv::spmv_bell(clfilename, &mat_d, dim2Size, ntimes, CONTEXTTYPE);
     }
@@ -139,12 +141,14 @@ int main(int argc, char* argv[])
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_sell.cl");
 	//spmv_sell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);
 	spmv::spmv_sell("spmv_sell.cl", &mat, dim2Size, ntimes, CONTEXTTYPE);
+	spmv::spmv_sell("spmv_sell_d.cl", &mat_d, dim2Size, ntimes, CONTEXTTYPE);
     }
 	#if 1
     else if (choice == 10)
     {
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_sbell.cl");
 	spmv::spmv_sbell("spmv_sbell.cl", &mat, dim2Size, ntimes, CONTEXTTYPE);
+	spmv::spmv_sbell("spmv_sbell_d.cl", &mat_d, dim2Size, ntimes, CONTEXTTYPE);
     }
 	#endif
 

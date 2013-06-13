@@ -166,13 +166,13 @@ public:
 	// I cannot change pointer to host (cpu) data after creation
 	// // cost of CLBaseClass is high. Should only be called once. 
 	~SuperBuffer() {
-		printf("inside SuperBuffer(%s) destructor\n", name.c_str());
+		//printf("inside SuperBuffer(%s) destructor\n", name.c_str());
 		// host is managed by a boost shared pointer. In this way, when a SuperBuffer
 		// is copied to another, memory is managed correctly
 		if (delete_host && host) {
 			delete host; 
 			host = 0;
-			printf("delete host ptr\n");
+			//printf("delete host ptr\n");
 		}
 	}
 
@@ -181,7 +181,7 @@ public:
 		host = 0;
 		host_ptr = 0;
 		delete_host = false;
-		printf("++++ Created empty SuperBuffer ++++ \n\n");
+		//printf("++++ Created empty SuperBuffer ++++ \n\n");
 	}
 	void create(std::vector<T>& host_) { // std::string name="") : host(&host_) {
 		dev_changed = false;
@@ -197,18 +197,18 @@ public:
 		}
 	}
 	SuperBuffer(std::vector<T>& host_, std::string name="") : host(&host_) {
-		printf("SuperBuffer(std::vector<T>& host_, std::string name=\n");
+		//printf("SuperBuffer(std::vector<T>& host_, std::string name=\n");
 		this->name = name;
 		dev_changed = false;
 		host_changed = true;
 		host_ptr = 0;
 		delete_host = false;
 		try {
-			printf("sizof(T)e: %d\n", sizeof(T));
-			printf("size: %d\n", sizeof(T)*host->size());
-			printf("host size: %d\n", host->size());
+			//printf("sizof(T)e: %d\n", sizeof(T));
+			//printf("size: %d\n", sizeof(T)*host->size());
+			//printf("host size: %d\n", host->size());
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
-			printf("Created SuperBuffer *** %s (size: %d bytes) ***\n\n", name.c_str(), host->size()*sizeof(T));
+			//printf("Created SuperBuffer *** %s (size: %d bytes) ***\n\n", name.c_str(), host->size()*sizeof(T));
 		} catch (cl::Error er) {
 	    	printf("[cl::Buffer] ERROR: %s(%s)\n", er.what(), oclErrorString(er.err()));
 			exit(0);
@@ -228,7 +228,7 @@ public:
 		}
 	}
 	SuperBuffer(std::vector<T>* host_, std::string name="") : host(host_) {
-		printf("SuperBuffer(std::vector<T>* host_, std::string name=\n");
+		//printf("SuperBuffer(std::vector<T>* host_, std::string name=\n");
 		this->name = name;
 		dev_changed = false;
 		host_changed = true;
@@ -236,7 +236,7 @@ public:
 		host_ptr = 0;
 		try {
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
-			printf("Created SuperBuffer *** %s (size: %d bytes) ***\n\n", name.c_str(), host->size()*sizeof(T));
+			//printf("Created SuperBuffer *** %s (size: %d bytes) ***\n\n", name.c_str(), host->size()*sizeof(T));
 		} catch (cl::Error er) {
 	    	printf("[cl::Buffer] ERROR: %s(%s)\n", er.what(), oclErrorString(er.err()));
 			exit(0);
@@ -258,7 +258,7 @@ public:
 	}
 	// SuperBuffer allocates the space
 	SuperBuffer(int size, std::string name="") {
-		printf("SuperBuffer(int size, std::string name=\n");
+		//printf("SuperBuffer(int size, std::string name=\n");
 		this->name = name;
 		dev_changed = false;
 		host_changed = true;
@@ -267,7 +267,7 @@ public:
 		delete_host = true;
 		try {
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
-			printf("Created SuperBuffer *** %s (size: %d bytes) ***\n\n", name.c_str(), size*sizeof(T));
+			//printf("Created SuperBuffer *** %s (size: %d bytes) ***\n\n", name.c_str(), size*sizeof(T));
 		} catch (cl::Error er) {
 	    	printf("[cl::Buffer] ERROR: %s(%s)\n", er.what(), oclErrorString(er.err()));
 			exit(0);
@@ -276,7 +276,7 @@ public:
 	// SuperBuffer allocates the space
 	SuperBuffer(int size, T* ptr, std::string name="") {
 	// NOT DEBUGGED
-		printf("SuperBuffer(int size, std::string name=\n");
+		//printf("SuperBuffer(int size, std::string name=\n");
 		this->name = name;
 		dev_changed = false;
 		host_changed = true;
@@ -285,7 +285,7 @@ public:
 		this->size = size; // number elements
 		try {
 			dev = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(T)*host->size(), NULL, &error);
-			printf("Created SuperBuffer *** %s (size: %d bytes) ***\n\n", name.c_str(), size*sizeof(T));
+			//printf("Created SuperBuffer *** %s (size: %d bytes) ***\n\n", name.c_str(), size*sizeof(T));
 		} catch (cl::Error er) {
 	    	printf("[cl::Buffer] ERROR: %s(%s)\n", er.what(), oclErrorString(er.err()));
 			exit(0);

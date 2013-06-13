@@ -123,14 +123,16 @@ void two_vec_compare(float* coovec, float* newvec, int size)
 	}
 	if (ratio > maxratiodiff)
 	    maxratiodiff = ratio;
+	#if 0
 	if (coovec[i] != newvec[i] && count < 10)
 	{
 	    printf("Error i %d coo res %f res %f \n", i, coovec[i], newvec[i]);
 	    count++;
 	}
+	#endif
     }
     printf("Max diff id %d coo res %f res %f \n", maxdiffid, coovec[maxdiffid], newvec[maxdiffid]);
-    printf("\nCorrectness Check: Distance %e max diff %e max diff ratio %e vec size %d\n", dist, maxdiff, maxratiodiff, size);
+    //printf("\nCorrectness Check: Distance %e max diff %e max diff ratio %e vec size %d\n", dist, maxdiff, maxratiodiff, size);
 }
 
 
@@ -164,13 +166,15 @@ void correctness_check(coo_matrix<int, float>* mat, float* vec, float* res)
 	    maxdiff = diff;
 	if (ratio > maxratiodiff)
 	    maxratiodiff = ratio;
+	#if 0
 	if (coores[i] != res[i] && count < 10)
 	{
 	    printf("Error i %d coo res %f res %f \n", i, coores[i], res[i]);
 	    count++;
 	}
+	#endif
     }
-    printf("\nCorrectness Check: Distance %e max diff %e max diff ratio %e vec size %d\n", dist, maxdiff, maxratiodiff, mat->matinfo.height);
+    //printf("\nCorrectness Check: Distance %e max diff %e max diff ratio %e vec size %d\n", dist, maxdiff, maxratiodiff, mat->matinfo.height);
     free(coores);
 }
 
