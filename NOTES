@@ -9,7 +9,7 @@ Cascade: cases 7,9,10 run without error.
          case 5 has errors.  <<<<<
 
 Frodo (MIC): cases 7,9,10 run without error. 
-         case 5 has no errors
+         case 5 has errors <<<<
 
 Gordo_mac (GPU): cases 7,9,10 run without error. 
          case 5 has no errors
