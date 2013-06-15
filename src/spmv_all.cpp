@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "projectsettings.h"
 #include "matrix_storage.h"
 #include "spmv_serial.h"
 #include "fileio.h"

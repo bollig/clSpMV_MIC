@@ -36,3 +36,21 @@ with and without vectorization (add pragma: vec_hint<double4> on MIC)
 Study cost of memory transfers on the different architectures (user perspective)
 Study use when combined with using the derivatives (which incures more memory bandwidth)
 ----------------------------------------------------------------------
+CREATE: 
+
+Data structure that contains all run parameters: 
+
+  - input file
+  - kernel file/name
+  - float or double
+  - work group and total number of threads
+  - nb nodes in template
+  - grid size
+  - type of process (MIC, K20, TESLA, AMD) 
+  - type of CPU (how to get this)
+  - register analysis of rows (NEED CODE FOR THIS)
+  - sparsity type (COMPACT, RANDOM)
+  - whether or not matrix data has been reordered and the type
+     (Cut-Hill-McGee, space-filling curve)
+  - sparse matrix format: (ELL, SELL, SBELL, BELL, CVR)
+----------------------------------------------------------------------

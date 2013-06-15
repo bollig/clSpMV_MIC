@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "print_utils.h"
+//#include "print_utils.h"
+
+#include "projectsettings.h"
 
 #include "matrix_storage.h"
 #include "spmv_serial.h"
@@ -52,14 +54,32 @@ int main(int argc, char* argv[])
 		return 0;
     }
 
-    char* filename = argv[1];
+// REWRITE argument list by using argv++ every time argv is used, and argc++ when argc is used
+    char* filename = argv[1]; argc--; argv++;
     int choice = 1;
-    if (argc > 2)
-	choice = atoi(argv[2]);
+    //if (argc > 2) {
+    if (argc > 1) {
+		//choice = atoi(argv[2]); 
+		choice = atoi(argv[1]); argc--; argv++;
+	}
     int dim2Size = 1;
     int ntimes = 20;
-    if (argc > 3)
-	ntimes = atoi(argv[3]);
+    //if (argc > 3) {
+    if (argc > 1) {
+		//ntimes = atoi(argv[3]); 
+		ntimes = atoi(argv[1]); argc--; argv++;
+	}
+
+	for (int i=0; i < argc; i++) {
+		printf("argv[%d]= %s\n", i, argv[i]);
+	}
+
+	//ProjectSettings pj("base.conf");
+	//pj.ParseFile("test.conf");
+	//int gg = pj.GetSettingAs<int>("gordon", ProjectSettings::optional, "-48");
+	//int gg = pj.GetOptional<int>("gordon", "-48");
+	//printf("gg = %d\n", gg);
+	//exit(1);
 
     coo_matrix<int, float> mat;
     coo_matrix<int, double> mat_d;

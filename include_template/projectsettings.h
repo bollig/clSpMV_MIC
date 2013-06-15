@@ -94,6 +94,16 @@ public:
         return ss_typecast<RT>(settings[key]);
     }
 
+	template <typename RT>
+    inline RT getOptional(std::string key, std::string defaultval = "0") {
+    	return GetSettingAs<RT>(key, ProjectSettings::optional, defaultval);
+	}
+
+	template <typename RT>
+    inline RT getRequired(std::string key) {
+    	return GetSettingAs<RT>(key, ProjectSettings::required);
+	}
+
     // Check if KEY = VALUE pair was found in config file
     bool Exists(std::string key) { if(settings.find(key) == settings.end()) { return false; } else { return true; } }
 

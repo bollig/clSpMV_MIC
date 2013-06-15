@@ -29,7 +29,7 @@ DEFINES = -DCL_DEVICE_TYPE_DEF=CL_DEVICE_TYPE_ACCELERATOR
 # Add source files here
 # C/C++ source files (compiled with gcc / c++)
 #COMMONFILES		:= util.cpp fileio.cpp oclcommon.cpp
-COMMONFILES		:= util.cpp oclcommon.cpp cl_base_class.cpp projectsettings.cpp timer_eb.cpp
+COMMONFILES		:= util.cpp oclcommon.cpp cl_base_class.cpp projectsettings.cpp timer_eb.cpp runs.cpp
 #SINGLEFILES		:= mem_bandwidth.cpp spmv_csr_scalar.cpp spmv_csr_vector.cpp spmv_bdia.cpp spmv_dia.cpp spmv_ell.cpp spmv_coo.cpp spmv_bell.cpp spmv_bcsr.cpp spmv_sell.cpp spmv_sbell.cpp spmv_all.cpp
 SINGLEFILES		:=  spmv_all.cpp 
 #BENCHFILES    		:= bench_bdia.cpp bench_dia.cpp bench_bell.cpp bench_sbell.cpp bench_bcsr.cpp bench_sell.cpp bench_ell.cpp bench_csr.cpp bench_coo.cpp bench_overhead.cpp
