@@ -1,0 +1,42 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/blas3_prod.cpp
+iostream
+-
+boost/numeric/ublas/io.hpp
+-
+boost/numeric/ublas/triangular.hpp
+-
+boost/numeric/ublas/matrix_sparse.hpp
+-
+boost/numeric/ublas/matrix.hpp
+-
+boost/numeric/ublas/matrix_proxy.hpp
+-
+boost/numeric/ublas/lu.hpp
+-
+boost/numeric/ublas/io.hpp
+-
+viennacl/scalar.hpp
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/viennacl/scalar.hpp
+viennacl/matrix.hpp
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/viennacl/matrix.hpp
+viennacl/matrix_proxy.hpp
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/viennacl/matrix_proxy.hpp
+viennacl/vector.hpp
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/viennacl/vector.hpp
+viennacl/linalg/prod.hpp
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/viennacl/linalg/prod.hpp
+viennacl/linalg/norm_2.hpp
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/viennacl/linalg/norm_2.hpp
+viennacl/linalg/direct_solve.hpp
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/viennacl/linalg/direct_solve.hpp
+examples/tutorial/Random.hpp
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/examples/tutorial/Random.hpp
+

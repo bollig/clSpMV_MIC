@@ -1,0 +1,9 @@
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/CMakeFiles/blas3_prod-test-cpu.dir
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/CMakeFiles/blas3_solve-test-cpu.dir
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/CMakeFiles/global_variables-test-cpu.dir
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/CMakeFiles/iterators-test-cpu.dir
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/CMakeFiles/matrix-test-cpu.dir
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/CMakeFiles/matrix-vector-test-cpu.dir
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/CMakeFiles/scalar-test-cpu.dir
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/CMakeFiles/sparse-test-cpu.dir
+/mnt/global/LCSE/gerlebacher/src/ViennaCL-1.4.2/tests/src/CMakeFiles/vector-test-cpu.dir

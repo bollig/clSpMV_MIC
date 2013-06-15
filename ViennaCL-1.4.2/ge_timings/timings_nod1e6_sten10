@@ -1,0 +1,178 @@
+******************** GORDON *******************
+
+-------------MIC Device OpenCL Configuration------------
+
+
+# 1 - print current configuration at MIC device startup
+CL_CONFIG_MIC_DEVICE_PRINT_CONFIG=1
+
+
+# 1 - gather info for GPA
+CL_CONFIG_USE_GPA=0
+
+# 1 - try to vectorize kernel during compilation
+CL_CONFIG_USE_VECTORIZER=1
+
+# 1 - connect to VTune on device
+CL_CONFIG_USE_VTUNE=1
+
+
+# 1 - deadloop on device during startup, wait for debugger
+CL_CONFIG_MIC_DEVICE_STOP_AT_LOAD=0
+
+# 1 - wrap kernels with try/catch
+CL_CONFIG_MIC_DEVICE_SAFE_KERNEL_EXECUTION=1
+
+
+# 1 - do not allow TBB workers to switch between HW threads
+CL_CONFIG_MIC_DEVICE_USE_AFFINITY=1
+
+# 0 - create 1 TBB worker per each HW thread per core, !=0 - limit TBB workers to the given number per core
+CL_CONFIG_MIC_DEVICE_THREADS_PER_CORE=0
+
+# 0 - use all MIC cores, !=0 - use specified number of cores
+CL_CONFIG_MIC_DEVICE_NUM_CORES=0
+
+# 1 - do not use 0 (system) MIC core
+CL_CONFIG_MIC_DEVICE_IGNORE_CORE_0=1
+
+# 1 - do not use last MIC core
+CL_CONFIG_MIC_DEVICE_IGNORE_LAST_CORE=1
+
+# 0 - disabled, !=0 - minimum size of buffer in kilobytes to use 2MB pages
+CL_CONFIG_MIC_DEVICE_2MB_BUF_MINSIZE_KB=512
+
+# must not be 0, recommended number of WGs to schedule for same thread
+CL_CONFIG_MIC_DEVICE_TBB_GRAIN_SIZE=1
+
+# affinity - tbb:affinity_partitioner, other - tbb::auto_partitioner
+CL_CONFIG_MIC_DEVICE_TBB_SCHEDULER=auto
+
+# default_TBB_tile - optimize by square tiles using TBB default implementation, columns - optimize columns, rows - optimize rows, tiles - optimize square tiles
+CL_CONFIG_MIC_DEVICE_TBB_BLOCK_OPTIMIZATION=rows
+
+# 1 - do not allow TBB workers to leave arena. Deadlocks if more than a single queue.
+CL_CONFIG_MIC_DEVICE_TBB_TRAP_WORKERS=0
+
+# 1 - perform host->device transfer only when really required
+CL_CONFIG_MIC_DEVICE_LAZY_TRANSFER=0
+
+
+# Restricts the process to use only the MIC cards specified as the value of the variable
+OFFLOAD_DEVICES=
+
+--------------------------------------------------------
+
+CL Device Vendor ID: 32902
+CL Device Name: Intel(R) Many Integrated Core Acceleration Card
+CL Driver Version: 1.2
+--------------------------------
+CL Device Max Compute Units: 240
+CL Device Max Work Group Size: 1024
+CL Device Global Mem Size: 6053326848
+CL Device Local Mem Size: 32768
+
+
+----------------------------------------------
+----------------------------------------------
+## Test :: Sparse Matrices
+----------------------------------------------
+----------------------------------------------
+
+***** 1 ***** 
+
+----------------------------------------------
+
+# Testing setup:
+  eps:     0.0001
+  numeric: float
+fromBinary, width/height= 1000000, 1000000
+File is stored as doubles
+fromBinary: 0, 0, 1.000000
+fromBinary: 0, 1, 0.000000
+fromBinary: 0, 2, 0.000000
+fromBinary: 0, 3, 0.000000
+fromBinary: 0, 4, 0.000000
+fromBinary: 0, 5, 0.000000
+fromBinary: 0, 6, 0.000000
+fromBinary: 0, 7, 0.000000
+fromBinary: 0, 8, 0.000000
+fromBinary: 0, 9, 0.000000
+height, width, nonzeros= 1000000, 1000000, 10000000
+******** SIZE *****************
+ublas size: 1000000, 1000000
+done reading matrix
+
+*** rhs.size = 1000000
+Testing products: ublas
+Testing products: compressed_matrix
+GPU execution time = 6.39 ms
+GPU execution time = 4.38 ms
+GPU execution time = 4.24 ms
+GPU execution time = 4.23 ms
+GPU execution time = 4.24 ms
+Testing products: coordinate_matrix
+GPU execution time = 4.26 ms
+GPU execution time = 4.26 ms
+GPU execution time = 4.23 ms
+GPU execution time = 4.24 ms
+GPU execution time = 4.21 ms
+Testing products: ell_matrix
+GPU execution time = 4.10 ms
+GPU execution time = 4.23 ms
+GPU execution time = 4.15 ms
+GPU execution time = 4.28 ms
+GPU execution time = 4.19 ms
+# Test passed
+
+----------------------------------------------
+
+*** 1 ***
+*** has double support ***
+# Testing setup:
+  eps:     1e-13
+  numeric: double
+fromBinary, width/height= 1000000, 1000000
+File is stored as doubles
+fromBinary: 0, 0, 1.000000
+fromBinary: 0, 1, 0.000000
+fromBinary: 0, 2, 0.000000
+fromBinary: 0, 3, 0.000000
+fromBinary: 0, 4, 0.000000
+fromBinary: 0, 5, 0.000000
+fromBinary: 0, 6, 0.000000
+fromBinary: 0, 7, 0.000000
+fromBinary: 0, 8, 0.000000
+fromBinary: 0, 9, 0.000000
+height, width, nonzeros= 1000000, 1000000, 10000000
+******** SIZE *****************
+ublas size: 1000000, 1000000
+done reading matrix
+
+*** rhs.size = 1000000
+Testing products: ublas
+Testing products: compressed_matrix
+GPU execution time = 7.14 ms
+GPU execution time = 5.14 ms
+GPU execution time = 5.16 ms
+GPU execution time = 5.08 ms
+GPU execution time = 5.09 ms
+Testing products: coordinate_matrix
+GPU execution time = 5.13 ms
+GPU execution time = 5.03 ms
+GPU execution time = 5.19 ms
+GPU execution time = 5.01 ms
+GPU execution time = 5.15 ms
+Testing products: ell_matrix
+GPU execution time = 5.24 ms
+GPU execution time = 5.19 ms
+GPU execution time = 5.14 ms
+GPU execution time = 5.18 ms
+GPU execution time = 5.11 ms
+# Test passed
+
+----------------------------------------------
+
+
+------- Test completed --------
+
