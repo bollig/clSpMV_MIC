@@ -15,6 +15,8 @@
 #include "cl_base_class.h" // SuperBuffer still undefined
 #include "class_base.h"
 
+#include "projectsettings.h"
+
 namespace spmv {
 
 #define USE(x) using BASE<T>::x
@@ -108,6 +110,15 @@ SELL<T>::SELL(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl_d
 		printf("coores_v[%d]= %f\n", i, coores_v[i]);
 	}
 	#endif
+
+
+	printf("**** SELL CONSTRUCTOR ****\n");
+	//ProjectSettings* pjj = ProjectSettingsSingleton::getProjectSettings();
+	printf("ASK EVAN HOW THIS WORKS\n");
+	int gh = OPTIONAL<int>("gordon", "45");
+	int gs = REQUIRED<int>("ggordon");
+	printf("gh = %d\n", gh); 
+	printf("gs = %d\n", gh);
 
     //---------------
 

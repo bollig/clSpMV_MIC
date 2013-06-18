@@ -23,6 +23,8 @@
 #include "mem_bandwidth.h"
 #endif
 
+//#include "globals.h"
+
 #include "class_ell.h" // renable when bell works
 #include "class_bell.h"
 #include "class_sell.h"
@@ -74,12 +76,27 @@ int main(int argc, char* argv[])
 		printf("argv[%d]= %s\n", i, argv[i]);
 	}
 
-	//ProjectSettings pj("base.conf");
-	//pj.ParseFile("test.conf");
+	//ProjectSettings* pjj = ProjectSettingsSingleton::getProjectSettings();
+	//pjj->ParseFile("test.conf");
+
+	ProjectSettings pj("base.conf");
+	pj.ParseFile("test.conf");
 	//int gg = pj.GetSettingAs<int>("gordon", ProjectSettings::optional, "-48");
+	//int ghh = pj.getRequired<int>("ggordon");
+	int gg = OPTIONAL<int>("gordon", "-48");
+	int ghh = REQUIRED<int>("ggordon");
+	printf("main: ghh = %d\n", ghh);
+	printf("main: gg = %d\n", gg);
+	//exit(0);
+
+	//ProjectSettingsSingleton pss;
+	//pss.setProjectSettings(&pj);
+	//ProjectSettings* pjj = pss.getProjectSettings();
+	int kk = REQUIRED<int>("ggordon");
+	printf("kk= %d\n", kk);
+
 	//int gg = pj.GetOptional<int>("gordon", "-48");
 	//printf("gg = %d\n", gg);
-	//exit(1);
 
     coo_matrix<int, float> mat;
     coo_matrix<int, double> mat_d;
