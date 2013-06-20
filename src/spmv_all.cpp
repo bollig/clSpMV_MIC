@@ -19,6 +19,7 @@
 #include "mem_bandwidth.h"
 
 
+
 void printDense(coo_matrix<int, float>& mat)
 {
     int width = mat.matinfo.width;

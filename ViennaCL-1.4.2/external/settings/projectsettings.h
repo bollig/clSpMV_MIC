@@ -10,8 +10,10 @@
 //#include <fstream>
 #include <sstream>
 //#include "timer_eb.h"
+//
 
-
+#define REQUIRED ProjectSettingsSingleton::getRequired
+#define OPTIONAL ProjectSettingsSingleton::getOptional
 /**
   * PARSE A CONFIGURATION FILE FORMATTED AS:
   *
@@ -132,4 +134,38 @@ protected:
 };
 
 
-#endif // PROJECTSETTINGS_H
+//----------------------------------------------------------------------
+#if 1
+class ProjectSettingsSingleton
+{
+public:
+	static ProjectSettings* settings;
+
+public:
+	static ProjectSettings* getProjectSettings() { 
+		//if (!settings) {
+			//printf("inside ProjectSettingsSingleton constructor\n");
+			//settings = new ProjectSettings();
+		//}
+		return settings; 
+	}
+	static void setProjectSettings(ProjectSettings* ps) {
+		settings = ps;
+	}
+
+	template <typename RT>
+    static inline RT getRequired(std::string key) {
+    	return settings->getRequired<RT>(key);
+	}
+
+	template <typename RT>
+    static inline RT getOptional(std::string key, std::string defaultval = "0") {
+    	return settings->getOptional<RT>(key, defaultval);
+	}
+};
+
+
+// __PROJECTSETTINGS_H__
+#endif
+
+#endif 

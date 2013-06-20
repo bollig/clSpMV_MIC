@@ -30,6 +30,8 @@
 #include "class_sell.h"
 #include "class_sbell.h"
 
+// comes from rbffd (Bollig) and inserted in include_template manually
+#include "rbffd_io.h"
 
 
 //using namespace spmv;
@@ -57,7 +59,7 @@ int main(int argc, char* argv[])
     }
 
 // REWRITE argument list by using argv++ every time argv is used, and argc++ when argc is used
-    char* filename = argv[1]; argc--; argv++;
+    std::string filename = argv[1]; argc--; argv++;
     int choice = 1;
     //if (argc > 2) {
     if (argc > 1) {
@@ -76,34 +78,44 @@ int main(int argc, char* argv[])
 		printf("argv[%d]= %s\n", i, argv[i]);
 	}
 
-	//ProjectSettings* pjj = ProjectSettingsSingleton::getProjectSettings();
-	//pjj->ParseFile("test.conf");
+	ProjectSettings pj("test.conf");
+	pj.ParseFile("in_file.txt"); // parameters change run to run
 
-	ProjectSettings pj("base.conf");
-	pj.ParseFile("test.conf");
-	//int gg = pj.GetSettingAs<int>("gordon", ProjectSettings::optional, "-48");
-	//int ghh = pj.getRequired<int>("ggordon");
-	int gg = OPTIONAL<int>("gordon", "-48");
-	int ghh = REQUIRED<int>("ggordon");
-	printf("main: ghh = %d\n", ghh);
-	printf("main: gg = %d\n", gg);
-	//exit(0);
+	std::string sparsity = REQUIRED<std::string>("sparsity");
+	printf("sparsity= %s\n", sparsity.c_str());
+	//filename = OPTIONAL<std::string>("data_filename", filename);
+	int c = OPTIONAL<int>("caee", "10"); // ERROR, see next line
+	//src_template/spmv_all.cpp:85: error: no matching function for call to ‘ProjectSettingsSingleton::getOptional(const char [5], int)’
+//	printf("c= %d\n", c);
+	printf("filename = %s\n", filename.c_str());
 
-	//ProjectSettingsSingleton pss;
-	//pss.setProjectSettings(&pj);
-	//ProjectSettings* pjj = pss.getProjectSettings();
-	int kk = REQUIRED<int>("ggordon");
-	printf("kk= %d\n", kk);
-
-	//int gg = pj.GetOptional<int>("gordon", "-48");
-	//printf("gg = %d\n", gg);
 
     coo_matrix<int, float> mat;
     coo_matrix<int, double> mat_d;
-    //init_coo_matrix(mat);
-    //init_coo_matrix(mat_d);
-    spmv::ReadMMF(filename, &mat);
-    spmv::ReadMMF(filename, &mat_d);
+    init_coo_matrix(mat);
+    init_coo_matrix(mat_d);
+    //spmv::ReadMMF(filename.c_str(), &mat);
+    //spmv::ReadMMF(filename.c_str(), &mat_d);
+	
+	RBFFD_IO<double> io;
+	std::vector<int> rows, cols;
+	std::vector<double> values;
+	int width, height;
+	io.loadFromBinaryMMFile(rows, cols, values, width, height, filename);
+	//io.loadFromAsciMMFile(rows, cols, values, width, height, filename);
+	//mat.coo_row_id = rows;
+	//mat.coo_col_id = cols;
+	//mat.coo_data = values;
+
+	for (int i=0; i < 10; i++) {
+		//printf("%d, %d, %f\n", mat.coo_row_id[i], mat.coo_col_id[i], mat.coo_data[i]);
+		printf("%d, %d, %f\n", rows[i], cols[i], values[i]);
+	}
+	exit(0);
+
+		//int loadFromBinaryMMFile(std::vector<int>& rows, std::vector<int>& cols, 
+				//std::vector<T>& values,int& width, int& height, std::string& filename);
+
 	printf("READ INPUT FILE: \n");
 	mat.print();
 
@@ -141,7 +153,7 @@ int main(int argc, char* argv[])
     {
 	#if 1
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_ell.cl");
-	printf("befpre spmv_ell\n");
+	printf("before spmv_ell\n");
 	spmv::spmv_ell("spmv_ell.cl", &mat, dim2Size, ntimes, CONTEXTTYPE);
 	spmv::spmv_ell("spmv_ell_d.cl", &mat_d, dim2Size, ntimes, CONTEXTTYPE);
 	//spmv::spmv_ell(clfilename, &mat, dim2Size, ntimes, CONTEXTTYPE);

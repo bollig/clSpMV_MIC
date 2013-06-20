@@ -103,30 +103,12 @@ SELL<T>::SELL(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl_d
 	std::fill(vec_v.begin(), vec_v.end(), 1.);
 	std::fill(result_v.begin(), result_v.end(), 0.);
     coores_v.resize(coo_mat->matinfo.height);
-	//std::fill(coores_v.begin(), coores_v.end(), 7.);
     spmv_only_T<T>(coo_mat, vec_v, coores_v);
-	#if 0
-	for (int i=0; i < 10; i++) {
-		printf("coores_v[%d]= %f\n", i, coores_v[i]);
-	}
-	#endif
-
-
-	printf("**** SELL CONSTRUCTOR ****\n");
-	//ProjectSettings* pjj = ProjectSettingsSingleton::getProjectSettings();
-	printf("ASK EVAN HOW THIS WORKS\n");
-	int gh = OPTIONAL<int>("gordon", "45");
-	int gs = REQUIRED<int>("ggordon");
-	printf("gh = %d\n", gh); 
-	printf("gs = %d\n", gh);
 
     //---------------
 
 	opttime = 10000.0f;
 	optmethod = 0;
-
-	//spmv_sell_ocl(&sellmat, vec, res, dim2Size, opttime1, optmethod1, oclfilename, deviceType, coores, ntimes);
-
 }
 //----------------------------------------------------------------------
 template <typename T>

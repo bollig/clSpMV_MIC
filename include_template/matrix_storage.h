@@ -546,9 +546,9 @@ template <class dimType, class dataType>
 void init_coo_matrix(coo_matrix<dimType, dataType>& mat)
 {
     init_mat_info(mat.matinfo);
-    mat.coo_row_id = NULL;
-    mat.coo_col_id = NULL;
-    mat.coo_data = NULL;
+    mat.coo_row_id.resize(0); // = NULL;
+    mat.coo_col_id.resize(0); // = NULL;
+    mat.coo_data.resize(0); // = NULL;
 }
 
 

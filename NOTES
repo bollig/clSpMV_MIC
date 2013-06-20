@@ -54,3 +54,10 @@ Data structure that contains all run parameters:
      (Cut-Hill-McGee, space-filling curve)
   - sparse matrix format: (ELL, SELL, SBELL, BELL, CVR)
 ----------------------------------------------------------------------
+No need to run all cases (bell, sell, etc.) for all matrices. Choose 1-2 representative, 
+say 32 nodes per stencil.  Choose only large node configurations where GPU is saturated. 
+Later on, do some spot checks. 
+
+Generate the 3D datasets. 
+----------------------------------------------------------------------
+works if I read ascii file, does not work if read binary  file. 

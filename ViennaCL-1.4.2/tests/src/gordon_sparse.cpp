@@ -61,7 +61,7 @@
 #include "rbffd/rbffd_io.h"
 #include "settings/projectsettings.h"
 
-ProjectSettings ps;
+//ProjectSettings ps;
 
 //
 // -------------------------------------------------------------
@@ -198,7 +198,7 @@ int test(Epsilon const& epsilon)
 	int width, height; 
 
 
-	std::string file_binary = ps.getRequired<std::string>("filename");
+	std::string file_binary = REQUIRED<std::string>("filename");
 	int err = io.loadFromBinaryMMFile(rows, cols, vals, width, height, file_binary);
 	if (err != 0) exit(1);
 	printf("height, width, nonzeros= %d, %d, %d\n", width, height, rows.size());
@@ -271,8 +271,9 @@ int test(Epsilon const& epsilon)
 //
 int main()
 {
-	ps.ParseFile("test.conf");
-	std::string coprocessor = ps.getRequired<std::string>("coprocessor");
+	ProjectSettings ps("test.conf");
+	//ps.ParseFile("test.conf");
+	std::string coprocessor = REQUIRED<std::string>("coprocessor");
 
 #ifdef VIENNACL_WITH_OPENCL
   // Choose the first Phi device (WORKS)

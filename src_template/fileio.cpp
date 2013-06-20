@@ -9,7 +9,7 @@ namespace spmv {
 
 //Read from matrix market format to a coo mat
 template <typename T>
-void ReadMMF(char* filename, coo_matrix<int, T>* mat)
+void ReadMMF(const char* filename, coo_matrix<int, T>* mat)
 {
     FILE* infile = fopen(filename, "r");
     char tmpstr[100];
