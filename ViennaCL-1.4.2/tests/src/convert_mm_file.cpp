@@ -6,6 +6,8 @@
 #include <vector>
 #include <cmath>
 
+#include "settings/projectsettings.h"
+
 
 #define VECT std::vector<T> 
 
@@ -15,6 +17,9 @@ int main()
 	std::string filename = "../../examples/testdata/thirtytwo_million.mtx";
 	//std::string filename = "../../examples/testdata/one_million.mtx";
 	//std::string filename = "../../examples/testdata/mat65k.mtx";
+
+	ProjectSettings ps("test.conf");
+	filename = REQUIRED<std::string>("filename");
 
 
 	std::vector<int> rows;

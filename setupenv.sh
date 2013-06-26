@@ -1,5 +1,7 @@
 #!/bin/sh
 
+#
+
 if [ $HOSTNAME = "S2" ] ; then
 	echo "Frodo"
 	export CL_DEVICE_TYPE="CL_DEVICE_TYPE_ACCELERATOR"
