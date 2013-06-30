@@ -122,6 +122,9 @@ added a check on OpenCL_ROOT, in case defined by user to handl non-conventinal s
 IMPORTANT: source ../setupenv.sh 
 (ideally, I should find a way to do this automatically.)
 ----------------------------------------------------------------------
+June 30, 2013
+ViennaCL tests run on S2 at UMN, on Cascade at MSI on on FSU HPC, both Opencl and CPU versions. 
+There is error in OpenCL version of M*V. (sparse matrix/vector multiplication.)
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
