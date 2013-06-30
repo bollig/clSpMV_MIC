@@ -15,7 +15,7 @@ elif [ $HOSTNAME = "Gordons-MacBook-Pro.local" ] ; then
 	export CL_DEVICE_TYPE="CL_DEVICE_TYPE_GPU"
 	export CLSPMVPATH=$HOME/src/clSpMV_MIC
 	export CL_KERNELS=${CLSPMVPATH}/kernels
-elif [ $HOSTNAME = "hpc-15-35" ]  ; then
+elif [ $HOSTNAME = "sc" -o $HOSTNAME = "hpc-15-35" ]  ; then
 	echo "FSU MIC/host node"
 	module load intel-oc
 	export CL_DEVICE_TYPE="CL_DEVICE_TYPE_ACCELERATOR"

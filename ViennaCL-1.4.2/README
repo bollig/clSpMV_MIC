@@ -118,6 +118,9 @@ Change compiler
 --
 Modifed sections of ../cmake/FindOpenCL to avoid searching default locations for OpenCL. I also 
 added a check on OpenCL_ROOT, in case defined by user to handl non-conventinal systems, such as Intel. 
+
+IMPORTANT: source ../setupenv.sh 
+(ideally, I should find a way to do this automatically.)
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
