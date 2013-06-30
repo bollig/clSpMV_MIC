@@ -109,3 +109,16 @@ A. License
 ------------
 ViennaCL is distributed under the MIT (X11) License. See file LICENSE.
 
+----------------------------------------------------------------------
+OPTIONS:  (GE), June 30, 2013
+Change compiler
+
+ cmake -DCMAKE_CXX_COMPILER=icc
+
+--
+Modifed sections of ../cmake/FindOpenCL to avoid searching default locations for OpenCL. I also 
+added a check on OpenCL_ROOT, in case defined by user to handl non-conventinal systems, such as Intel. 
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+----------------------------------------------------------------------

@@ -84,10 +84,10 @@ int main(int argc, char* argv[])
 	std::string sparsity = REQUIRED<std::string>("sparsity");
 	printf("sparsity= %s\n", sparsity.c_str());
 	//filename = OPTIONAL<std::string>("data_filename", filename);
-	int c = OPTIONAL<int>("caee", "10"); // ERROR, see next line
+	//int c = OPTIONAL<int>("case", "10"); // ERROR, see next line
 	//src_template/spmv_all.cpp:85: error: no matching function for call to ‘ProjectSettingsSingleton::getOptional(const char [5], int)’
 //	printf("c= %d\n", c);
-	printf("filename = %s\n", filename.c_str());
+	//printf("filename = %s\n", filename.c_str());
 
 
     coo_matrix<int, float> mat;
@@ -97,21 +97,27 @@ int main(int argc, char* argv[])
     //spmv::ReadMMF(filename.c_str(), &mat);
     //spmv::ReadMMF(filename.c_str(), &mat_d);
 	
-	RBFFD_IO<double> io;
+	RBFFD_IO<float> io;
 	std::vector<int> rows, cols;
-	std::vector<double> values;
+	std::vector<float> values;
 	int width, height;
+	#if 0
 	io.loadFromBinaryMMFile(rows, cols, values, width, height, filename);
-	//io.loadFromAsciMMFile(rows, cols, values, width, height, filename);
-	//mat.coo_row_id = rows;
-	//mat.coo_col_id = cols;
-	//mat.coo_data = values;
+	mat.coo_row_id = rows;
+	mat.coo_col_id = cols;
+	mat.coo_data = values;
+	#else
+	io.loadFromAsciMMFile(rows, cols, values, width, height, filename);
+    mat.matinfo.height = height;
+    mat.matinfo.width = width;
+    mat_d.matinfo.height = height;
+    mat_d.matinfo.width = width;
+	#endif
 
-	for (int i=0; i < 10; i++) {
-		//printf("%d, %d, %f\n", mat.coo_row_id[i], mat.coo_col_id[i], mat.coo_data[i]);
+	for (int i=0; i < 100; i++) {
 		printf("%d, %d, %f\n", rows[i], cols[i], values[i]);
 	}
-	exit(0);
+	//exit(0);
 
 		//int loadFromBinaryMMFile(std::vector<int>& rows, std::vector<int>& cols, 
 				//std::vector<T>& values,int& width, int& height, std::string& filename);
@@ -197,7 +203,7 @@ int main(int argc, char* argv[])
     {
 	sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_sbell.cl");
 	spmv::spmv_sbell("spmv_sbell.cl", &mat, dim2Size, ntimes, CONTEXTTYPE);
-	spmv::spmv_sbell("spmv_sbell_d.cl", &mat_d, dim2Size, ntimes, CONTEXTTYPE);
+	//spmv::spmv_sbell("spmv_sbell_d.cl", &mat_d, dim2Size, ntimes, CONTEXTTYPE);
     }
 	#endif
 

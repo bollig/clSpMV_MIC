@@ -28,7 +28,14 @@ if(ENV_OPENCLROOT2)
  set(ENV_OPENCLROOT $ENV{OPENCLROOT})
 endif(ENV_OPENCLROOT2)
 
+set(ENV_OPENCL_ROOT $ENV{OPENCL_ROOT})
+if(ENV_OPENCL_ROOT)
+  set(ENV_OPENCLROOT $ENV{OPENCL_ROOT})
+endif(ENV_OPENCL_ROOT)
+
+
 if(ENV_OPENCLROOT)
+message("*** ENV_OPENCLROOT: ${ENV_OPENCLROOT}")
   find_path(
     OPENCL_INCLUDE_DIR
     NAMES CL/cl.h OpenCL/cl.h
@@ -44,15 +51,18 @@ if(ENV_OPENCLROOT)
     else(CMAKE_SIZEOF_VOID_P EQUAL 4)
       set(OPENCL_LIB_SEARCH_PATH
           ${OPENCL_LIB_SEARCH_PATH}
+          ${ENV_OPENCLROOT}/lib64
           ${ENV_OPENCLROOT}/lib/x86_64)
     endif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+message("*** OPENCL_LIB_SEARCH_PATH: ${OPENCL_LIB_SEARCH_PATH}")
   endif(("${CMAKE_SYSTEM_NAME}" MATCHES "Linux") OR (${CMAKE_SYSTEM_NAME} MATCHES "Windows"))
   find_library(
     OPENCL_LIBRARY
+    NO_DEFAULT_PATH  #uncomment this is you wish to surpress the use of default paths for OpenCL
     NAMES OpenCL
     PATHS ${OPENCL_LIB_SEARCH_PATH}
-    #NO_DEFAULT_PATH  #uncomment this is you wish to surpress the use of default paths for OpenCL
     )
+message("*** OPENCL_LIBRARY: ${OPENCL_LIBRARY}")
 else(ENV_OPENCLROOT)
   find_path(
     OPENCL_INCLUDE_DIR
@@ -72,6 +82,7 @@ find_package_handle_standard_args(
   DEFAULT_MSG
   OPENCL_LIBRARY OPENCL_INCLUDE_DIR
   )
+message("*** override OPENCL_LIBRARY: ${OPENCL_LIBRARY}")
 
 if(OPENCL_FOUND)
   set(OPENCL_INCLUDE_DIRS ${OPENCL_INCLUDE_DIR})

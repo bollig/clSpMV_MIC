@@ -61,3 +61,6 @@ Later on, do some spot checks.
 Generate the 3D datasets. 
 ----------------------------------------------------------------------
 works if I read ascii file, does not work if read binary  file. 
+
+I am getting buffer errors. DO NOT KNOW WHY. 
+----------------------------------------------------------------------
