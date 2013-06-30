@@ -1,6 +1,7 @@
 # Project setup
 ###############
 
+
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
@@ -8,6 +9,9 @@ endif(COMMAND cmake_policy)
 
 project(ViennaCL)
 
+#ADD_DEFINITIONS(-DCMAKE_C_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc)
+
+message("*** 1")
 
 #
 # User customizations if CMake does not find Boost or OpenCL
@@ -16,6 +20,8 @@ project(ViennaCL)
 # Set boost path here if not found automatically by CMake
 #SET(BOOST_ROOT "C:/Program\ Files\ (x86)/boost/boost_1_42")     # adjust this on Windows
 #SET(BOOST_ROOT "/opt/local/include")                            # adjust this on MacOS or Linux
+
+set(BOOST_ROOT $ENV{HOME}/local/boost_1_53_0/)
 
 
 # Common options - There is usually no need to change anything below this line
@@ -28,6 +34,8 @@ set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
+message("*** 2")
+include(compilers)  
 include(ViennaCLCommon)
 
 # For out-of-the-box support on MacOS:
@@ -37,6 +45,7 @@ IF (ENABLE_OPENCL)
     set(CMAKE_EXE_LINKER_FLAGS "-framework OpenCL")
   ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ENDIF(ENABLE_OPENCL)
+message("*** 3")
 
 
 # Set release build:
@@ -55,9 +64,12 @@ if(BUILD_EXAMPLES)
    add_subdirectory(examples)
 endif()
 
+message("*** build testing : ${BUILD_TESTING}")
 if(BUILD_TESTING)
+   message("*** BUILD_TESTING ***")
    add_subdirectory(tests)
 endif()
+message("*** 4")
 
 # Install
 #########
@@ -65,3 +77,4 @@ endif()
 install(DIRECTORY viennacl ${CMAKE_CURRENT_BINARY_DIR}/viennacl
    DESTINATION ${INSTALL_INCLUDE_DIR} COMPONENT dev
    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+message("*** 5")

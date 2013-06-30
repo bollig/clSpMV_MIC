@@ -49,6 +49,12 @@ CXX        := g++ -g
 CC         := gcc
 LINK       := g++ -g
 
+IF (USE_ICC)
+    set (CMAKE_C_COMPILER "icc")
+	set (CMAKE_CXX_COMPILER "icpc")
+ENDIF (USE_ICC)
+
+
 # Includes
 INCLUDES  += $(INCDIR) -I$(OCLCOMMONDIR)/include
 

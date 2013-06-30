@@ -26,6 +26,7 @@ find_library(
 
 # tests with OpenCL backend
 if (ENABLE_OPENCL)
+  message("ENABLE_OPENCL is on, build tests")
   foreach(PROG blas3_prod blas3_solve fft iterators
                generator_inner_product generator_matrix_vector_product generator_vector generator_multiline
                global_variables
