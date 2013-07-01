@@ -179,6 +179,7 @@ makedirectories:
 	$(VERBOSE)cp $(ROOTDIR)/include/constant.h /tmp/ 
 
 single: $(COMMONOBJS) $(SINGLEOBJS) 
+	echo $(LIB)
 	$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_all $(COMMONOBJS) $(SINGLEOBJS) $(LIB)
 
 bench: $(COMMONOBJS) $(BENCHOBJS)

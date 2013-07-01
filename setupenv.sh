@@ -9,14 +9,15 @@ if [ $HOSTNAME = "S2" ] ; then
 	# preload does not work
 	#export LD_PRELOAD=$OPENCL_ROOT/lib64/libtbb_preview.so
 
-elif [ $HOSTNAME = "casiornis" -o $HOSTNAME = "case013" ] ; then
-	echo "Casiornis"
+elif [ $HOSTNAME = "casiornis" -o $HOSTNAME = "cas013" ] ; then
+	echo $HOSTNAME
 	module load intel
 	export CL_DEVICE_TYPE="CL_DEVICE_TYPE_ACCELERATOR"
 	export CLSPMVPATH=$HOME/src/clSpMV_MIC
 	export CL_KERNELS=${CLSPMVPATH}/kernels
 	export OPENCL_ROOT=/opt/intel/opencl-1.2-3.0.67279/
-	export LD_PRELOAD=$OPENCL_ROOT/lib64/libtbb_preview.so
+	#export LD_PRELOAD=$OPENCL_ROOT/lib64/libtbb_preview.so
+	export LD_LIBRARY_PATH=$OPENCL_ROOT/lib64:$LD_LIBRARY_PATH
 elif [ $HOSTNAME = "Gordons-MacBook-Pro.local" ] ; then
 	echo "Home Mac"
 	export CL_DEVICE_TYPE="CL_DEVICE_TYPE_GPU"
