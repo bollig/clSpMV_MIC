@@ -101,13 +101,13 @@ int main(int argc, char* argv[])
 	std::vector<int> rows, cols;
 	std::vector<float> values;
 	int width, height;
-	#if 0
+	#if 1
+	printf("*** load BINARY FILE %s ***\n", filename.c_str());
 	io.loadFromBinaryMMFile(rows, cols, values, width, height, filename);
-	mat.coo_row_id = rows;
-	mat.coo_col_id = cols;
-	mat.coo_data = values;
 	#else
+	printf("*** load ASCI FILE %s ***\n", filename.c_str());
 	io.loadFromAsciMMFile(rows, cols, values, width, height, filename);
+	#endif
     mat.matinfo.height = height;
     mat.matinfo.width = width;
     mat.matinfo.nnz = rows.size();
@@ -123,7 +123,6 @@ int main(int argc, char* argv[])
 	for (int i=0; i < values.size(); i++)  {
 		mat_d.coo_data[i] = (double) values[i];
 	}
-	#endif
 
 	for (int i=0; i < 100; i++) {
 		printf("%d, %d, %f\n", rows[i], cols[i], values[i]);
