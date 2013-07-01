@@ -110,13 +110,16 @@ int main(int argc, char* argv[])
 	io.loadFromAsciMMFile(rows, cols, values, width, height, filename);
     mat.matinfo.height = height;
     mat.matinfo.width = width;
+    mat.matinfo.nnz = rows.size();
     mat_d.matinfo.height = height;
     mat_d.matinfo.width = width;
+    mat_d.matinfo.nnz = rows.size();
 	#endif
 
 	for (int i=0; i < 100; i++) {
 		printf("%d, %d, %f\n", rows[i], cols[i], values[i]);
 	}
+	printf("rows.size: %d\n", rows.size());
 	//exit(0);
 
 		//int loadFromBinaryMMFile(std::vector<int>& rows, std::vector<int>& cols, 
@@ -124,6 +127,7 @@ int main(int argc, char* argv[])
 
 	printf("READ INPUT FILE: \n");
 	mat.print();
+	exit(0);
 
     char* clspmvpath = getenv("CLSPMVPATH");
     char clfilename[1000];

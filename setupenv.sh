@@ -5,6 +5,9 @@ if [ $HOSTNAME = "S2" ] ; then
 	export CL_DEVICE_TYPE="CL_DEVICE_TYPE_ACCELERATOR"
 	export CLSPMVPATH=$HOME/src/clSpMV_MIC
 	export CL_KERNELS=${CLSPMVPATH}/kernels
+	export OPENCL_ROOT=/opt/intel/opencl-1.2-3.0.67279/
+	# preload does not work
+	#export LD_PRELOAD=$OPENCL_ROOT/lib64/libtbb_preview.so
 
 elif [ $HOSTNAME = "casiornis" -o $HOSTNAME = "case013" ] ; then
 	echo "Casiornis"

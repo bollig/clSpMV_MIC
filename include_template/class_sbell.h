@@ -111,7 +111,7 @@ SBELL<T>::SBELL(coo_matrix<int, T>* coo_mat, int dim2Size, char* oclfilename, cl
     coores_v.resize(coo_mat->matinfo.height);
 	std::fill(coores_v.begin(), coores_v.end(), 7.);
     spmv_only_T<T>(coo_mat, vec_v, coores_v);   // matrix*vector, serial
-	#if 0
+	#if 1
 	for (int i=0; i < 10; i++) {
 		printf("coores_v[%d]= %f\n", i, coores_v[i]);
 	}
@@ -129,10 +129,10 @@ void SBELL<T>::run()
     for (int bwidth = 4; bwidth < 9; bwidth += 4) {
     for (int bheight = 1; bheight < 9; bheight*=2) {
 	// re-initialization Should not be required. Did not help solve the problem. 
-	count++;
+		count++;
 
 
-		//printf("++++++ for loop: bwidth= %d, bheight= %d ++++\n", bwidth, bheight);
+		printf("++++++ for loop: bwidth= %d, bheight= %d ++++\n", bwidth, bheight);
 
 		//bwidth = 4; // run same case twice
 		//bheight = 1;
@@ -154,6 +154,7 @@ void SBELL<T>::run()
     	//col_align = mat.sbell_height_aligned;
     	//data_align = mat.sbell_float4_aligned;
     	nnz = mat.matinfo.nnz;
+		printf("nnz= %d\n", nnz);
     	rownum = mat.matinfo.height;
     	blockrownum = mat.sbell_row_num;
     	vecsize = mat.matinfo.width;
