@@ -114,20 +114,27 @@ int main(int argc, char* argv[])
     mat_d.matinfo.height = height;
     mat_d.matinfo.width = width;
     mat_d.matinfo.nnz = rows.size();
+	mat.coo_row_id = rows; // copy is expensive
+	mat.coo_col_id = cols;
+	mat.coo_data = values;
+	mat_d.coo_row_id = rows; // copy is expensive
+	mat_d.coo_col_id = cols;
+	mat_d.coo_data.resize(values.size());
+	for (int i=0; i < values.size(); i++)  {
+		mat_d.coo_data[i] = (double) values[i];
+	}
 	#endif
 
 	for (int i=0; i < 100; i++) {
 		printf("%d, %d, %f\n", rows[i], cols[i], values[i]);
 	}
 	printf("rows.size: %d\n", rows.size());
-	//exit(0);
 
 		//int loadFromBinaryMMFile(std::vector<int>& rows, std::vector<int>& cols, 
 				//std::vector<T>& values,int& width, int& height, std::string& filename);
 
 	printf("READ INPUT FILE: \n");
 	mat.print();
-	exit(0);
 
     char* clspmvpath = getenv("CLSPMVPATH");
     char clfilename[1000];
