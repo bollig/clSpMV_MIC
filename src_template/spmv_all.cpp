@@ -83,6 +83,8 @@ int main(int argc, char* argv[])
 
 	std::string sparsity = REQUIRED<std::string>("sparsity");
 	printf("sparsity= %s\n", sparsity.c_str());
+
+	std::string asci_binary = REQUIRED<std::string>("asci_binary");
 	//filename = OPTIONAL<std::string>("data_filename", filename);
 	//int c = OPTIONAL<int>("case", "10"); // ERROR, see next line
 	//src_template/spmv_all.cpp:85: error: no matching function for call to ‘ProjectSettingsSingleton::getOptional(const char [5], int)’
@@ -101,13 +103,18 @@ int main(int argc, char* argv[])
 	std::vector<int> rows, cols;
 	std::vector<float> values;
 	int width, height;
-	#if 1
-	printf("*** load BINARY FILE %s ***\n", filename.c_str());
-	io.loadFromBinaryMMFile(rows, cols, values, width, height, filename);
-	#else
-	printf("*** load ASCI FILE %s ***\n", filename.c_str());
-	io.loadFromAsciMMFile(rows, cols, values, width, height, filename);
-	#endif
+
+
+	if (asci_binary == "asci" || asci_binary == "ascii") {
+		printf("*** load ASCI FILE %s ***\n", filename.c_str());
+		io.loadFromAsciMMFile(rows, cols, values, width, height, filename);
+	} else if (asci_binary == "binary") {
+		printf("*** load BINARY FILE %s ***\n", filename.c_str());
+		io.loadFromBinaryMMFile(rows, cols, values, width, height, filename);
+	} else {
+		printf("*** unknown read format type (asci/binary)\n");
+	}
+
     mat.matinfo.height = height;
     mat.matinfo.width = width;
     mat.matinfo.nnz = rows.size();
