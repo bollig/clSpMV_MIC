@@ -197,7 +197,7 @@ void SELL<T>::run()
 	//int optmethod = sell_ocl.getOptMethod();
 
 	double gflops = (double)nnz*2/opttime/(double)1e9;
-	char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
+	const char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
 	printf("\n------------------------------------------------------------------------\n");
 	printf("SELL %s best time %f ms best method %d GFLOPS %f", format, opttime*1000.0, optmethod, gflops);
 	printf("\n------------------------------------------------------------------------\n");
@@ -251,7 +251,7 @@ void SELL<T>::method_0_warp()
 	double testend = timestamp();
 	double time_in_sec = (testend - teststart)/(double)dim2;
 	double gflops = (double)nnz*2/(time_in_sec/(double)ntimes)/(double)1e9;
-	char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
+	const char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
 	printf("\nSELL %s cpu warp time %lf ms GFLOPS %lf code %d \n\n",   format, time_in_sec / (double) ntimes * 1000, gflops, methodid);
 
 	double onetime = time_in_sec / (double) ntimes;
@@ -310,7 +310,7 @@ void SELL<T>::method_0_group()
 	double testend = timestamp();
 	double time_in_sec = (testend - teststart)/(double)dim2;
 	double gflops = (double)nnz*2/(time_in_sec/(double)ntimes)/(double)1e9;
-	char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
+	const char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
 	printf("\nSELL %s cpu group time %lf ms GFLOPS %lf code %d \n\n",   format, time_in_sec / (double) ntimes * 1000, gflops, methodid);
 
 	double onetime = time_in_sec / (double) ntimes;

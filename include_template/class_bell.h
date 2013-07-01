@@ -214,7 +214,7 @@ void BELL<T>::run()
 		double gflops = (double)nnz*2/opttime/(double)1e9;
 		printf("BELL info: block row num %d ell num %d \n", mat.b4ell_row_num, mat.b4ell_block_num);
 		printf("\n------------------------------------------------------------------------\n");
-		char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
+		const char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
 		printf("BELL %s best time %f ms best method %d GFLOPS %f", format, opttime*1000.0, optmethod, gflops);
 		printf("\n------------------------------------------------------------------------\n");
     }}
@@ -286,7 +286,7 @@ void BELL<T>::method_0(int count)
 	double testend = timestamp();
 	double time_in_sec = (testend - teststart)/(double)dim2;
 	printf("ntimes= %d, time_in_msec= %f, nnz= %d\n", ntimes, time_in_sec*1000., nnz);
-	char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
+	const char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
 	double gflops = (double)nnz*2/(time_in_sec/(double)ntimes)/(double)1e9;
 	printf("\nBELL %s %dx%d block cpu time %lf ms GFLOPS %lf code %d \n\n", format, bh, bw,  time_in_sec / (double) ntimes * 1000, gflops, methodid);
 
@@ -349,7 +349,7 @@ void BELL<T>::method_1()
 	double testend = timestamp();
 	double time_in_sec = (testend - teststart)/(double)dim2;
 	double gflops = (double)nnz*2/(time_in_sec/(double)ntimes)/(double)1e9;
-	char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
+	const char* format = (sizeof(T) == sizeof(float)) ? "double" : "float";
 	printf("\nBELL %s %dx%d block mad cpu time %lf ms GFLOPS %lf code %d \n\n", format, bh, bw,  time_in_sec / (double) ntimes * 1000, gflops, methodid);
 
 

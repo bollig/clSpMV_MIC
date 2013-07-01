@@ -9,10 +9,13 @@
 # Basic directory setup for SDK
 # (override directories only if they are not already defined)
 
-OCLROOTDIR := /opt/intel/opencl
+OCLROOTDIR ?= ${OPENCL_ROOT}
 OCLCOMMONDIR ?= $(OCLROOTDIR)
 OCLBINDIR ?= $(OCLROOTDIR)/bin/
 OCLLIBDIR     := $(OCLCOMMONDIR)/lib64
+#go:
+	#echo ${OCLCOMMONDIR}
+
 
 SRCDIR     ?= ./src_template
 ROOTDIR    ?= .
@@ -20,7 +23,7 @@ ROOTOBJDIR ?= obj
 BINDIR     ?= $(ROOTDIR)/linux
 #INCDIR	?= $(ROOTDIR)/include
 
-OPENCLDIR  = /opt/intel/opencl-1.2-3.0.67279/include  #GE
+OPENCLDIR  = ${OPENCL_ROOT}
 INCDIR	= -I$(ROOTDIR)/include_template  -I$(OPENCLDIR) -I.
 
 # GPU or ACCELERATOR
@@ -49,14 +52,13 @@ CXX        := g++ -g
 CC         := gcc
 LINK       := g++ -g
 
-IF (USE_ICC)
-    set (CMAKE_C_COMPILER "icc")
-	set (CMAKE_CXX_COMPILER "icpc")
-ENDIF (USE_ICC)
+CXX        := icpc -g
+CC         := icc
+LINK       := icpc -g
 
 
 # Includes
-INCLUDES  += $(INCDIR) -I$(OCLCOMMONDIR)/include
+INCLUDES  += $(INCDIR) -I${OCLCOMMONDIR}/include
 
 ifeq "$(strip $(HP_64))" ""
 	MACHINE := 32
@@ -120,8 +122,9 @@ endif
 
 
 # Libs
-LIB       := ${USRLIBDIR} -L/opt/intel/opencl-1.2-3.0.67279/lib64/ -L${OCLLIBDIR}
-LIB += -lintelocl -lOpenCL ${OPENGLLIB} ${LIB} 
+LIB       := ${USRLIBDIR} -L${OPENCL_ROOT}/lib64/ -L${OCLLIBDIR}
+#LIB += -lintelocl -lcl_logger -ltask_executor -ltbb_preview -lOpenCL ${OPENGLLIB} ${LIB} 
+LIB += -lintelocl -lcl_logger -ltask_executor -ltbb_preview -lOpenCL ${OPENGLLIB} ${LIB} 
 
 
 # Lib/exe configuration
