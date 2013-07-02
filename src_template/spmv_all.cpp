@@ -79,10 +79,10 @@ int main(int argc, char* argv[])
 	}
 
 	ProjectSettings pj("test.conf");
-	pj.ParseFile("in_file.txt"); // parameters change run to run
+	//pj.ParseFile("in_file.txt"); // parameters change run to run
 
-	std::string sparsity = REQUIRED<std::string>("sparsity");
-	printf("sparsity= %s\n", sparsity.c_str());
+	//std::string sparsity = REQUIRED<std::string>("sparsity");
+	//printf("sparsity= %s\n", sparsity.c_str());
 
 	std::string asci_binary = REQUIRED<std::string>("asci_binary");
 	//filename = OPTIONAL<std::string>("data_filename", filename);
