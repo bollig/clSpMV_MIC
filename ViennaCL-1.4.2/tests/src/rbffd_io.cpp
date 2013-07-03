@@ -10,7 +10,8 @@
 #include <stdio.h>
 #include <vector>
 #include <iostream>
-#include "nist/mmio.h"
+//#include "nist/mmio.h"
+#include "mmio.h"
 #include <assert.h>
 
 

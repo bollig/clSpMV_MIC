@@ -5,7 +5,7 @@ case = [5,7,9,10]
 workgroup_size = [1, 32, 128]
 dimensions = 2
 sparsity = ["compact", "random"]
-nb_nodes_per_stencil = [16,31,32,33]
+nb_nodes_per_stencil = [16,31,32,33,64]
 
 case = [10]
 workgroup_size = [1]

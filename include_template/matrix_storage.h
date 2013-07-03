@@ -2513,6 +2513,8 @@ bool coo2sbell(coo_matrix<dimType, dataType>* source, sbell_matrix<dimType, data
     {
 	//if (dest->sbell_slice_ptr)
 	    //free(dest->sbell_slice_ptr);
+		printf("SBELL totalsize= %d, MAX_MEM_OBJ= %d, bwidth= %d, bheight= %d, sizeof(dataType)= %d\n",
+		   totalsize, MAX_MEM_OBJ, bwidth, bheight, sizeof(dataType));
 		printf("SBELL too large totalsize %d bwidth %d bheight %d\n", totalsize, bwidth, bheight);
 		return false;
     }

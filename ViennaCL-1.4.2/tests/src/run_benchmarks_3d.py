@@ -1,15 +1,16 @@
 #!/usr/bin/python
 import os
 
-case = [5,7,9,10]
 workgroup_size = [1, 32, 128]
-dimensions = 2
+dimensions = 3
 sparsity = ["compact", "random"]
-nb_nodes_per_stencil = [16,31,32,33]
+#sparsity = ["random"]
+#nb_nodes_per_stencil = [16,31,32,33,64]
+nb_nodes_per_stencil = [16,32]
 
-case = [10]
 workgroup_size = [1]
-nb_nodes = [8,16,32,64,128]
+#nb_nodes = [8,16,32,64,128]
+nb_nodes = [64,128]
 
 #random_x_weights_direct__no_hv_stsize_33_2d_8x_8y_1z.mtxb
 
@@ -20,23 +21,32 @@ def generateFileList():
         for ns in nb_nodes_per_stencil:
             for nn in nb_nodes:
                     #file = "%s_x_weights_direct__no_hv_stsize_%d_2d_%dx_%dy_1z.mtx" % (s,ns,nn,nn) # works
-                    file = "%s_x_weights_direct__no_hv_stsize_%d_2d_%dx_%dy_1z.mtxb" % (s,ns,nn,nn)
+                    file = "%s_x_weights_direct__no_hv_stsize_%d_3d_%dx_%dy_%dz.mtxb" % (s,ns,nn,nn,nn)
                     files.append(file)
     return files
 #----------------------------------------------------------------------
 def run_cases():
 
     files = generateFileList()
-    os.system("mkdir output")
+    print(files)
+    #os.system("mkdir output")
 
-    for f in files:
-        for c in case:
-            CMD="./linux/release/spmv_all matrix/%s %s 5 > output/%s_case%s" % (f, c, f,c)
-            print(CMD + "\n")
-            os.system(CMD)
+    for file_name in files:
+        print "filename = ", file_name
+        fil = "matrix/" + file_name
+        file_content = """
+         coprocessor = MIC
+         filename = %s
+        """ % fil
+        fd = open('test.conf', 'w')
+        fd.write(file_content)
+        fd.close()
+        CMD="./gordon_sparse-test-opencl > output/%s_out" % file_name
+        print(CMD + "\n")
+        os.system(CMD)
 #----------------------------------------------------------------------
-files = generateFileList()
-print(files)
+#files = generateFileList()
+#print(files)
 
 run_cases()
 

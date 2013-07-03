@@ -20,7 +20,7 @@ find_library(
 find_library(
     SETTINGS_LIBRARY
     NAMES settings
-    PATHS ../external/settings ../../external/settings)
+    PATHS ../external/settings ../../external/settings $ENV{HOME}/src/rbffd_gpu/src/utils/conf)
     #NO_DEFAULT_PATH  #uncomment this is you wish to surpress the use of default paths for OpenCL
 
 
@@ -31,13 +31,29 @@ if (ENABLE_OPENCL)
                generator_inner_product generator_matrix_vector_product generator_vector generator_multiline
                global_variables
                matrix-vector matrix nmf qr-method
-               scalar sparse gordon_sparse convert_mm_file structured-matrices svd
+               scalar sparse structured-matrices svd
                vector)
      add_executable(${PROG}-test-opencl src/${PROG}.cpp)
      target_link_libraries(${PROG}-test-opencl ${OPENCL_LIBRARIES} ${NIST_LIBRARY} ${SETTINGS_LIBRARY})
      add_test(${PROG}-opencl ${PROG}-test-opencl)
      set_target_properties(${PROG}-test-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
   endforeach(PROG)
+
+  set(PROG gordon_sparse)
+  add_executable(${PROG}-test-opencl src/${PROG}.cpp src/mmio.cpp src/projectsettings.cpp)
+  target_link_libraries(${PROG}-test-opencl ${OPENCL_LIBRARIES} ${NIST_LIBRARY})
+  add_test(${PROG}-opencl ${PROG}-test-opencl)
+  set_target_properties(${PROG}-test-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
+
+  set(PROG convert_mm_file)
+  add_executable(${PROG}-test-opencl src/${PROG}.cpp src/projectsettings.cpp)
+  target_link_libraries(${PROG}-test-opencl ${OPENCL_LIBRARIES} ${NIST_LIBRARY})
+  add_test(${PROG}-opencl ${PROG}-test-opencl)
+  set_target_properties(${PROG}-test-opencl PROPERTIES COMPILE_FLAGS "-DVIENNACL_WITH_OPENCL")
+
+
+
+
 
   include_directories(${PROJECT_SOURCE_DIR}/external)
   add_executable(external_linkage-opencl

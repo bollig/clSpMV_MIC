@@ -58,7 +58,8 @@
 
 #include <vector>
 #include <string>
-#include "rbffd/rbffd_io.h"
+//#include "rbffd/rbffd_io.h"
+#include "rbffd_io.h"
 #include "settings/projectsettings.h"
 
 //ProjectSettings ps;
@@ -177,7 +178,6 @@ ScalarType diff(ublas::compressed_matrix<ScalarType> & cpu_matrix, VCL_MATRIX & 
   return error;
 }
 
-
 //----------------------------------------------------------------------
 // -------------------------------------------------------------
 //
@@ -199,6 +199,7 @@ int test(Epsilon const& epsilon)
 
 
 	std::string file_binary = REQUIRED<std::string>("filename");
+	printf("************ file_binary= %sn", file_binary.c_str()); // <<<<<<<<<<<<<<<<<<<<<<<<<<
 	int err = io.loadFromBinaryMMFile(rows, cols, vals, width, height, file_binary);
 	if (err != 0) exit(1);
 	printf("height, width, nonzeros= %d, %d, %d\n", width, height, rows.size());
@@ -213,7 +214,7 @@ int test(Epsilon const& epsilon)
 	printf("ublas size: %d, %d\n", ublas_matrix.size1(), ublas_matrix.size2());
 #else
   	ublas::compressed_matrix<NumericT> ublas_matrix;
-  	if (!viennacl::io::read_matrix_market_file(ublas_matrix, "../../examples/testdata/mat65k.mtx"))
+  	if (!viennacl::io::read_matrix_market_file(ublas_matrix, "matrix/mat65k.mtx"))
 #endif
 
 	std::cout << "done reading matrix" << std::endl;
