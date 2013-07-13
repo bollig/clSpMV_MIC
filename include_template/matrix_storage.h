@@ -121,10 +121,21 @@ public:
 		//if (b4ell_data) delete [] b4ell_data;
 		//if (b4ell_col_id) delete [] b4ell_col_id;
 	}
-	void print() {
+	void print(int nb_rows=0) {
 		printf("ell matrix info\n");
 		matinfo.print();
+        if (nb_rows < 0) nb_rows = matinfo.height;
 		printf("ell_num=%d, ell_height_aligned=%d\n", ell_num, ell_height_aligned);
+        for (int i=0; i < nb_rows; i++) {
+                int base = i*ell_height_aligned;
+                for (int el=0; el < ell_num; el++) {
+                    printf("row %d, col %d, ell, col_id[%d]= %d, data[%d]= %f\n", 
+                        i, el, i, ell_col_id[base+el], i, ell_data[base+el]);
+                }
+        }
+        //for (int i=0; i < ell_col_id.size(); i++) {
+            //printf("ell, col_id[%d]= %d, data[%d]= %f\n", i, ell_col_id[i], i, ell_data[i]);
+        //}
 	}
 };
 
@@ -195,10 +206,13 @@ public:
 		//printf("*** inside coo_matrix destructor\n");
 	}
 
-	void print() {
-		printf("coo_matrix info\n");
+	void print(int nb_rows=0) {
+		printf("*** coo_matrix info ***\n");
 		matinfo.print();
 		printf("coo_row_id sz: %d, coo_col_id sz: %d, coo_data sz: %d\n", coo_row_id.size(), coo_col_id.size(), coo_data.size());
+        for (int i=0; i < nb_rows; i++) {
+                printf("coo, row[%d]= %d, col[%d]= %d, val[%d]= %f\n", i, coo_row_id[i], i, coo_col_id[i], i, coo_data[i]);
+        }
 	}
 };
 
@@ -229,10 +243,25 @@ public:
     	//if (csr_col_id) delete [] csr_col_id;
     	//if (csr_row_data) delete [] csr_data;
     }
+
+	void print(int nb_rows=0) {
+		printf("*** csr_matrix info ***\n");
+		matinfo.print();
+		printf("csr_row_ptr sz: %d, csr_col_id sz: %d, csr_data sz: %d\n", csr_row_ptr.size(), csr_col_id.size(), csr_data.size());
+        if (nb_rows < 0) { // print entire matrix
+            nb_rows = csr_col_id.size();
+        }
+        for (int i=0; i < nb_rows; i++) {
+                printf("csr, col[%d]= %d, val[%d]= %f\n", i, csr_col_id[i], i, csr_data[i]);
+        }
+        for (int i=0; i < csr_row_ptr.size(); i++) {
+            printf("csr, row_ptr[%d]= %d\n", i, csr_row_ptr[i]);
+        }
+	}
 };
 
 
-/** Examplar Storage
+/** example Storage
  *  | 0 1 | 4 5 |
  *  | 2 3 | 6 7 |
  *
@@ -275,7 +304,7 @@ public:
 	}
 };
 
-/** Examplar Storage
+/** example Storage
  *  | 0 1 | 4 5 |
  *  | 2 3 | 6 7 |
  *
@@ -1478,6 +1507,9 @@ void coo2ell(coo_matrix<dimType, dataType>* source, ell_matrix<dimType, dataType
     
     csr_matrix<dimType, dataType> csrmat;
     coo2csr<dimType, dataType>(source, &csrmat);
+    //source->print(source->matinfo.nnz);
+    //csrmat.print(-1); // print 64 rows + matrix info
+
    
     if (ellnum == (dimType)0)
     {
@@ -1495,38 +1527,52 @@ void coo2ell(coo_matrix<dimType, dataType>* source, ell_matrix<dimType, dataType
     //dest->ell_col_id = (dimType*)malloc(sizeof(dimType)*newlength*ellnum);
     //dest->ell_data = (dataType*)malloc(sizeof(dataType)*newlength*ellnum);
 
+    printf("newlength= %d\n", newlength);
+    printf("ellnum= %d\n", ellnum);
     dest->ell_col_id.resize(newlength*ellnum);
     dest->ell_data.resize(newlength*ellnum);
 
-    for (dimType i = (dimType)0; i < newlength * ellnum; i++)
-    {
-	dest->ell_col_id[i] = (dimType)0;
-	dest->ell_data[i] = (dataType)0;
-    }
+    std::fill(dest->ell_col_id.begin(), dest->ell_col_id.end(), 0);
+    std::fill(dest->ell_data.begin(), dest->ell_data.end(), (dataType)0);
+    //for (dimType i = (dimType)0; i < newlength * ellnum; i++)
+    //{
+	    //dest->ell_col_id[i] = (dimType)0;
+	    //dest->ell_data[i] = (dataType)0;
+    //}
 
     for (dimType i = (dimType)0; i < source->matinfo.height; i++)
     {
-	dimType start = csrmat.csr_row_ptr[i];
-	dimType end = csrmat.csr_row_ptr[i+1];
-	assert(end - start <= ellnum);
-	dimType lastcolid = (dimType)0;
-	for (dimType j = start; j < end; j++)
-	{
-	    dimType colid = csrmat.csr_col_id[j];
-	    dataType data = csrmat.csr_data[j];
-	    dest->ell_col_id[i + (j - start) * newlength] = colid;
-	    dest->ell_data[i + (j - start) * newlength] = data;
-	    lastcolid = colid;
-	}
-	for (dimType j = end; j < start + ellnum; j++)
-	{
-	    dest->ell_col_id[i + (j - start) * newlength] = lastcolid;
-	    dest->ell_data[i + (j - start) * newlength] = (dataType)0;
-	}
+        //printf("**** row %d ***\n", i);
+    	dimType start = csrmat.csr_row_ptr[i];
+	    dimType end = csrmat.csr_row_ptr[i+1];
+        //printf("start, end= %d, %d\n", start, end); // ok
+	    assert(end - start <= ellnum);
+	    dimType lastcolid = (dimType)0;
+	    for (dimType j = start; j < end; j++)
+	    {
+            // i : row number
+	        dimType colid = csrmat.csr_col_id[j];
+	        dataType data = csrmat.csr_data[j];
+            int indx = i+(j-start)*newlength;
+            //printf("el %d, colid, data= %d, %f\n", j, colid, data); // ok, newlength=32
+            //printf("i=%d, j-start= %d, indx= %d\n", i, j-start, indx);
+            //printf("ell_col_id size: %d\n", dest->ell_col_id.size());
+	        dest->ell_col_id[indx] = colid;
+	        dest->ell_data[indx] = data;
+	        lastcolid = colid;
+	    }
+	    for (dimType j = end; j < start + ellnum; j++)
+	    {
+            printf("INSIDE PADDING LOOP: shoud not occur\n");
+            assert(false); // should never end here in my own experiments (GE)
+	        dest->ell_col_id[i + (j - start) * newlength] = lastcolid;
+	        dest->ell_data[i + (j - start) * newlength] = (dataType)0;
+	    }
     }
 
-    //free_csr_matrix(csrmat);
+    //dest->print(16);
 
+    //free_csr_matrix(csrmat);
 }
 
 

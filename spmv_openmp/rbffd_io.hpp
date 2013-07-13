@@ -108,7 +108,7 @@ int RBFFD_IO<T>::loadFromBinaryMMFile(std::vector<int>& rows, std::vector<int>& 
 	width = N;
 	height = M;
 
-//printf("fromBinary, width/height= %d, %d\n", width, height);
+printf("fromBinary, width/height= %d, %d\n", width, height);
 
     /* NOTE: when reading in doubles, ANSI C requires the use of the "l"  */
     /*   specifier as in "%lg", "%lf", "%le", otherwise errors will occur */
@@ -126,8 +126,8 @@ int RBFFD_IO<T>::loadFromBinaryMMFile(std::vector<int>& rows, std::vector<int>& 
 		float val;
 	} line_f;
 
-	//printf("sizeof(line_d) = %d\n", sizeof(line_d));
-	//printf("sizeof(line_f) = %d\n", sizeof(line_f));
+	printf("sizeof(line_d) = %d\n", sizeof(line_d));
+	printf("sizeof(line_f) = %d\n", sizeof(line_f));
 
 
 	// Figure out the remaining size of the file to determine whether data is stored in 
@@ -153,7 +153,7 @@ int RBFFD_IO<T>::loadFromBinaryMMFile(std::vector<int>& rows, std::vector<int>& 
 			rows[i] = line_f.row-1; // matrix market indexes from 1
 			cols[i] = line_f.col-1;
 			values[i] = line_f.val;
-			//if (i < 10) printf("(float) fromBinary: %d, %d, %f\n", rows[i], cols[i], values[i]);
+			if (i < 10) printf("(float) fromBinary: %d, %d, %f\n", rows[i], cols[i], values[i]);
     	}
 	} else if (value_size == sizeof(double)) {
 		printf("File is stored as doubles\n");
@@ -162,7 +162,7 @@ int RBFFD_IO<T>::loadFromBinaryMMFile(std::vector<int>& rows, std::vector<int>& 
 			rows[i] = line_d.row-1; // matrix market indexes from 1
 			cols[i] = line_d.col-1;
 			values[i] = line_d.val;
-			//if (i < 10) printf("(float) fromBinary: %d, %d, %lf\n", rows[i], cols[i], values[i]);
+			if (i < 10) printf("(float) fromBinary: %d, %d, %lf\n", rows[i], cols[i], values[i]);
     	}
 	}
 

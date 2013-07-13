@@ -137,7 +137,7 @@ void Timer::begin()
 	count++;
 }
 //----------------------------------------------------------------------
-void Timer::end()
+double Timer::end()
 {
 	if (count <= offset) return;
 
@@ -145,7 +145,8 @@ void Timer::end()
 	double tt = (t_end.tv_sec - t_start.tv_sec) +
 	     (t_end.tv_usec - t_start.tv_usec) * 1.e-6;
 	//printf("tt= %f\n", tt);
-	t += 1000*tt;
+    elapsed = 1000.*tt;
+	t += elapsed;
 
 	if (count == nbCalls) {
 		print();
@@ -153,6 +154,7 @@ void Timer::end()
 	}
 
 	//t +=  (clock() - t1) * scale;
+    return elapsed;
 }
 
 void Timer::set(float tt)

@@ -1,0 +1,10 @@
+omp-spmv.cpp: end of file: execute matrix/vector multiply (standard)
+omp-spmv-vect.cpp: explicit vectorization (non-portable)
+
+The random stencils are not ordered. So sten[row][i] = {7,3,10,9,8} for example. 
+One sees that when one fetches 10, (11,12,13,...) are fetched as well. then when one fetches 9, 
+{9,10,11,12} are fetched. Inefficient. Stencil values should be orderd. Of course, by having them 
+unordered, we establish a worst case scenario. 
+----------------------------------------------------------------------
+Start implementation of ell format, which should be more efficient for my matrices. 
+----------------------------------------------------------------------

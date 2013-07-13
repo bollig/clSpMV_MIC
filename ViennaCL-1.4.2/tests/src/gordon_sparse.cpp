@@ -257,12 +257,12 @@ int test(Epsilon const& epsilon)
 
 	std::cout << "Testing products: coordinate_matrix" << std::endl;
 	for (int i=0; i< 5; i++) {
-  		vcl_result = viennacl::linalg::prod(vcl_compressed_matrix, vcl_rhs);
+  		vcl_result = viennacl::linalg::prod(vcl_coordinate_matrix, vcl_rhs);
 	}
 
 	std::cout << "Testing products: ell_matrix" << std::endl;
 	for (int i=0; i < 5; i++) {
-  		vcl_result = viennacl::linalg::prod(vcl_compressed_matrix, vcl_rhs);
+  		vcl_result = viennacl::linalg::prod(vcl_ell_matrix, vcl_rhs);
 	}
 
   return retval;

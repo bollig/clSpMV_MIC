@@ -70,11 +70,12 @@ namespace EB {
             ~Timer();
             void reset();
             void begin();
-            void end();
+            double end();
             int getCount() { return count;}
 
-            void stop() { end(); }
+            double stop() { return end(); }
             void start() { begin(); }
+            double getTime() { return elapsed; } // in ms
 
             void set(float t); //add a time from an external timer (GPU)
 

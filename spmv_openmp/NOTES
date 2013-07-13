@@ -1,0 +1,61 @@
+Working on Frodo at UMN. 
+compact file. 
+16 vectors in parallel
+64^3: m_nrngo : 128 Gflop
+32^3: m_nrngo is fastest : 93 Gflop
+32^3: m_nrngo is fastest : 93 Gflop
+
+8 vectors in parallel (change 8 go 4 in omp-spmm-vect)
+
+64^3, m_nrngo,  156.5 Gflops (32 vectors in parallel)
+64^3, m_nrngo,  128.5 Gflops (16 vectors in parallel)
+64^3, m_nrngo,  76.3 Gflops (8 vectors in parallel)
+the 4 vectors in paralle case crashed. Do not know why. 
+64^3, m_nrngo,  76.3 Gflops (16 vectors in parallel) (vector is 512 bits = 64 bytes = 8 doubles. 
+
+----------------------------------------------------------------------
+Single vector A*x
+omp-spmv-vect-swi-88
+OMP_THREAD=  180
+OMP_SCHEDULE=  dynamic,64
+KMP_AFFINITY=  scatter
+filename: random_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.mtx nVtx: 110592 nonzero: 3538944 AvgTime: 0.013247 Gflops: 0.534301 Bandwidth: 3.37278 
+filename: compact_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.mtx nVtx: 110592 nonzero: 3538944 AvgTime:
+0.00037 Gflops: 19.1294 Bandwidth: 120.755 
+----------------------------------------------------------------------
+OMP_THREAD=  180
+OMP_SCHEDULE=  dynamic,16
+KMP_AFFINITY=  scatter
+filename: compact_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.mtx nVtx: 110592 nonzero: 3538944 AvgTime:
+0.00039 Gflops: 18.1484 Bandwidth: 114.562 
+----------------------------------------------------------------------
+OMP_THREAD=  240
+OMP_SCHEDULE=  dynamic,64
+KMP_AFFINITY=  scatter
+filename: compact_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.mtx nVtx: 110592 nonzero: 3538944 AvgTime:
+0.00036 Gflops: 19.6608 Bandwidth: 124.109 
+----------------------------------------------------------------------
+OMP_THREAD=  120
+OMP_SCHEDULE=  dynamic,64
+KMP_AFFINITY=  scatter
+filename: compact_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.mtx nVtx: 110592 nonzero: 3538944 AvgTime:
+0.000449 Gflops: 15.7637 Bandwidth: 99.5082 
+----------------------------------------------------------------------
+OMP_THREAD=  120
+OMP_SCHEDULE=  dynamic,64
+KMP_AFFINITY=  compact
+filename: compact_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.mtx nVtx: 110592 nonzero: 3538944 AvgTime:
+0.000367 Gflops: 19.2858 Bandwidth: 121.742 
+----------------------------------------------------------------------
+OMP_THREAD=  180
+OMP_SCHEDULE=  dynamic,64
+KMP_AFFINITY=  compact
+filename: compact_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.mtx nVtx: 110592 nonzero: 3538944 AvgTime:
+0.000361 Gflops: 19.6063 Bandwidth: 123.765 
+----------------------------------------------------------------------
+MAXIMUM SPEED at 48^3 is 20 Gflops. 
+----------------------------------------------------------------------
+MAXIMUM SPEED at 64^3 is 21.4 Gflops. 
+----------------------------------------------------------------------
+
+

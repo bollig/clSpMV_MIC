@@ -224,6 +224,15 @@ int main(int argc, char* argv[])
     }
 	#endif
 
+    #if 0
+    else if (choice == 11)
+    {
+        printf("spmv in ell format using OpenNP in Native mode\n");
+	    sprintf(clfilename, "%s%s", clspmvpath, "/kernels/spmv_sbell.cl");
+	    spmv::spmv_sbell("spmv_sbell.cl", &mat, dim2Size, ntimes, CONTEXTTYPE);
+    }
+
+
     //free_coo_matrix(mat);
 
     return 0;
