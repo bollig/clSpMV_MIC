@@ -83,6 +83,7 @@ int main(int argc, char* argv[])
 	//printf("sparsity= %s\n", sparsity.c_str());
 
 	std::string asci_binary = REQUIRED<std::string>("asci_binary");
+    printf("asci_binary= %s\n", asci_binary.c_str());
 	//filename = OPTIONAL<std::string>("data_filename", filename);
 	//int c = OPTIONAL<int>("case", "10"); // ERROR, see next line
 	//src_template/spmv_all.cpp:85: error: no matching function for call to ‘ProjectSettingsSingleton::getOptional(const char [5], int)’

@@ -53,8 +53,8 @@ CXX        := g++ -g
 CC         := gcc
 LINK       := g++ -g
 
-MMIC       := -mmic
 MMIC       :=  
+MMIC       := -mmic
 CXX        := icpc  -openmp $(MMIC)  -diag-enable openmp 
 CC         := icc
 LINK       := icpc  -openmp $(MMIC)

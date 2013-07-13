@@ -190,23 +190,28 @@ void ELL_OPENMP<T>::method_0()
         //----------------------------
 // Probably wrong value, whci might explain poor performance.
  printf("aligned_length= %d\n", aligned_length);
- for (int i=0; i < 100; i++) {
-        printf("col_id[%d]= %d\n", i, col_id[i]);
- }
+ //for (int i=0; i < 100; i++) {
+        //printf("col_id[%d]= %d\n", i, col_id[i]);
+ //}
 #if 1
     float matrixelem;
     float vecelem;
     float accumulant;
     int vecid;
-    int aligned = aligned_length;
+    //const int aligned = aligned_length; // Gflop goes from 25 to 0.5 (Cannot make it private)
+    int aligned = aligned_length; 
 
     for (int it=0; it < 10; it++) {
         tm["spmv"]->start();
-#pragma omp parallel private(vecid, matrixelem, vecelem, accumulant, aligned)
+#pragma omp parallel private(vecid, matrixelem, vecelem, accumulant, aligned )
 {
 #pragma omp for 
         for (int row=0; row < vec_v.size(); row++) {
             int matoffset = row;
+// force vectorization of loop (I doubt it is appropriate)
+// went from 22 to 30Gfops  (static,1)
+// went from 27 to 30Gfops  (guided,16)
+#pragma simd
             for (int i = 0; i < nz; i++) {
 	            vecid = col_id[matoffset];
                 //printf("row %d, sten %d, vecid= %d\n", row, i, vecid);
