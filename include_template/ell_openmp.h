@@ -8,6 +8,7 @@
 //#include "CL/cl.h"
 #include "matrix_storage.h"
 #include <vector>
+#include <algorithm>
 #include <string>
 
 #include <omp.h>
@@ -83,18 +84,16 @@ public:
 	virtual void run();
 
 protected:
-	virtual void method_0();
-	virtual void method_1();
+	virtual void method_0(int nb=0);
+	virtual void method_1(int nb=0);
 };
 
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP<T>::run()
 {
-    for (int i=0; i < 1; i++) {
-	    method_0();
-    }
-	//method_1();
+    method_0();
+	method_1(4);
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -134,7 +133,7 @@ ELL_OPENMP<T>::ELL_OPENMP(coo_matrix<int, T>* coo_mat, int dim2Size, int ntimes)
 }
 //----------------------------------------------------------------------
 template <typename T>
-void ELL_OPENMP<T>::method_0()
+void ELL_OPENMP<T>::method_0(int nbit)
 {
 	printf("============== METHOD 0 ===================\n");
     // implementation on the CPU, using OpenMP, and ELL_OPENMP format
@@ -208,6 +207,7 @@ void ELL_OPENMP<T>::method_0()
 #pragma omp for 
         for (int row=0; row < vec_v.size(); row++) {
             int matoffset = row;
+            accumulant = 0.;
 // force vectorization of loop (I doubt it is appropriate)
 // went from 22 to 30Gfops  (static,1)
 // went from 27 to 30Gfops  (guided,16)
@@ -265,8 +265,89 @@ void ELL_OPENMP<T>::method_0()
 }
 //----------------------------------------------------------------------
 template <typename T>
-void ELL_OPENMP<T>::method_1()
+void ELL_OPENMP<T>::method_1(int nb_vectors)
 {
+	printf("============== METHOD 1 ===================\n");
+    // implementation on the CPU, using OpenMP, and ELL_OPENMP format
+
+    int nz = mat.ell_num;
+    std::vector<int>& col_id = mat.ell_col_id;
+    std::vector<T>& data = mat.ell_data;
+
+    printf("nz in row: %d\n", nz);
+    printf("nb rows: %d\n", vec_v.size());
+    printf("aligned_length= %d\n", aligned_length);
+    printf("vector length= %d\n", vec_v.size());
+    printf("result_length= %d\n", result_v.size());
+    printf("nb_vectors= %d\n", nb_vectors);
+
+    int nb_rows = vec_v.size();
+    std::vector<float> vec_in(nb_rows*nb_vectors, 1.);
+    std::vector<float> vec_out(nb_rows*nb_vectors, 1.);
+    float gflops;
+    float elapsed; 
+
+#if 1
+    float matrixelem;
+    float vecelem;
+    printf("after def of accumulant\n");
+    int vecid;
+    //const int aligned = aligned_length; // Gflop goes from 25 to 0.5 (Cannot make it private)
+    int aligned = aligned_length; 
+    printf("size of vec_in/out= %d, %d\n", vec_in.size(), vec_out.size());
+    int nb_vec = nb_vectors;
+
+    for (int it=0; it < 10; it++) {
+        tm["spmv"]->start();
+#pragma omp parallel private(vecid, matrixelem, vecelem, aligned, nb_vec )
+{
+        std::vector<float> accumulant(nb_vec);
+#pragma omp for 
+        for (int row=0; row < vec_v.size(); row++) {
+            int matoffset = row;
+            std::fill(accumulant.begin(), accumulant.end(), 0.);
+// force vectorization of loop (I doubt it is appropriate)
+            for (int i = 0; i < nz; i++) {
+	            vecid = col_id[matoffset];
+                float data_offset = data[matoffset];
+#pragma simd
+                for (int v = 0; v < nb_vec; v++) {
+                    //printf("row= %d, i= %d, v= %d\n", row, i, v);
+                    //printf("indx = %d, matoffset= %d\n", vecid+v*nb_rows, matoffset);
+                    //printf("size accumulant= %d\n", accumulant.size());
+                    //printf("indx= %d\n", v+vecid*nz);
+	                accumulant[v] += data_offset * vec_in[v+vecid*nz];
+                    //printf("1\n");
+                }
+	            matoffset += aligned;
+            }
+#pragma simd
+            for (int v=0; v < nb_vec; v++) {
+                //vec_out[vecid+v*nb_rows] = accumulant[vecid+v*nb_rows];
+                vec_out[v+vecid*nz] = accumulant[v];
+            }
+        }
+}
+    elapsed = tm["spmv"]->end();
+    gflops = 2.*nz*vec_v.size()*1e-9 / (1e-3*tm["spmv"]->getTime()); // assumes count of 1
+    printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
+   }
+#endif
+
+    printf("col_id.size()= %d\n", col_id.size());
+    printf("vec_in.size()= %d\n", vec_in.size());
+    printf("data.size() = %d\n", data.size());
+
+    std::vector<float> tmp(vec_out.size());
+    std::copy(vec_out.begin(), vec_out.end(), tmp.begin());
+
+// Less efficient than above. Hard to believe, since it looks identical. 
+
+    tm.printAll(stdout, 80);
+    printf("time = %f ms\n", tm["spmv"]->getTime());
+
+    printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
+    printf("vec_out[3] = %f\n", vec_out[3]);
 }
 //----------------------------------------------------------------------
 

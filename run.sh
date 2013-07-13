@@ -7,13 +7,14 @@ F=random_x_weights_direct__no_hv_stsize_32_3d_32x_32y_32z.mtxb
 F=random_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 F=random_x_weights_direct__no_hv_stsize_32_2d_128x_128y_1z.mtxb
 F=compact_x_weights_direct__no_hv_stsize_4_2d_4x_4y_1z.mtxb
-F=random_x_weights_direct__no_hv_stsize_4_2d_8x_8y_1z.mtxb
 F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 F=random_x_weights_direct__no_hv_stsize_32_3d_32x_32y_32z.mtxb
+F=random_x_weights_direct__no_hv_stsize_4_2d_8x_8y_1z.mtxb
 F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 F=random_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 export F=$F
 # export OMP_DYNAMIC=FALSE
+export OMP_NUM_THREADS=1
 export OMP_NUM_THREADS=180
 # 2nd argument must be as low as possible in random case
 export OMP_SCHEDULE=static,1  # no influence 2.5 Gf

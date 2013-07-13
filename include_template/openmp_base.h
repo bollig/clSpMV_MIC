@@ -67,12 +67,12 @@ public:
     	//free(result);
     	//free(coores);
 	}
-	virtual void method_0() { printf("method 0 not implemented\n"); }
-	virtual void method_1() { printf("method 1 not implemented\n"); }
-	virtual void method_2() { printf("method 2 not implemented\n"); }
-	virtual void method_3() { printf("method 3 not implemented\n"); }
-	virtual void method_4() { printf("method 4 not implemented\n"); }
-	virtual void method_5() { printf("method 5 not implemented\n"); }
+	virtual void method_0(int nb=0) { printf("method 0 not implemented\n"); }
+	virtual void method_1(int nb=0) { printf("method 1 not implemented\n"); }
+	virtual void method_2(int nb=0) { printf("method 2 not implemented\n"); }
+	virtual void method_3(int nb=0) { printf("method 3 not implemented\n"); }
+	virtual void method_4(int nb=0) { printf("method 4 not implemented\n"); }
+	virtual void method_5(int nb=0) { printf("method 5 not implemented\n"); }
 	virtual double getOptTime() {return opttime;}
 	virtual std::string getKernelName(std::string kernel_name);
 	int getOptMethod() {return optmethod;}
