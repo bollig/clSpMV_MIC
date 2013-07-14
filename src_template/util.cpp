@@ -28,6 +28,11 @@ unsigned int getRand(unsigned int upper)
     return rand() % upper;
 }
 
+double getRandf()
+{
+        return rand() / (float) RAND_MAX;
+}
+
 void pad_csr(csr_matrix<int, float>* source, csr_matrix<int, float>* dest, int alignment)
 {
 	using namespace std;	
