@@ -55,7 +55,7 @@ LINK       := g++ -g
 
 MMIC       :=  
 MMIC       := -mmic
-CXX        := icpc  -openmp $(MMIC)  -diag-enable openmp 
+CXX        := icpc  -openmp $(MMIC)  -diag-enable openmp  -vec-report3
 CC         := icc
 LINK       := icpc  -openmp $(MMIC)
 
@@ -116,7 +116,7 @@ ifeq ($(dbg),1)
 	BINSUBDIR   := debug
 	LIBSUFFIX   := D
 else 
-	COMMONFLAGS += -O3 
+	COMMONFLAGS += 
 	BINSUBDIR   := release
 	LIBSUFFIX   :=
 	CXXFLAGS    += -fno-strict-aliasing

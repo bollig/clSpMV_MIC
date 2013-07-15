@@ -6,21 +6,24 @@ F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 F=random_x_weights_direct__no_hv_stsize_32_3d_32x_32y_32z.mtxb
 F=random_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 F=random_x_weights_direct__no_hv_stsize_32_2d_128x_128y_1z.mtxb
-F=compact_x_weights_direct__no_hv_stsize_4_2d_4x_4y_1z.mtxb
 F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 F=random_x_weights_direct__no_hv_stsize_32_3d_32x_32y_32z.mtxb
 F=random_x_weights_direct__no_hv_stsize_4_2d_8x_8y_1z.mtxb
+F=compact_x_weights_direct__no_hv_stsize_4_2d_4x_4y_1z.mtxb
+# 12.5 Gflop, 14GF
 F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
-F=random_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
+# 1.7 Gflop
+#F=random_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb  
 export F=$F
 # export OMP_DYNAMIC=FALSE
 export OMP_NUM_THREADS=1
 export OMP_NUM_THREADS=180
 # 2nd argument must be as low as possible in random case
-export OMP_SCHEDULE=static,1  # no influence 2.5 Gf
 //# export OMP_SCHEDULE=guided,16  # 27 Gflop/random
 //# export OMP_SCHEDULE=guided,8  # 22 Gflop/random
-export OMP_SCHEDULE=guided,16  # 27 Gflop/random (and scatter). 22Gflop with copact
+export OMP_SCHEDULE="dynamic,8"  # 27 Gflop/random (and scatter). 22Gflop with copact
+export OMP_SCHEDULE=guided,8  # 15 GF (best results with mymethod_2. 
+export OMP_SCHEDULE=static,32  # no influence 2.5 Gf
 export KMP_AFFINITY=compact  # 22 GF
 export KMP_AFFINITY=scatter  # 25 GF
 
