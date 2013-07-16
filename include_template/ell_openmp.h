@@ -772,14 +772,14 @@ void ELL_OPENMP<T>::method_5(int nbit)
 
 
     float* result_va = (float*) _mm_malloc(result_v.size()*sizeof(float), 64);
-    float* vec_va = (float*) _mm_malloc(vec_v.size()*sizeof(float), 64);
-    float* data_a = (float*) _mm_malloc(data.size()*sizeof(float), 64);
-    int* col_id_ta = (int*) _mm_malloc(data.size()*sizeof(int), 64);
+    float* vec_va    = (float*) _mm_malloc(vec_v.size()*sizeof(float), 64);
+    float* data_a    = (float*) _mm_malloc(data.size()*sizeof(float), 64);
+    int* col_id_ta   = (int*)   _mm_malloc(col_id.size()*sizeof(int), 64);
 
     for (int i=0; i < result_v.size(); i++) { result_va[i] = result_v[i]; }
-    for (int i=0; i < vec_v.size(); i++) { vec_va[i] = vec_v[i]; }
-    for (int i=0; i < data.size(); i++) { data_a[i] = data_t[i]; }
-    for (int i=0; i < col_id_t.size(); i++) { col_id_ta[i] = col_id_t[i]; }
+    for (int i=0; i < vec_v.size(); i++)    { vec_va[i]    = vec_v[i];    }
+    for (int i=0; i < data.size(); i++)     { data_a[i]    = data_t[i];   }
+    for (int i=0; i < col_id.size(); i++)   { col_id_ta[i] = col_id_t[i]; }
 
         //----------------------------
 #if 1
@@ -789,6 +789,7 @@ void ELL_OPENMP<T>::method_5(int nbit)
     //const int aligned = aligned_length; // Gflop goes from 25 to 0.5 (Cannot make it private)
 
     // Must now work on alignmentf vectors. 
+    // Produces the correct serial result
     for (int it=0; it < 10; it++) {
         tm["spmv"]->start();
 #pragma omp parallel firstprivate(nb_rows, nz)
@@ -809,7 +810,8 @@ void ELL_OPENMP<T>::method_5(int nbit)
                 __m512i vecidv = _mm512_load_epi32(col_id_ta+matoffset);  // only need 1/2 registers if dealing with doubles
                 __m512  dv     = _mm512_load_ps(data_a+matoffset);
                 __m512  vv     = _mm512_i32gather_ps(vecidv, vec_va, scale); // scale = 4 (floats)
-                accu = _mm512_fmadd_ps(dv, vv, accu);
+                //accu = _mm512_fmadd_ps(dv, vv, accu);
+                accu = _mm512_mul_ps(dv, vv);
                 a += _mm512_reduce_add_ps(accu); 
             }
             result_va[row] = a;
