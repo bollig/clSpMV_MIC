@@ -18,6 +18,8 @@
 
 #include "timer_eb.h"
 
+
+
 namespace spmv {
 
 #define USE(x) using OPENMP_BASE<T>::x
@@ -82,6 +84,7 @@ public:
 	}
 
     void spmv_serial(ell_matrix<int, T>& mat, std::vector<T>& v, std::vector<T>& result);
+    void spmv_serial_row(ell_matrix<int, T>& mat, std::vector<T>& v, std::vector<T>& result);
     void fill_random(ell_matrix<int, T>& mat, std::vector<T>& v);
     T l2norm(std::vector<T>& v);
     T l2norm(T*, int n);
@@ -89,6 +92,7 @@ public:
 	virtual void run();
 	void method_3(int nb=0);
 	void method_4(int nb=0);
+	void method_5(int nb=0);
 
 protected:
 	virtual void method_0(int nb=0);
@@ -100,11 +104,17 @@ protected:
 template <typename T>
 void ELL_OPENMP<T>::run()
 {
-    method_0();
+    //spmv_serial(mat, vec_v, result_v);
+    //printf("l2norm of serial version: %f\n", l2norm(result_v));
+    //spmv_serial_row(mat, vec_v, result_v);
+    //printf("l2norm of serial row version: %f\n", l2norm(result_v));
+    //exit(0);
+    //method_0();
 	//method_1(4);
 	//method_2(1);
 	//method_3(4);
 	method_4(4);
+	method_5(4);
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -206,7 +216,7 @@ void ELL_OPENMP<T>::method_0(int nbit)
 #pragma loopcount 100000
         for (int row=0; row < nb_rows; row++) {
             int matoffset = row;
-            int accumulant = 0.;
+            float accumulant = 0.;
 // force vectorization of loop (I doubt it is appropriate)
 // went from 22 to 30Gfops  (static,1)
 // went from 27 to 30Gfops  (guided,16)
@@ -539,7 +549,7 @@ void ELL_OPENMP<T>::method_3(int nbit)
             // should have a stride of 32 in order to define
             // line result_v = accumulant
             int matoffset = row*nz;
-            int accumulant = 0.;
+            float accumulant = 0.;
             //for (int i = 0; i < nz; i++) {
 //#pragma simd
             //for (int i = 0; i < nz; i++) {
@@ -599,15 +609,17 @@ void ELL_OPENMP<T>::method_4(int nbit)
     // Current version, from ell_matrix:  [nz][nrow]
     // Transform to [nrow][nz]
     std::vector<int> col_id_t(col_id.size());
-    for (int n=0; n < nz; n++) {
-        for (int row=0; row < nb_rows; row++) {
+    std::vector<float> data_t(data.size());
+    for (int row=0; row < nb_rows; row++) {
+        for (int n=0; n < nz; n++) {
             col_id_t[n+nz*row] = col_id[row+n*nb_rows];
+              data_t[n+nz*row]   = data[row+n*nb_rows];
         }
     }
 
-    for (int i=0; i < 128; i++) {
-        printf("col_id_t[%d] = %d\n", i, col_id_t[i]);
-   }
+    //for (int i=0; i < 128; i++) {
+        //printf("col_id_t[%d] = %d\n", i, col_id_t[i]);
+   //}
  
     printf("nz in row: %d\n", nz);
     printf("nb rows: %d\n", vec_v.size());
@@ -639,7 +651,7 @@ void ELL_OPENMP<T>::method_4(int nbit)
 
     for (int i=0; i < result_v.size(); i++) { result_va[i] = result_v[i]; }
     for (int i=0; i < vec_v.size(); i++) { vec_va[i] = vec_v[i]; }
-    for (int i=0; i < data.size(); i++) { data_a[i] = data[i]; }
+    for (int i=0; i < data.size(); i++) { data_a[i] = data_t[i]; }
     for (int i=0; i < col_id_t.size(); i++) { col_id_ta[i] = col_id_t[i]; }
 
         //----------------------------
@@ -709,6 +721,120 @@ void ELL_OPENMP<T>::method_4(int nbit)
 
 }
 //----------------------------------------------------------------------
+// load 8 double precision floats converted from block (which presumably can be float or double.)
+#include <immintrin.h>
+#define _mm512_loadnr_pd(block) _mm512_extload_pd(block, _MM_UPCONV_PD_NONE, _MM_BROADCAST64_NONE, _MM_HINT_NT)
+#define _mm512_loadnr_ps(block) _mm512_extload_ps(block, _MM_UPCONV_PD_NONE, _MM_BROADCAST64_NONE, _MM_HINT_NT)
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::method_5(int nbit)
+{
+    // Align the vectors so I can use vector instrincis and other technique.s 
+    // Repalce std::vector by pointers to floats and ints. 
+	printf("============== METHOD 5 ===================\n");
+    printf("Implement streaming\n");
+    // vectors are aligned. Start using vector _mm_ constructs. 
+
+    int nz = mat.ell_num;
+    std::vector<int>& col_id = mat.ell_col_id;
+    std::vector<T>& data = mat.ell_data;
+    int nb_rows = vec_v.size();
+
+    // transpose col_id array 
+    // Current version, from ell_matrix:  [nz][nrow]
+    // Transform to [nrow][nz]
+    std::vector<int> col_id_t(col_id.size());
+    std::vector<float> data_t(data.size());
+    for (int row=0; row < nb_rows; row++) {
+        for (int n=0; n < nz; n++) {
+            col_id_t[n+nz*row] = col_id[row+n*nb_rows];
+              data_t[n+nz*row]   = data[row+n*nb_rows];
+        }
+    }
+
+    //for (int i=0; i < 128; i++) {
+        //printf("col_id_t[%d] = %d\n", i, col_id_t[i]);
+    //}
+ 
+    printf("nz in row: %d\n", nz);
+    printf("nb rows: %d\n", vec_v.size());
+    printf("aligned_length= %d\n", aligned_length);
+    printf("vector length= %d\n", vec_v.size());
+    printf("result_length= %d\n", result_v.size());
+    printf("nz*aligned_length= %d\n", nz*aligned_length);
+    printf("maximum nb threads: %d\n", omp_get_max_threads());
+    printf("size of col_id: %d\n", col_id.size());
+    printf("size of data: %d\n", data.size());
+
+    float gflops;
+    float elapsed; 
+
+
+
+    float* result_va = (float*) _mm_malloc(result_v.size()*sizeof(float), 64);
+    float* vec_va = (float*) _mm_malloc(vec_v.size()*sizeof(float), 64);
+    float* data_a = (float*) _mm_malloc(data.size()*sizeof(float), 64);
+    int* col_id_ta = (int*) _mm_malloc(data.size()*sizeof(int), 64);
+
+    for (int i=0; i < result_v.size(); i++) { result_va[i] = result_v[i]; }
+    for (int i=0; i < vec_v.size(); i++) { vec_va[i] = vec_v[i]; }
+    for (int i=0; i < data.size(); i++) { data_a[i] = data_t[i]; }
+    for (int i=0; i < col_id_t.size(); i++) { col_id_ta[i] = col_id_t[i]; }
+
+        //----------------------------
+#if 1
+    int matoffset;
+    int vecid;
+    const int aligned = aligned_length; 
+    //const int aligned = aligned_length; // Gflop goes from 25 to 0.5 (Cannot make it private)
+
+    // Must now work on alignmentf vectors. 
+    for (int it=0; it < 10; it++) {
+        tm["spmv"]->start();
+#pragma omp parallel firstprivate(nb_rows, nz)
+{
+    const int scale = 4; // in bytes
+    const int skip = 16;
+// Perhaps I should organize loops differently? Vectorize of rows? 
+#pragma omp for 
+        for (int row=0; row < nb_rows; row++) {
+            __m512 accu = _mm512_setzero_ps();
+            // should have a stride of 32 in order to define
+            // line result_v = accumulant
+            float a = 0.0;
+            // skip 16 if floats, skip 8 if doubles
+            for (int i = 0; i < nz; i+=skip) {  // nz is multiple of 32 (for now)
+                // 16 ints
+                int matoffset = row*nz + i;
+                __m512i vecidv = _mm512_load_epi32(col_id_ta+matoffset);  // only need 1/2 registers if dealing with doubles
+                __m512  dv     = _mm512_load_ps(data_a+matoffset);
+                __m512  vv     = _mm512_i32gather_ps(vecidv, vec_va, scale); // scale = 4 (floats)
+                accu = _mm512_fmadd_ps(dv, vv, accu);
+                a += _mm512_reduce_add_ps(accu); 
+            }
+            result_va[row] = a;
+        }
+}
+    elapsed = tm["spmv"]->end();
+    gflops = 2.*nz*vec_v.size()*1e-9 / (1e-3*tm["spmv"]->getTime()); // assumes count of 1
+    printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
+   }
+#endif
+
+    printf("l2norm of omp version: %f\n", l2norm(result_va, result_v.size()));
+
+    spmv_serial(mat, vec_v, result_v);
+    printf("l2norm of serial version: %f\n", l2norm(result_v));
+    spmv_serial_row(mat, vec_v, result_v);
+    printf("l2norm of serial row version: %f\n", l2norm(result_v));
+
+    _mm_free(result_va);
+    _mm_free(vec_va);
+    _mm_free(data_a);
+    _mm_free(col_id_ta);
+
+}
+//----------------------------------------------------------------------
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 template <typename T>
@@ -720,27 +846,87 @@ void ELL_OPENMP<T>::spmv_serial(ell_matrix<int, T>& mat, std::vector<T>& v, std:
     int nz = mat.ell_num;
     std::vector<int>& col_id = mat.ell_col_id;
     std::vector<T>& data = mat.ell_data;
-    printf(" mat.ell_num = %d\n", mat.ell_num);
-    printf("tot nb nonzeros: %d\n", mat.matinfo.nnz);
-    printf("nb rows: %d\n", v.size());
-    printf("aligned= %d\n", aligned);
+    //printf(" mat.ell_num = %d\n", mat.ell_num);
+    //printf("tot nb nonzeros: %d\n", mat.matinfo.nnz);
+    //printf("nb rows: %d\n", v.size());
+    //printf("aligned= %d\n", aligned);
     std::fill(result.begin(), result.end(), (T) 0.);
 
     for (int row=0; row < v.size(); row++) {
+        //if (row >= 1) break;
         int matoffset = row;
-        accumulant = 0.;
+        float accumulant = 0.;
 
         for (int i = 0; i < nz; i++) {
             vecid = col_id[matoffset];
+            float d= data[matoffset];
+            //printf("vecid= %d, d = %f\n", vecid, d);
             accumulant += data[matoffset] * v[vecid];
+            //printf("col, i=%d, accu= %f,  ", i, accumulant);
+            //printf("vecid= %d, d = %f\n, v= %f\n", vecid, d, v[vecid]);
             matoffset += aligned;
         }
+        //printf("accumulant= %f\n", accumulant);
         result[row] = accumulant;
     }
     
     //for (int i=0; i < 10; i++) {
         //printf("serial result: %f\n", result[i]);
     //}
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::spmv_serial_row(ell_matrix<int, T>& mat, std::vector<T>& v, std::vector<T>& result)
+// transpose col_id from mat, and apply alternate algorithm to compute col_id (more efficient)
+// results should be same as spmv_serial (which is really spmv_serial_col)
+{
+    T accumulant;
+    int vecid;
+    int aligned = mat.ell_height_aligned;
+    int nz = mat.ell_num;
+    std::vector<int>& col_id = mat.ell_col_id;
+    std::vector<T>& data = mat.ell_data;
+    int nb_rows = v.size();
+    printf(" mat.ell_num = %d\n", mat.ell_num);
+    printf("tot nb nonzeros: %d\n", mat.matinfo.nnz);
+    printf("nb rows: %d\n", v.size());
+    printf("aligned= %d\n", aligned);
+    printf("nz*nb_rows= %d\n", nz*nb_rows);
+    printf("data size= %d\n", data.size());
+    printf("col_id size= %d\n", col_id.size());
+    mat.print();
+
+    std::fill(result.begin(), result.end(), (T) 0.);
+
+    std::vector<int> col_id_t(col_id.size());
+    std::vector<T> data_t(data.size());
+
+    // Transpose rows and columns
+    for (int row=0; row < nb_rows; row++) {
+        for (int n=0; n < nz; n++) {
+            //col_id_t[row+n*nb_rows] = col_id[n+nz*row];
+            //data_t[row+n*nb_rows] = data[n+nz*row];
+            //ct[nrows][nz], c[nz][nrows]
+            // ct[nz][n] = c[n][nz]
+            col_id_t[n+nz*row] = col_id[row+n*nb_rows];
+              data_t[n+nz*row]   = data[row+n*nb_rows];
+        }
+    }
+    
+    for (int row=0; row < nb_rows; row++) {
+        //if (row >= 1) break;
+        float accumulant = 0.;
+        for (int i=0; i < nz; i++) {
+            int matoffset = row*nz+i;
+            int vecid = col_id_t[matoffset];
+            float   d = data_t[matoffset];
+            accumulant += d * v[vecid];  // most efficient, 12 Gflops
+            //printf("row, i=%d, accu= %f,  ", i, accumulant);
+            //printf("vecid= %d, d = %f\n, v= %f\n", vecid, d, v[vecid]);
+        }
+        //printf("accumulant= %f\n", accumulant);
+        result[row] = accumulant;
+    }
 }
 //----------------------------------------------------------------------
 template <typename T>
