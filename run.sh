@@ -23,8 +23,8 @@ export OMP_NUM_THREADS=180
 //# export OMP_SCHEDULE=guided,16  # 27 Gflop/random
 //# export OMP_SCHEDULE=guided,8  # 22 Gflop/random
 export OMP_SCHEDULE=guided,8  # 15 GF (best results with mymethod_2. 
-export OMP_SCHEDULE=static,32  # no influence 2.5 Gf
-export OMP_SCHEDULE=dynamic,1  # 27 Gflop/random (and scatter). 22Gflop with copact
+export OMP_SCHEDULE=static,1  # no influence 2.5 Gf
+export OMP_SCHEDULE=dynamic,8  # 27 Gflop/random (and scatter). 22Gflop with copact
 export KMP_AFFINITY=scatter  # 25 GF
 export KMP_AFFINITY=compact  # 22 GF
 

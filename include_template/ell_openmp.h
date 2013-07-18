@@ -19,6 +19,10 @@
 #include "timer_eb.h"
 
 
+// load 8 double precision floats converted from block (which presumably can be float or double.)
+#include <immintrin.h>
+#define _mm512_loadnr_pd(block) _mm512_extload_pd(block, _MM_UPCONV_PD_NONE, _MM_BROADCAST64_NONE, _MM_HINT_NT)
+#define _mm512_loadnr_ps(block) _mm512_extload_ps(block, _MM_UPCONV_PD_NONE, _MM_BROADCAST64_NONE, _MM_HINT_NT)
 
 namespace spmv {
 
@@ -93,6 +97,12 @@ public:
 	void method_3(int nb=0);
 	void method_4(int nb=0);
 	void method_5(int nb=0);
+	void method_6(int nb=0);
+	void method_7(int nb=0); // 4 matrices, 4 vectors
+
+    __m512 read_aaaa(float* a);
+    __m512 read_abcd(float* a);
+    __m512 tensor_product(float* a, float* b);
 
 protected:
 	virtual void method_0(int nb=0);
@@ -113,8 +123,10 @@ void ELL_OPENMP<T>::run()
 	//method_1(4);
 	//method_2(1);
 	//method_3(4);
-	method_4(4);
-	method_5(4);
+	//method_4(4);
+	//method_5(4);
+	method_6(4);
+	method_7(4);
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -721,10 +733,6 @@ void ELL_OPENMP<T>::method_4(int nbit)
 
 }
 //----------------------------------------------------------------------
-// load 8 double precision floats converted from block (which presumably can be float or double.)
-#include <immintrin.h>
-#define _mm512_loadnr_pd(block) _mm512_extload_pd(block, _MM_UPCONV_PD_NONE, _MM_BROADCAST64_NONE, _MM_HINT_NT)
-#define _mm512_loadnr_ps(block) _mm512_extload_ps(block, _MM_UPCONV_PD_NONE, _MM_BROADCAST64_NONE, _MM_HINT_NT)
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP<T>::method_5(int nbit)
@@ -836,6 +844,248 @@ void ELL_OPENMP<T>::method_5(int nbit)
     _mm_free(col_id_ta);
 
 }
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::method_6(int nbit)
+{
+    // Align the vectors so I can use vector instrincis and other technique.s 
+    // Repalce std::vector by pointers to floats and ints. 
+	printf("============== METHOD 6 ===================\n");
+    printf("Implement streaming\n");
+    // vectors are aligned. Start using vector _mm_ constructs. 
+
+    int nz = mat.ell_num;
+    std::vector<int>& col_id = mat.ell_col_id;
+    std::vector<T>& data = mat.ell_data;
+    int nb_rows = vec_v.size();
+
+    // transpose col_id array 
+    // Current version, from ell_matrix:  [nz][nrow]
+    // Transform to [nrow][nz]
+    std::vector<int> col_id_t(col_id.size());
+    std::vector<float> data_t(data.size());
+    for (int row=0; row < nb_rows; row++) {
+        for (int n=0; n < nz; n++) {
+            col_id_t[n+nz*row] = col_id[row+n*nb_rows];
+              data_t[n+nz*row]   = data[row+n*nb_rows];
+        }
+    }
+
+    //for (int i=0; i < 128; i++) {
+        //printf("col_id_t[%d] = %d\n", i, col_id_t[i]);
+    //}
+ 
+    printf("nz in row: %d\n", nz);
+    printf("nb rows: %d\n", vec_v.size());
+    printf("aligned_length= %d\n", aligned_length);
+    printf("vector length= %d\n", vec_v.size());
+    printf("result_length= %d\n", result_v.size());
+    printf("nz*aligned_length= %d\n", nz*aligned_length);
+    printf("maximum nb threads: %d\n", omp_get_max_threads());
+    printf("size of col_id: %d\n", col_id.size());
+    printf("size of data: %d\n", data.size());
+
+    float gflops;
+    float elapsed; 
+
+
+
+    float* result_va = (float*) _mm_malloc(result_v.size()*sizeof(float), 64);
+    float* vec_va    = (float*) _mm_malloc(vec_v.size()*sizeof(float), 64);
+    float* data_a    = (float*) _mm_malloc(data.size()*sizeof(float), 64);
+    int* col_id_ta   = (int*)   _mm_malloc(col_id.size()*sizeof(int), 64);
+
+    for (int i=0; i < result_v.size(); i++) { result_va[i] = result_v[i]; }
+    for (int i=0; i < vec_v.size(); i++)    { vec_va[i]    = vec_v[i];    }
+    for (int i=0; i < data.size(); i++)     { data_a[i]    = data_t[i];   }
+    for (int i=0; i < col_id.size(); i++)   { col_id_ta[i] = col_id_t[i]; }
+
+        //----------------------------
+#if 1
+    int matoffset;
+    int vecid;
+    const int aligned = aligned_length; 
+    //const int aligned = aligned_length; // Gflop goes from 25 to 0.5 (Cannot make it private)
+
+    // Must now work on alignmentf vectors. 
+    // Produces the correct serial result
+    for (int it=0; it < 1; it++) { // check for correctness
+    //for (int it=0; it < 10; it++) {
+        tm["spmv"]->start();
+#pragma omp parallel firstprivate(nb_rows, nz)
+{
+    const int scale = 4; // in bytes
+    const int skip = 16;
+    float row_accum[skip];
+// Perhaps I should organize loops differently? Vectorize of rows? 
+#pragma omp for 
+        for (int row=0; row < nb_rows; row+=skip) {
+            __m512 row_accu = _mm512_setzero_ps();
+         for (int ir=0; ir < skip; ir++) {
+#pragma simd
+            __m512    accu = _mm512_setzero_ps();
+            __mmask16 mask = _mm512_int2mask(ir); // has an effect on results. 
+            // should have a stride of 32 in order to define
+            // line result_v = accumulant
+            float a = 0.0;  // How can make sure it stays in a vector register or in cache? 
+            // skip 16 if floats, skip 8 if doubles
+            for (int i=0; i < nz; i+=skip) {  // nz is multiple of 32 (for now)
+                // 16 ints
+                int matoffset = (ir+row)*nz + i;
+                __m512i vecidv = _mm512_load_epi32(col_id_ta+matoffset);  // only need 1/2 registers if dealing with doubles
+                __m512  dv     = _mm512_load_ps(data_a+matoffset);
+                __m512  vv     = _mm512_i32gather_ps(vecidv, vec_va, scale); // scale = 4 (floats)
+                accu = _mm512_fmadd_ps(dv, vv, accu);
+            }
+             __m512 reduce = _mm512_set1_ps(_mm512_reduce_add_ps(accu)); // float -> 16 floats
+             row_accu = _mm512_mask_add_ps(row_accu, mask, reduce, row_accu);
+          }
+          _mm512_store_ps(result_va+row, row_accu); // PRODUCING WRONG RESULTS
+        }
+}
+    elapsed = tm["spmv"]->end();
+    gflops = 2.*nz*vec_v.size()*1e-9 / (1e-3*tm["spmv"]->getTime()); // assumes count of 1
+    printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
+   }
+#endif
+
+    printf("l2norm of omp version: %f\n", l2norm(result_va, result_v.size()));
+
+    spmv_serial(mat, vec_v, result_v);
+    printf("l2norm of serial version: %f\n", l2norm(result_v));
+    spmv_serial_row(mat, vec_v, result_v);
+    printf("l2norm of serial row version: %f\n", l2norm(result_v));
+
+    _mm_free(result_va);
+    _mm_free(vec_va);
+    _mm_free(data_a);
+    _mm_free(col_id_ta);
+
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::method_7(int nbit)
+{
+    // Align the vectors so I can use vector instrincis and other technique.s 
+    // Replace std::vector by pointers to floats and ints. 
+    // Process 4 matrices and 4 vectors. Make 4 matrices identical. 
+	printf("============== METHOD 7 ===================\n");
+    printf("Implement streaming\n");
+    // vectors are aligned. Start using vector _mm_ constructs. 
+
+    int nb_mat = 4; // must be 4
+    int nb_vec = 4; // must be 4
+    int nz = mat.ell_num;
+    std::vector<int>& col_id = mat.ell_col_id;
+    std::vector<T>& data = mat.ell_data;
+    int nb_rows = vec_v.size();
+    std::vector<T> vec_vt(nb_vec*vec_v.size());
+    std::vector<T> result_vt(nb_vec*nb_mat*vec_v.size());
+
+    // transpose col_id array 
+    // Current version, from ell_matrix:  [nz][nrow]
+    // Transform to [nrow][nz]
+    #define COL(m,c,r)   col_id_t[(m) + nb_mat*((c) + nz*(r))]
+    #define DATA(m,c,r)  data_t[(m) + nb_mat*((c) + nz*(r))]
+    #define VEC(m,r)     vec_vt[(m) + nb_mat*(r)]
+    #define RES(m,v,r)   result_vt[(m) + nb_mat*((v) + nb_vec*(r))]
+    std::vector<int> col_id_t(col_id.size()*4);
+    std::vector<float> data_t(data.size()*4);
+
+    // Create 4 identical vectors, 4 identical matrices (easier to check results at first)
+    for (int m=0; m < nb_mat; m++) {
+        for (int r=0; r < nb_rows; r++) {
+            for (int n=0; n < nz; n++) {
+                COL(m,n,r)  = col_id[r+n*nb_rows];
+                DATA(m,n,r) = data[r+n*nb_rows];
+            }
+            VEC(m,r) = vec_v[r];
+        }
+    }
+
+    //for (int i=0; i < 128; i++) {
+        //printf("col_id_t[%d] = %d\n", i, col_id_t[i]);
+    //}
+ 
+    printf("nz in row: %d\n", nz);
+    printf("nb rows: %d\n", vec_v.size());
+    printf("aligned_length= %d\n", aligned_length);
+    printf("vector length= %d\n", vec_v.size());
+    printf("result_length= %d\n", result_v.size());
+    printf("nz*aligned_length= %d\n", nz*aligned_length);
+    printf("maximum nb threads: %d\n", omp_get_max_threads());
+    printf("size of col_id: %d\n", col_id.size());
+    printf("size of data: %d\n", data.size());
+
+    float gflops;
+    float elapsed; 
+
+
+#if 0
+    float* result_va = (float*) _mm_malloc(result_v.size()*sizeof(float), 64);
+    float* vec_va    = (float*) _mm_malloc(vec_v.size()*sizeof(float), 64);
+    float* data_a    = (float*) _mm_malloc(data.size()*sizeof(float), 64);
+    int* col_id_ta   = (int*)   _mm_malloc(col_id.size()*sizeof(int), 64);
+
+    for (int i=0; i < result_v.size(); i++) { result_va[i] = result_v[i]; }
+    for (int i=0; i < vec_v.size(); i++)    { vec_va[i]    = vec_v[i];    }
+    for (int i=0; i < data.size(); i++)     { data_a[i]    = data_t[i];   }
+    for (int i=0; i < col_id.size(); i++)   { col_id_ta[i] = col_id_t[i]; }
+#endif
+
+// work on unpacking 
+    //exit(0);
+
+        //----------------------------
+#if 1
+    int matoffset;
+    int vecid;
+    const int aligned = aligned_length; 
+    //const int aligned = aligned_length; // Gflop goes from 25 to 0.5 (Cannot make it private)
+
+    // Must now work on alignmentf vectors. 
+    // Produces the correct serial result
+    for (int it=0; it < 1; it++) {
+        tm["spmv"]->start();
+#pragma omp parallel firstprivate(nb_rows, nz)
+{
+    //const int scale = 4; // in bytes
+    const int skip = 16;
+#pragma omp for 
+        for (int row=0; row < nb_rows; row++) {
+            __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
+            float a = 0.0;
+            for (int i = 0; i < nz; i+=skip) {  // nz is multiple of 32 (for now)
+                float* addr_weights = 0; //??;
+                float* addr_vector = 0; //??;
+                __m512 tens = tensor_product(addr_weights, addr_vector);
+                accu = _mm512_add_ps(accu, tens);
+            }
+            //result_va[row] = a;
+        }
+}
+    elapsed = tm["spmv"]->end();
+    gflops = nb_mat*nb_vec*2.*nz*vec_v.size()*1e-9 / (1e-3*tm["spmv"]->getTime()); // assumes count of 1
+    printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
+   }
+#endif
+
+    //printf("l2norm of omp version: %f\n", l2norm(result_va, result_v.size()));
+
+#if 0
+    spmv_serial(mat, vec_v, result_v);
+    printf("l2norm of serial version: %f\n", l2norm(result_v));
+    spmv_serial_row(mat, vec_v, result_v);
+    printf("l2norm of serial row version: %f\n", l2norm(result_v));
+
+    _mm_free(result_va);
+    _mm_free(vec_va);
+    _mm_free(data_a);
+    _mm_free(col_id_ta);
+#endif
+
+}
+//----------------------------------------------------------------------
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -961,6 +1211,40 @@ void ELL_OPENMP<T>::fill_random(ell_matrix<int, T>& mat, std::vector<T>& v)
     for (int i=0; i < mat.ell_col_id.size(); i++) {
             mat.ell_data[i] = getRandf();
     }
+}
+//----------------------------------------------------------------------
+template <typename T>
+__m512 ELL_OPENMP<T>::tensor_product(float* a, float* b)
+{
+        __m512 va = read_aaaa(a);
+        __m512 vb = read_abcd(b);
+        return _mm512_mul_ps(va, vb);
+}
+//----------------------------------------------------------------------
+template <typename T>
+__m512 ELL_OPENMP<T>::read_aaaa(float* a)
+{
+    // only works with floats
+    // read in 4 floats (a,b,c,d) and create the 
+    // 16-float vector dddd,cccc,bbbb,aaaa
+
+    int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
+    __mmask16 mask_lo = _mm512_int2mask(int_mask_lo);
+    __m512 v1_old;
+    v1_old = _mm512_setzero_ps();
+    v1_old = _mm512_mask_loadunpacklo_ps(v1_old, mask_lo, a);
+    v1_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
+    return v1_old;
+}
+//----------------------------------------------------------------------
+template <typename T>
+__m512 ELL_OPENMP<T>::read_abcd(float* a)
+{
+    // read in 4 floats (a,b,c,d) and create the 
+    // 16-float vector dcba,dcba,dcba,dcba
+
+    __m512 v1_old = _mm512_extload_ps(a, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NONE);
+    return v1_old;
 }
 //----------------------------------------------------------------------
 #if 1
