@@ -100,9 +100,9 @@ public:
 	void method_6(int nb=0);
 	void method_7(int nb=0); // 4 matrices, 4 vectors
 
-    __m512 read_aaaa(float* a);
-    __m512 read_abcd(float* a);
-    __m512 tensor_product(float* a, float* b);
+    inline __m512 read_aaaa(float* a);
+    inline __m512 read_abcd(float* a);
+    inline __m512 tensor_product(float* a, float* b);
 
 protected:
 	virtual void method_0(int nb=0);
@@ -124,8 +124,8 @@ void ELL_OPENMP<T>::run()
 	//method_2(1);
 	//method_3(4);
 	//method_4(4);
-	method_5(4);
-	method_6(4);
+	//method_5(4);
+	//method_6(4);
 	method_7(4);
 }
 //----------------------------------------------------------------------
@@ -978,31 +978,49 @@ void ELL_OPENMP<T>::method_7(int nbit)
     int nb_vec = 4; // must be 4
     int nz = mat.ell_num;
     std::vector<int>& col_id = mat.ell_col_id;
-    std::vector<T>& data = mat.ell_data;
+    std::vector<float>& data = mat.ell_data;
     int nb_rows = vec_v.size();
-    std::vector<T> vec_vt(nb_vec*vec_v.size());
-    std::vector<T> result_vt(nb_vec*nb_mat*vec_v.size());
+
+    //std::vector<float> vec_vt(nb_vec*vec_v.size());
+    //std::vector<float> result_vt(nb_vec*nb_mat*vec_v.size());
+    //std::vector<int> col_id_t(col_id.size()*4);
+    //std::vector<float> data_t(data.size()*4);
+
+    float* vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * vec_v.size(), 64);
+    float* result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * vec_v.size(), 64);
+    int*   col_id_t  = (int*)   _mm_malloc(sizeof(int)   * col_id.size(), 16);
+    float* data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * col_id.size(), 64);
+
+    if (vec_vt == 0 || result_vt == 0 || col_id_t == 0 || data_t == 0) {
+        printf("1. memory allocation failed\n");
+        exit(0);
+    }
 
     // transpose col_id array 
     // Current version, from ell_matrix:  [nz][nrow]
     // Transform to [nrow][nz]
-    #define COL(m,c,r)   col_id_t[(m) + nb_mat*((c) + nz*(r))]
-    #define DATA(m,c,r)  data_t[(m) + nb_mat*((c) + nz*(r))]
-    #define VEC(m,r)     vec_vt[(m) + nb_mat*(r)]
-    #define RES(m,v,r)   result_vt[(m) + nb_mat*((v) + nb_vec*(r))]
-    std::vector<int> col_id_t(col_id.size()*4);
-    std::vector<float> data_t(data.size()*4);
+    #define COL(c,r)   col_id_t[(c) + nz*(r)]
+    #define DATA(m,c,r)    data_t[(m) + nb_mat*((c) + nz*(r))]
+    #define VEC(m,r)       vec_vt[(m) + nb_mat*(r)]
+    #define RES(m,v,r)  result_vt[(m) + nb_mat*((v) + nb_vec*(r))]
 
     // Create 4 identical vectors, 4 identical matrices (easier to check results at first)
     for (int m=0; m < nb_mat; m++) {
         for (int r=0; r < nb_rows; r++) {
             for (int n=0; n < nz; n++) {
-                COL(m,n,r)  = col_id[r+n*nb_rows];
                 DATA(m,n,r) = data[r+n*nb_rows];
             }
             VEC(m,r) = vec_v[r];
         }
     }
+
+    for (int r=0; r < nb_rows; r++) {
+        for (int n=0; n < nz; n++) {
+            COL(n,r) = col_id[r + nb_rows*n];
+        }
+    }
+
+    printf("after initialization\n");
 
     //for (int i=0; i < 128; i++) {
         //printf("col_id_t[%d] = %d\n", i, col_id_t[i]);
@@ -1050,24 +1068,52 @@ void ELL_OPENMP<T>::method_7(int nbit)
         tm["spmv"]->start();
 #pragma omp parallel firstprivate(nb_rows, nz)
 {
-    //const int scale = 4; // in bytes
-    const int skip = 16;
+    //const int skip = 1;
+    const int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
+    const int nb_mat = 4;
+    const int nb_vec = 4;
+
+    __m512 v1_old = _mm512_setzero_ps();
+    __m512 v2_old = _mm512_setzero_ps();
+
 #pragma omp for 
-        for (int row=0; row < nb_rows; row++) {
+        for (int r=0; r < nb_rows; r++) {
+        //for (int ir=0; ir < skip; ir++) {
+//#pragma simd
+            //const int r = row; //+ ir;
             __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
-            for (int i = 0; i < nz; i++) {  // nz is multiple of 32 (for now)
-                float* addr_weights = &DATA(0,i,row);
-                int    icol         = COL(0,i,row);
-                float* addr_vector = &VEC(0,icol); //??;
-                __m512 tens = tensor_product(addr_weights, addr_vector);
-                accu = _mm512_add_ps(accu, tens);
+
+            for (int n=0; n < nz; n++) {  // nz is multiple of 32 (for now)
+#pragma simd
+    //#define COL(m,c,r)   col_id_t[(m) + nb_mat*((c) + nz*(r))]
+    //#define DATA(m,c,r)    data_t[(m) + nb_mat*((c) + nz*(r))]
+    //#define VEC(m,r)       vec_vt[(m) + nb_mat*(r)]
+    //#define RES(m,v,r)  result_vt[(m) + nb_mat*((v) + nb_vec*(r))]
+                //const int    icol         = COL(0,n,r);   
+                const int    icol         = col_id_t[n+nz*r];
+                //const float* addr_weights = &DATA(0,n,r);
+                const float* addr_weights = data_t + nb_mat*(n+nz*r);  // more efficient. No use of &
+                //const float* addr_vector  = &VEC(0,icol); 
+                const float* addr_vector  = vec_vt + nb_mat*icol;
+
+                //__m512 va = read_aaaa(addr_weights); // retrieve four weights
+                v1_old = _mm512_mask_loadunpacklo_ps(v1_old, _mm512_int2mask(int_mask_lo), addr_weights);
+                v1_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
+
+                //__m512 vb = read_abcd(addr_vector); // retrieve four vector values (3 Gfl)
+                //v2_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NONE);
+                v2_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+
+                // accu corresponds to 16 terms for the tensor product
+                accu = _mm512_fmadd_ps(v1_old, v2_old, accu);
             }
-            printf("row= %d\n", row);
-            _mm512_store_ps(&RES(0,0,row), accu);
-        }
+            //if (r % skip == 0)
+            //_mm512_store_ps(&RES(0,0,r), accu);
+            _mm512_store_ps(result_vt+nb_mat*nb_vec*r, accu);
+        } //}
 }
-    elapsed = tm["spmv"]->end();
-    gflops = nb_mat*nb_vec*2.*nz*vec_v.size()*1e-9 / (1e-3*tm["spmv"]->getTime()); // assumes count of 1
+    elapsed = tm["spmv"]->end() / (nb_mat*nb_vec);  // time for each matrix/vector multiply
+    gflops = 2.*nz*vec_v.size()*1e-9 / (1e-3*tm["spmv"]->getTime()); // assumes count of 1
     printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
    }
 #endif
