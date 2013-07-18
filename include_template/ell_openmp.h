@@ -225,7 +225,6 @@ void ELL_OPENMP<T>::method_0(int nbit)
 #pragma omp for 
 // simd slows it down
 #pragma simd   
-#pragma loopcount 100000
         for (int row=0; row < nb_rows; row++) {
             int matoffset = row;
             float accumulant = 0.;
@@ -825,8 +824,9 @@ void ELL_OPENMP<T>::method_5(int nbit)
             result_va[row] = a;
         }
 }
-    elapsed = tm["spmv"]->end();
-    gflops = 2.*nz*vec_v.size()*1e-9 / (1e-3*tm["spmv"]->getTime()); // assumes count of 1
+    tm["spmv"]->end();
+    elapsed = tm["spmv"]->getTime();
+    gflops = 2.*nz*vec_v.size()*1e-9 / (1e-3*elapsed); // assumes count of 1
     printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
    }
 #endif
@@ -908,6 +908,8 @@ void ELL_OPENMP<T>::method_6(int nbit)
     const int aligned = aligned_length; 
     //const int aligned = aligned_length; // Gflop goes from 25 to 0.5 (Cannot make it private)
 
+   tm["spmv"]->reset();
+
     // Must now work on alignmentf vectors. 
     // Produces the correct serial result
     for (int it=0; it < 1; it++) { // check for correctness
@@ -944,8 +946,9 @@ void ELL_OPENMP<T>::method_6(int nbit)
           _mm512_store_ps(result_va+row, row_accu); // PRODUCING WRONG RESULTS
         }
 }
-    elapsed = tm["spmv"]->end();
-    gflops = 2.*nz*vec_v.size()*1e-9 / (1e-3*tm["spmv"]->getTime()); // assumes count of 1
+    tm["spmv"]->end();
+    elapsed = tm["spmv"]->getTime();
+    gflops = 2.*nz*vec_v.size()*1e-9 / (1e-3*elapsed); // assumes count of 1
     printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
    }
 #endif
@@ -1078,22 +1081,13 @@ void ELL_OPENMP<T>::method_7(int nbit)
 
 #pragma omp for 
         for (int r=0; r < nb_rows; r++) {
-        //for (int ir=0; ir < skip; ir++) {
 //#pragma simd
-            //const int r = row; //+ ir;
             __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
 
-            for (int n=0; n < nz; n++) {  // nz is multiple of 32 (for now)
 #pragma simd
-    //#define COL(m,c,r)   col_id_t[(m) + nb_mat*((c) + nz*(r))]
-    //#define DATA(m,c,r)    data_t[(m) + nb_mat*((c) + nz*(r))]
-    //#define VEC(m,r)       vec_vt[(m) + nb_mat*(r)]
-    //#define RES(m,v,r)  result_vt[(m) + nb_mat*((v) + nb_vec*(r))]
-                //const int    icol         = COL(0,n,r);   
+            for (int n=0; n < nz; n++) {  // nz is multiple of 32 (for now)
                 const int    icol         = col_id_t[n+nz*r];
-                //const float* addr_weights = &DATA(0,n,r);
                 const float* addr_weights = data_t + nb_mat*(n+nz*r);  // more efficient. No use of &
-                //const float* addr_vector  = &VEC(0,icol); 
                 const float* addr_vector  = vec_vt + nb_mat*icol;
 
                 //__m512 va = read_aaaa(addr_weights); // retrieve four weights
@@ -1108,12 +1102,12 @@ void ELL_OPENMP<T>::method_7(int nbit)
                 accu = _mm512_fmadd_ps(v1_old, v2_old, accu);
             }
             //if (r % skip == 0)
-            //_mm512_store_ps(&RES(0,0,r), accu);
             _mm512_store_ps(result_vt+nb_mat*nb_vec*r, accu);
-        } //}
+        } 
 }
-    elapsed = tm["spmv"]->end() / (nb_mat*nb_vec);  // time for each matrix/vector multiply
-    gflops = 2.*nz*vec_v.size()*1e-9 / (1e-3*tm["spmv"]->getTime()); // assumes count of 1
+    tm["spmv"]->end();  // time for each matrix/vector multiply
+    elapsed = tm["spmv"]->getTime();
+    gflops = nb_mat * nb_vec * 2.*nz*vec_v.size()*1e-9 / (1e-3*elapsed); // assumes count of 1
     printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
    }
 #endif
