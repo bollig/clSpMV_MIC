@@ -1064,7 +1064,53 @@ void ELL_OPENMP<T>::method_7(int nbit)
     int vecid;
     const int aligned = aligned_length; 
     //const int aligned = aligned_length; // Gflop goes from 25 to 0.5 (Cannot make it private)
+ 
+    // Time pure loads
+    for (int it=0; it < 10; it++) {
+        tm["spmv"]->start();
+#pragma omp parallel
+{
+#pragma omp for
+       for (int r=0; r  < nb_rows; r += 16) {
+            const __m512 v1_old = _mm512_load_ps(vec_vt + r);
+             _mm512_store_ps(result_vt + r, v1_old);
+        }
+}
+       tm["spmv"]->end();
+       float elapsed_mem = tm["spmv"]->getTime();
+       float gbytes = (nb_rows/16)*sizeof(float) * (16+16) * 1.e-9;
+       //printf("gbytes= %f\n", gbytes);
+       float bandwidth = gbytes / (elapsed_mem*1.e-3);
+       printf("bandwidth= %f (gbytes/sec), time: %f (ms)\n", bandwidth, elapsed_mem);
+    }
 
+//..................
+// Time read 4 floats at a time with masking
+//
+    // Time pure loads
+    for (int it=0; it < 10; it++) {
+        tm["spmv"]->start();
+
+#pragma omp parallel
+{
+    const int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
+    const int nb_mat = 4;
+    const int nb_vec = 4;
+#pragma omp for
+       for (int r=0; r  < nb_rows; r += 4) {
+            //const __m512 v1_old = _mm512_load_ps(vec_vt + r);
+            //  reading 4 floats
+             __m512 v1_old = _mm512_mask_loadunpacklo_ps(v1_old, _mm512_int2mask(int_mask_lo), vec_vt+r);
+             _mm512_store_ps(result_vt+4*r, v1_old);  // writing 16 floats
+       }
+}
+       tm["spmv"]->end();
+       float elapsed_mem = tm["spmv"]->getTime();
+       float gbytes = (nb_rows/4)*sizeof(float) * (16.+4.) * 1.e-9;
+       float bandwidth = gbytes / (elapsed_mem*1.e-3);
+       printf("bandwidth unpack= %f (gbytes/sec), time: %f (ms)\n", bandwidth, elapsed_mem);
+    }
+//.......................................................
     // Must now work on alignmentf vectors. 
     // Produces the correct serial result
     for (int it=0; it < 10; it++) {
@@ -1078,6 +1124,8 @@ void ELL_OPENMP<T>::method_7(int nbit)
 
     __m512 v1_old = _mm512_setzero_ps();
     __m512 v2_old = _mm512_setzero_ps();
+    __m512 v3_old = _mm512_setzero_ps();
+    __m512i i3_old = _mm512_setzero_ps();
 
 #pragma omp for 
         for (int r=0; r < nb_rows; r++) {
@@ -1085,24 +1133,54 @@ void ELL_OPENMP<T>::method_7(int nbit)
             __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
 
 #pragma simd
-            for (int n=0; n < nz; n++) {  // nz is multiple of 32 (for now)
-                const int    icol         = col_id_t[n+nz*r];
-                const float* addr_weights = data_t + nb_mat*(n+nz*r);  // more efficient. No use of &
-                const float* addr_vector  = vec_vt + nb_mat*icol;
+            for (int n=0; n < nz; n+=4) {  // nz is multiple of 32 (for now)
+                int    icol;
+                float* addr_vector;
+
+                v1_old = _mm512_load_ps(data_t + n*nb_mat); // load 16 at a time
+
+                icol         = col_id_t[n+nz*r];
+                addr_vector  = vec_vt + nb_vec*icol;
+                v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
+                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+
+                icol         = col_id_t[n+nz*r+1];
+                addr_vector  = vec_vt + nb_vec*icol;
+                v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_BBBB);
+                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+
+                icol         = col_id_t[n+nz*r+2];
+                addr_vector  = vec_vt + nb_vec*icol;
+                v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_CCCC);
+                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+
+                icol         = col_id_t[n+nz*r+3];
+                addr_vector  = vec_vt + nb_vec*icol;
+                v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_DDDD);
+                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
                 //__m512 va = read_aaaa(addr_weights); // retrieve four weights
-                v1_old = _mm512_mask_loadunpacklo_ps(v1_old, _mm512_int2mask(int_mask_lo), addr_weights);
-                v1_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
+                //v1_old = _mm512_mask_loadunpacklo_ps(v1_old, _mm512_int2mask(int_mask_lo), addr_weights);
+                //v1_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
 
+                // MOST INEFFICIENT, probably, for random case
                 //__m512 vb = read_abcd(addr_vector); // retrieve four vector values (3 Gfl)
                 //v2_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NONE);
-                v2_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+                //v2_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
 
                 // accu corresponds to 16 terms for the tensor product
-                accu = _mm512_fmadd_ps(v1_old, v2_old, accu);
+                //accu = _mm512_fmadd_ps(v1_old, v2_old, accu);
             }
             //if (r % skip == 0)
-            _mm512_store_ps(result_vt+nb_mat*nb_vec*r, accu);
+            //_mm512_store_ps(result_vt+nb_mat*nb_vec*r, accu);
+            // nr: no register
+            _mm512_storenr_ps(result_vt+nb_mat*nb_vec*r, accu);
+            // no ordering and no read of cache lines from memory
+            //_mm512_storenrngo_ps(result_vt+nb_mat*nb_vec*r, accu);
         } 
 }
     tm["spmv"]->end();  // time for each matrix/vector multiply
