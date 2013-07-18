@@ -13,6 +13,8 @@ F=compact_x_weights_direct__no_hv_stsize_4_2d_4x_4y_1z.mtxb
 F=random_x_weights_direct__no_hv_stsize_4_2d_8x_8y_1z.mtxb
 # method_5 will not work unless stencil is multiple of 32
 F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
+F=compact_x_weights_direct__no_hv_stsize_32_3d_32x_32y_32z.mtxb
+#F=compact_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.mtx
 # 1.7 Gflop
 #F=random_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb  
 export F=$F

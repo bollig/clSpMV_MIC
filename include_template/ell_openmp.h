@@ -124,7 +124,7 @@ void ELL_OPENMP<T>::run()
 	//method_2(1);
 	//method_3(4);
 	//method_4(4);
-	//method_5(4);
+	method_5(4);
 	method_6(4);
 	method_7(4);
 }
@@ -852,6 +852,7 @@ void ELL_OPENMP<T>::method_6(int nbit)
     // Repalce std::vector by pointers to floats and ints. 
 	printf("============== METHOD 6 ===================\n");
     printf("Implement streaming\n");
+    printf("INCORRECT REULTS\n");
     // vectors are aligned. Start using vector _mm_ constructs. 
 
     int nz = mat.ell_num;
@@ -1045,7 +1046,7 @@ void ELL_OPENMP<T>::method_7(int nbit)
 
     // Must now work on alignmentf vectors. 
     // Produces the correct serial result
-    for (int it=0; it < 1; it++) {
+    for (int it=0; it < 10; it++) {
         tm["spmv"]->start();
 #pragma omp parallel firstprivate(nb_rows, nz)
 {
@@ -1054,14 +1055,15 @@ void ELL_OPENMP<T>::method_7(int nbit)
 #pragma omp for 
         for (int row=0; row < nb_rows; row++) {
             __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
-            float a = 0.0;
-            for (int i = 0; i < nz; i+=skip) {  // nz is multiple of 32 (for now)
-                float* addr_weights = 0; //??;
-                float* addr_vector = 0; //??;
+            for (int i = 0; i < nz; i++) {  // nz is multiple of 32 (for now)
+                float* addr_weights = &DATA(0,i,row);
+                int    icol         = COL(0,i,row);
+                float* addr_vector = &VEC(0,icol); //??;
                 __m512 tens = tensor_product(addr_weights, addr_vector);
                 accu = _mm512_add_ps(accu, tens);
             }
-            //result_va[row] = a;
+            printf("row= %d\n", row);
+            _mm512_store_ps(&RES(0,0,row), accu);
         }
 }
     elapsed = tm["spmv"]->end();
@@ -1233,6 +1235,7 @@ __m512 ELL_OPENMP<T>::read_aaaa(float* a)
     __m512 v1_old;
     v1_old = _mm512_setzero_ps();
     v1_old = _mm512_mask_loadunpacklo_ps(v1_old, mask_lo, a);
+    v1_old = _mm512_mask_loadunpackhi_ps(v1_old, mask_lo, a);
     v1_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
     return v1_old;
 }
