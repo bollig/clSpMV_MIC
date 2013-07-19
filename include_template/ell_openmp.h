@@ -1003,10 +1003,11 @@ void ELL_OPENMP<T>::method_7(int nbit)
 
     int nb_mat = 4; // must be 4
     int nb_vec = 4; // must be 4
+    int nb_rows = vec_v.size();
     int nz = mat.ell_num;
+
     std::vector<int>& col_id = mat.ell_col_id;
     std::vector<float>& data = mat.ell_data;
-    int nb_rows = vec_v.size();
 
     //std::vector<float> vec_vt(nb_vec*vec_v.size());
     //std::vector<float> result_vt(nb_vec*nb_mat*vec_v.size());
@@ -1016,7 +1017,7 @@ void ELL_OPENMP<T>::method_7(int nbit)
     float* vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * vec_v.size(), 64);
     float* result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * vec_v.size(), 64);
     int*   col_id_t  = (int*)   _mm_malloc(sizeof(int)   * col_id.size(), 16);
-    float* data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * col_id.size(), 64);
+    float* data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * data.size(), 64);
 
     if (vec_vt == 0 || result_vt == 0 || col_id_t == 0 || data_t == 0) {
         printf("1. memory allocation failed\n");
@@ -1027,7 +1028,7 @@ void ELL_OPENMP<T>::method_7(int nbit)
     // Current version, from ell_matrix:  [nz][nrow]
     // Transform to [nrow][nz]
     #define COL(c,r)   col_id_t[(c) + nz*(r)]
-    #define DATA(m,c,r)    data_t[(m) + nb_mat*((c) + nz*(r))]
+    //#define DATA(m,c,r)    data_t[(m) + nb_mat*((c) + nz*(r))]
     #define VEC(m,r)       vec_vt[(m) + nb_mat*(r)]
     #define RES(m,v,r)  result_vt[(m) + nb_mat*((v) + nb_vec*(r))]
 
@@ -1050,12 +1051,10 @@ void ELL_OPENMP<T>::method_7(int nbit)
     int n_skip = 4;
     int nz4 = nz / n_skip; // check that nz is multiple of n_skip
     for (int r=0; r < nb_rows; r++) {
-    for (int n=0; n < nz; n+=n_skip) {
-        int n4 = n >> 2; // if n_skip == 4
+    for (int n=0; n < nz; n += n_skip) {
+        int n4 = n / 4; // if n_skip == 4
         for (int m=0; m < nb_mat; m++) {
             for (int in=0; in < n_skip; in++) {
-                //data(in,m,c,r)
-                //data_t[in+nb_mat*(m+nz*r)] = data[r+(n+in)*nb_rows];
                 data_t[in+n_skip*(m+nb_mat*(n4+nz4*r))] = data[r+(n+in)*nb_rows];
             }
         }
@@ -1172,10 +1171,10 @@ void ELL_OPENMP<T>::method_7(int nbit)
     const int nb_mat = 4;
     const int nb_vec = 4;
 
-    __m512 v1_old  = _mm512_setzero_ps();
-    __m512 v2_old  = _mm512_setzero_ps();
-    __m512 v3_old  = _mm512_setzero_ps();
-    __m512i i3_old = _mm512_setzero_ps();
+    __m512  v1_old  = _mm512_setzero_ps();
+    __m512  v2_old  = _mm512_setzero_ps();
+    __m512  v3_old  = _mm512_setzero_ps();
+    __m512i i3_old  = _mm512_setzero_ps();
 
 #pragma omp for 
         for (int r=0; r < nb_rows; r++) {
@@ -1200,11 +1199,11 @@ void ELL_OPENMP<T>::method_7(int nbit)
                 // f0v0 means 0th element of function 0
                 // read 4 vectors (f0v0,f1v0,f2v0,f3v0) and create vector (f0v0,f1v0,f2v0,f3v0, f0v0,f1v0,f2v0,f3v0,...)
                 v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
-                // m0c0,m0c0,m0c0,m0c0, m1c0,m1c0,m1c0,m1c0, m2c0,m2c0,m2c0,m2c0,   m3c0,m3c0,m3c0,m3c0
+                // m0c0,m0c0,m0c0,m0c0,   m1c0,m1c0,m1c0,m1c0,   m2c0,m2c0,m2c0,m2c0,   m3c0,m3c0,m3c0,m3c0
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
                 //printf("1st icol= %d\n", icol);
-                //print_ps(v3_old, "1st v3old, extload_ps");
-                //print_ps(v2_old, "1st swizzle");
+                print_ps(v3_old, "1st v3old, extload_ps");
+                print_ps(v2_old, "1st swizzle");
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
                 //-----
@@ -1238,7 +1237,7 @@ void ELL_OPENMP<T>::method_7(int nbit)
                 // m0c3,m0c3,m0c3,m0c3, m1c3,m1c3,m1c3,m1c3, m2c3,m2c3,m2c3,m2c3,   m3c3,m3c3,m3c3,m3c3
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_DDDD);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-                printf("4th icol= %d\n", icol);
+                //printf("4th icol= %d\n", icol);
                 print_ps(v3_old, "4th v3old, extload_ps");
                 print_ps(v2_old, "4th swizzle");
                 //if (n == 4) exit(0);
@@ -1604,11 +1603,12 @@ template <typename T>
 void ELL_OPENMP<T>::fill_random(ell_matrix<int, T>& mat, std::vector<T>& v)
 {
     for (int i=0; i < v.size(); i++) {
-            v[i] = (T) getRandf();
+            v[i] = (T) getRandf();  // = 1.0;
     }
 
     for (int i=0; i < mat.ell_col_id.size(); i++) {
-            mat.ell_data[i] = getRandf();
+            //mat.ell_data[i] = getRandf();
+            mat.ell_data[i] = 1.0;  // also try setting vector to 1.0 to find out the culprit. 
     }
 }
 //----------------------------------------------------------------------
