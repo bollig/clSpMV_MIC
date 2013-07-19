@@ -67,4 +67,8 @@ I am getting buffer errors. DO NOT KNOW WHY.
 July 2, 2013
 What does the error message:  "too large" mean? 
 output/random_x_weights_direct__no_hv_stsize_33_3d_64x_64y_64z.mtxb_case10:SBELL too large totalsize 8421376 bwidth 8 bheight 8
-
+----------------------------------------------------------------------
+July 19, 2013
+Method 7: correct results if matrix constant, and vector constant. I also made matrix m = m*matrix(0), with correct results. 
+Now create matrix with constant vertical lines. Column i: value: i. Then do row i: value i.
+----------------------------------------------------------------------

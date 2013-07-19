@@ -132,7 +132,7 @@ void ELL_OPENMP<T>::run()
 	//method_4(4);
 	//method_5(4); // correct results
 	//method_6(4);
-	method_7(4);
+	//method_7(4);
 	method_8(4);
 }
 //----------------------------------------------------------------------
@@ -1060,6 +1060,11 @@ void ELL_OPENMP<T>::method_7(int nbit)
         }
     }}
 
+    //for (int i=0; i< nb_rows*nz*nb_mat; i++) {
+        //printf("data_t[%d]= %f\n", i, data_t[i]);
+    //}
+    //exit(0);
+
     print_f(&data[0], "data");
     print_f(data_t, "data_t");
     print_i(&col_id[0], "col_id");
@@ -1179,19 +1184,23 @@ void ELL_OPENMP<T>::method_7(int nbit)
 #pragma omp for 
         for (int r=0; r < nb_rows; r++) {
 //#pragma simd
+            //printf("***** row %d\n", r);
+            //if (r > 2) exit(0);
             __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
             float* addr_vector;
             int    icol;
 
 #pragma simd
             for (int n=0; n < nz; n+=4) {  // nz is multiple of 32 (for now)
+                    //printf("==== n= %d\n", n);
 
                 // (m=[0,..,3],c=0),(m=[0,..,3],c=1),..,(m=[0,..,3],c=3) == 16 elements
                 // Left is least significant (in Intel vectorization charts, right is least significant
                 // Left here, is right in the Intel documents.
                 // m0c0,m0c1,m0c2,m0c3,  m1c0,m1c1,m1c2,m2c3,  ...., m3c0,m3c1,m3c2,m3c3
-                v1_old = _mm512_load_ps(data_t + n*nb_mat); // load 16 at a time
-                print_ps(v1_old, "v1_old: data_t");
+                v1_old = _mm512_load_ps(data_t + nb_mat*(n + r*nz)); // load 16 at a time
+                //printf("v1_old offset: %d, nb_mat= %d\n", n*nb_mat, nb_mat);
+                //print_ps(v1_old, "v1_old: data_t");
 
                 // icol is the same for all matrices
                 icol         = col_id_t[n+nz*r+0];   // single element (but next 4 in cache)
@@ -1202,8 +1211,8 @@ void ELL_OPENMP<T>::method_7(int nbit)
                 // m0c0,m0c0,m0c0,m0c0,   m1c0,m1c0,m1c0,m1c0,   m2c0,m2c0,m2c0,m2c0,   m3c0,m3c0,m3c0,m3c0
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
                 //printf("1st icol= %d\n", icol);
-                print_ps(v3_old, "1st v3old, extload_ps");
-                print_ps(v2_old, "1st swizzle");
+                //print_ps(v3_old, "1st v3old, extload_ps");
+                //print_ps(v2_old, "1st swizzle");
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
                 //-----
@@ -1214,8 +1223,8 @@ void ELL_OPENMP<T>::method_7(int nbit)
                 // m0c0,m0c0,m0c0,m0c0, m1c0,m1c0,m1c0,m1c0, m2c0,m2c0,m2c0,m2c0,   m3c0,m3c0,m3c0,m3c0
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_BBBB);
                 //printf("2nd icol= %d\n", icol);
-                print_ps(v3_old, "2nd v3old, extload_ps");
-                print_ps(v2_old, "2nd swizzle");
+                //print_ps(v3_old, "2nd v3old, extload_ps");
+                //print_ps(v2_old, "2nd swizzle");
                 //exit(0);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
@@ -1227,8 +1236,8 @@ void ELL_OPENMP<T>::method_7(int nbit)
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_CCCC);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
                 //printf("3rd icol= %d\n", icol);
-                print_ps(v3_old, "3rd v3old, extload_ps");
-                print_ps(v2_old, "3rd swizzle");
+                //print_ps(v3_old, "3rd v3old, extload_ps");
+                //print_ps(v2_old, "3rd swizzle");
 
                 //-----
                 icol         = col_id_t[n+nz*r+3];
@@ -1238,9 +1247,10 @@ void ELL_OPENMP<T>::method_7(int nbit)
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_DDDD);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
                 //printf("4th icol= %d\n", icol);
-                print_ps(v3_old, "4th v3old, extload_ps");
-                print_ps(v2_old, "4th swizzle");
-                //if (n == 4) exit(0);
+                //print_ps(v3_old, "4th v3old, extload_ps");
+                //print_ps(v2_old, "4th swizzle");
+                //print_ps(accu, "accu");
+                //if (n >= 8) exit(0);
             }
             //if (r % skip == 0)
             _mm512_store_ps(result_vt+nb_mat*nb_vec*r, accu);
@@ -1413,7 +1423,7 @@ void ELL_OPENMP<T>::method_8(int nbit)
                 int    icol;
                 float* addr_vector;
 
-                v1_old = _mm512_load_ps(data_t + n*nb_mat); // load 16 at a time
+                v1_old = _mm512_load_ps(data_t + nb_mat*(n + r*nz)); // load 16 at a time
 
                 //v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
          
@@ -1603,13 +1613,33 @@ template <typename T>
 void ELL_OPENMP<T>::fill_random(ell_matrix<int, T>& mat, std::vector<T>& v)
 {
     for (int i=0; i < v.size(); i++) {
-            v[i] = (T) getRandf();  // = 1.0;
+            v[i] = (T) getRandf();  
+            //v[i] = 1.0;   // Did not work
     }
 
     for (int i=0; i < mat.ell_col_id.size(); i++) {
-            //mat.ell_data[i] = getRandf();
-            mat.ell_data[i] = 1.0;  // also try setting vector to 1.0 to find out the culprit. 
+            mat.ell_data[i] = getRandf(); // problem is with random matrices
+            //mat.ell_data[i] = 1.0;  // worked
     }
+
+#if 0
+    for (int i=0; i < 32; i++) {
+    for (int j=0; j < 32; j++) {
+        mat.ell_data[i+32*j] = (float) j; // worked
+        mat.ell_data[i+32*j] = (float) i; // get a zero product. NOT POSSIBLE.
+    }}
+#endif
+    /**
+     *   (0 0 0 0) 1
+     *   (1 1 1 1) 1
+     *   (2 2 2 2) 1  = 32*(0,1,2,3,...,31)
+     *   (3 3 3 3) 1
+     *
+     *   (0 1 2 3) 1
+     *   (0 1 2 3) 1
+     *   (0 1 2 3) 1  = (0+1+2+3+...+31)*(1,1,...,1) = 
+     *   (0 1 2 3) 1
+    **/
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -1675,7 +1705,7 @@ void ELL_OPENMP<T>::print_i(int* res, const std::string msg)
 template <typename T>
 void ELL_OPENMP<T>::print_ps(const __m512 v1, const std::string msg)
 {
-    return;
+    //return;
     float* res = (float*) _mm_malloc(32*sizeof(float), 64);
     _mm512_store_ps(res, v1);
     printf("--- %s ---\n", msg.c_str());
@@ -1689,7 +1719,7 @@ void ELL_OPENMP<T>::print_ps(const __m512 v1, const std::string msg)
 template <typename T>
 void ELL_OPENMP<T>::print_epi32(const __m512i v1, const std::string msg)
 {
-    return;
+    //return;
     int* res = (int*) _mm_malloc(32*sizeof(int), 64);
     _mm512_store_epi32(res, v1);
     printf("--- %s ---\n", msg.c_str());
