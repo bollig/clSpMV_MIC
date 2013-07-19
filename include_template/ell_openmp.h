@@ -126,9 +126,10 @@ void ELL_OPENMP<T>::run()
 	//method_2(1);
 	//method_3(4);
 	//method_4(4);
-	//method_5(4);
+	//method_5(4); // correct results
 	//method_6(4);
 	method_7(4);
+    exit(0);
 	method_8(4);
 }
 //----------------------------------------------------------------------
@@ -745,6 +746,8 @@ void ELL_OPENMP<T>::method_5(int nbit)
     printf("Implement streaming\n");
     // vectors are aligned. Start using vector _mm_ constructs. 
 
+    fill_random(mat, vec_v);
+
     int nz = mat.ell_num;
     std::vector<int>& col_id = mat.ell_col_id;
     std::vector<T>& data = mat.ell_data;
@@ -834,12 +837,25 @@ void ELL_OPENMP<T>::method_5(int nbit)
    }
 #endif
 
-    printf("l2norm of omp version: %f\n", l2norm(result_va, result_v.size()));
+#if 0
+    std::vector<float> one_res(nb_rows);  // single result
+    for (int w=0; w < 4; w++) {
+        for (int i=0; i < nb_rows; i++) {
+            one_res[i] = result_va[4*i+w];
+        }
+        printf("method_5, l2norm[%d]=of omp version: %f\n", w, l2norm(one_res));
+    }
 
     spmv_serial(mat, vec_v, result_v);
-    printf("l2norm of serial version: %f\n", l2norm(result_v));
+    printf("method_5, l2norm of serial version: %f\n", l2norm(result_v));
+#endif
+
+
+    printf("method_5, l2norm of omp version: %f\n", l2norm(result_va, result_v.size()));
+    spmv_serial(mat, vec_v, result_v);
+    printf("method_5, l2norm of serial version: %f\n", l2norm(result_v));
     spmv_serial_row(mat, vec_v, result_v);
-    printf("l2norm of serial row version: %f\n", l2norm(result_v));
+    printf("method_5, l2norm of serial row version: %f\n", l2norm(result_v));
 
     _mm_free(result_va);
     _mm_free(vec_va);
@@ -1195,19 +1211,24 @@ void ELL_OPENMP<T>::method_7(int nbit)
    }
 #endif
 
-    //printf("l2norm of omp version: %f\n", l2norm(result_va, result_v.size()));
+#if 1
+    std::vector<float> one_res(nb_rows);  // single result
+    for (int w=0; w < 16; w++) {
+        for (int i=0; i < nb_rows; i++) {
+            one_res[i] = result_vt[16*i+w];
+        }
+        printf("method_7, l2norm[%d]=of omp version: %f\n", w, l2norm(one_res));
+    }
 
-#if 0
     spmv_serial(mat, vec_v, result_v);
-    printf("l2norm of serial version: %f\n", l2norm(result_v));
-    spmv_serial_row(mat, vec_v, result_v);
-    printf("l2norm of serial row version: %f\n", l2norm(result_v));
-
-    _mm_free(result_va);
-    _mm_free(vec_va);
-    _mm_free(data_a);
-    _mm_free(col_id_ta);
+    printf("method_7, l2norm of serial version: %f\n", l2norm(result_v));
 #endif
+
+
+    _mm_free(result_vt);
+    _mm_free(vec_vt);
+    _mm_free(data_t);
+    _mm_free(col_id_t);
 
 }
 //----------------------------------------------------------------------
