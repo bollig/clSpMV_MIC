@@ -99,7 +99,9 @@ public:
 	void method_5(int nb=0);
 	void method_6(int nb=0);
 	void method_7(int nb=0); // 4 matrices, 4 vectors
+	void method_8(int nb=0); // 4 matrices, 4 vectors
 
+    inline __m512 permute(__m512 v1, _MM_PERM_ENUM perm);
     inline __m512 read_aaaa(float* a);
     inline __m512 read_abcd(float* a);
     inline __m512 tensor_product(float* a, float* b);
@@ -127,6 +129,7 @@ void ELL_OPENMP<T>::run()
 	//method_5(4);
 	//method_6(4);
 	method_7(4);
+	method_8(4);
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -977,6 +980,8 @@ void ELL_OPENMP<T>::method_7(int nbit)
     printf("Implement streaming\n");
     // vectors are aligned. Start using vector _mm_ constructs. 
 
+    fill_random(mat, vec_v);
+
     int nb_mat = 4; // must be 4
     int nb_vec = 4; // must be 4
     int nz = mat.ell_num;
@@ -1206,6 +1211,205 @@ void ELL_OPENMP<T>::method_7(int nbit)
 
 }
 //----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::method_8(int nbit)
+{
+    // Align the vectors so I can use vector instrincis and other technique.s 
+    // Replace std::vector by pointers to floats and ints. 
+    // Process 4 matrices and 4 vectors. Make 4 matrices identical. 
+	printf("============== METHOD 8 ===================\n");
+    printf("Implement streaming\n");
+    // vectors are aligned. Start using vector _mm_ constructs. 
+
+    fill_random(mat, vec_v);
+
+    int nb_mat = 4; // must be 4
+    int nb_vec = 4; // must be 4
+    int nz = mat.ell_num;
+    std::vector<int>& col_id = mat.ell_col_id;
+    std::vector<float>& data = mat.ell_data;
+    int nb_rows = vec_v.size();
+
+    //std::vector<float> vec_vt(nb_vec*vec_v.size());
+    //std::vector<float> result_vt(nb_vec*nb_mat*vec_v.size());
+    //std::vector<int> col_id_t(col_id.size()*4);
+    //std::vector<float> data_t(data.size()*4);
+
+    float* vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * vec_v.size(), 64);
+    float* result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * vec_v.size(), 64);
+    int*   col_id_t  = (int*)   _mm_malloc(sizeof(int)   * col_id.size(), 16);
+    float* data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * col_id.size(), 64);
+
+    if (vec_vt == 0 || result_vt == 0 || col_id_t == 0 || data_t == 0) {
+        printf("1. memory allocation failed\n");
+        exit(0);
+    }
+
+    // transpose col_id array 
+    // Current version, from ell_matrix:  [nz][nrow]
+    // Transform to [nrow][nz]
+    #define COL(c,r)   col_id_t[(c) + nz*(r)]
+    #define DATA(m,c,r)    data_t[(m) + nb_mat*((c) + nz*(r))]
+    #define VEC(m,r)       vec_vt[(m) + nb_mat*(r)]
+    #define RES(m,v,r)  result_vt[(m) + nb_mat*((v) + nb_vec*(r))]
+
+    // Create 4 identical vectors, 4 identical matrices (easier to check results at first)
+    for (int m=0; m < nb_mat; m++) {
+        for (int r=0; r < nb_rows; r++) {
+            for (int n=0; n < nz; n++) {
+                DATA(m,n,r) = data[r+n*nb_rows];
+                //printf("data= %f\n", DATA(m,n,r));
+            }
+            VEC(m,r) = vec_v[r];
+            //printf("vec= %f\n", VEC(m,r));
+        }
+    }
+
+    for (int r=0; r < nb_rows; r++) {
+        for (int n=0; n < nz; n++) {
+            COL(n,r) = col_id[r + nb_rows*n];
+        }
+    }
+
+    printf("after initialization\n");
+
+    //for (int i=0; i < 128; i++) {
+        //printf("col_id_t[%d] = %d\n", i, col_id_t[i]);
+    //}
+ 
+    printf("nz in row: %d\n", nz);
+    printf("nb rows: %d\n", vec_v.size());
+    printf("aligned_length= %d\n", aligned_length);
+    printf("vector length= %d\n", vec_v.size());
+    printf("result_length= %d\n", result_v.size());
+    printf("nz*aligned_length= %d\n", nz*aligned_length);
+    printf("maximum nb threads: %d\n", omp_get_max_threads());
+    printf("size of col_id: %d\n", col_id.size());
+    printf("size of data: %d\n", data.size());
+
+    float gflops;
+    float elapsed; 
+
+        //----------------------------
+    // Restructure data array
+    // order:[r=0,m=0,n=(0,1,2,3)],[r=0,m=1,n=(0,1,2,3)],...,[r=0,m=3,n=(0,1,2,3)]
+    //       [r=1,m=0,n=(0,1,2,3)],....
+    int nz4 = nz / 4;
+    for (int r=0; r < nb_rows; r++) {
+    for (int n=0; n < nz; n+=4) {
+        for (int m=0; m < nb_mat; m++) {
+            for (int in=0; in < 4; in++) {
+                data_t[in+nb_mat*(m+nz*r)] = data[r+in*nb_rows];
+            }
+        }
+    }}
+
+#if 1
+//.......................................................
+    // Must now work on alignmentf vectors. 
+    // Produces the correct serial result
+    for (int it=0; it < 10; it++) {
+        tm["spmv"]->start();
+#pragma omp parallel firstprivate(nb_rows, nz)
+{
+    //const int skip = 1;
+    const int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
+    const int nb_mat = 4;
+    const int nb_vec = 4;
+    const int scale = 4;
+
+    __m512 v1_old = _mm512_setzero_ps();
+    __m512 v2_old = _mm512_setzero_ps();
+    __m512 v3_old = _mm512_setzero_ps();
+    __m512i i3_old = _mm512_setzero_ps();
+   // 0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3
+   const __m512i offsets = _mm512_set4_epi32(3,2,1,0); 
+   // (c4,c4,c4,c4,c3,c3,c3,c3,c2,c2,c2,c2,c1,c1,c1,c1)
+   // value of vperm has no effect
+   const __m512i vperm = _mm512_set_epi32(15,11,7,3,14,10,6,2,13,9,5,1,12,8,4,0);
+   //const __m512i vperm = _mm512_set_epi32(1,1,1,1,1,1,1,2,13,9,5,4,4,4,4,4);
+
+#pragma omp for 
+        for (int r=0; r < nb_rows; r++) {
+//#pragma simd
+            __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
+
+#pragma simd
+            for (int n=0; n < nz; n+=4) {  // nz is multiple of 32 (for now)
+                int    icol;
+                float* addr_vector;
+
+                v1_old = _mm512_load_ps(data_t + n*nb_mat); // load 16 at a time
+
+                //v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+         
+        // if col_id is (2,35,52,30)=(c1,c2,c3,c4), the offsets into the vector are
+        //   (4*2+0,4*2+1,4*2+2,4*2+3,  4*35+0,4*35+1,4*35+2,4*35+3,   4*52+0,4*52+1,4*52+2,4*52+3,  4*30+0,4*30+1, ... )
+        //   4*(c1,c1,c1,c1,  c2,c2,c2,c2,  c3,c3,c3,c3,   c4,c4,c4,c4)
+        // +   ( 0, 1, 2, 3,   0, 1, 2, 3,   0, 1, 2, 3,    0, 1, 2, 3
+       //__m512i vecidv = _mm512_load_epi32(col_id_ta+matoffset);  // only need 1/2 registers if dealing with doubles
+
+       //Using broadcast, I can read  c1,c2,c3,c4   c1,c2,c3,c4,  c1,c2,c3,c4,  c1,c2,c3,c4)
+
+
+       // Change hint to _MM_HINT_NT?
+       // (c4,c3,c2,c1,  c4,c3,c2,c1,   )
+        // read 4 values, broadcast to 16
+       __m512i v3_oldi = _mm512_extload_epi32(col_id_t+n, _MM_UPCONV_EPI32_NONE, _MM_BROADCAST_4X16, _MM_HINT_NONE);
+       v3_oldi = _mm512_permutevar_epi32(vperm, v3_oldi);
+       v3_oldi = _mm512_add_epi32(v3_oldi, offsets);
+       __m512  v     = _mm512_i32gather_ps(v3_oldi, vec_vt, scale); // scale = 4 (floats)
+
+                v3_old = permute(v, _MM_PERM_AAAA);
+                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
+                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+
+                v3_old = permute(v, _MM_PERM_BBBB);
+                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_BBBB);
+                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+
+                v3_old = permute(v, _MM_PERM_CCCC);
+                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_CCCC);
+                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+
+                v3_old = permute(v, _MM_PERM_DDDD);
+                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_DDDD);
+                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+                //accu = _mm512_setzero_ps();  generates zero norm as expected
+
+            }
+            _mm512_storenrngo_ps(result_vt+nb_mat*nb_vec*r, accu);
+        } 
+}
+    tm["spmv"]->end();  // time for each matrix/vector multiply
+    elapsed = tm["spmv"]->getTime();
+    gflops = nb_mat * nb_vec * 2.*nz*vec_v.size()*1e-9 / (1e-3*elapsed); // assumes count of 1
+    printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
+   }
+#endif
+
+
+#if 1
+    std::vector<float> one_res(nb_rows);  // single result
+    for (int w=0; w < 16; w++) {
+        for (int i=0; i < nb_rows; i++) {
+            one_res[i] = result_vt[16*i+w];
+        }
+        printf("method_8, l2norm[%d]=of omp version: %f\n", w, l2norm(one_res));
+    }
+
+    spmv_serial(mat, vec_v, result_v);
+    printf("method_8, l2norm of serial version: %f\n", l2norm(result_v));
+#endif
+
+
+    _mm_free(result_vt);
+    _mm_free(vec_vt);
+    _mm_free(data_t);
+    _mm_free(col_id_t);
+
+}
+//----------------------------------------------------------------------
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -1339,6 +1543,21 @@ __m512 ELL_OPENMP<T>::tensor_product(float* a, float* b)
         __m512 va = read_aaaa(a);
         __m512 vb = read_abcd(b);
         return _mm512_mul_ps(va, vb);
+}
+//----------------------------------------------------------------------
+template <typename T>
+__m512 ELL_OPENMP<T>::permute(__m512 v1, _MM_PERM_ENUM perm)
+//  Read 4 floats and copy them to four other lanes
+//  trick: __m512i _mm512_castps_si512(__m512 IN)
+//  Use _mm512_shuffle_epi32(__m512i v2, _MM_PERM_ENUM permute)
+//  permute =  255  (all lanes the smae
+{
+    __m512i vi = _mm512_castps_si512(v1);
+    //vi = _mm512_shuffle_epi32(vi, _MM_PERM_AAAA);
+    vi = _mm512_permute4f128_epi32(vi, perm);
+    // shuffle is like a swizzle
+    v1 = _mm512_castsi512_ps(vi);
+    return v1;
 }
 //----------------------------------------------------------------------
 template <typename T>
