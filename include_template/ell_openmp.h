@@ -129,7 +129,6 @@ void ELL_OPENMP<T>::run()
 	//method_5(4); // correct results
 	//method_6(4);
 	method_7(4);
-    exit(0);
 	method_8(4);
 }
 //----------------------------------------------------------------------
@@ -1031,9 +1030,6 @@ void ELL_OPENMP<T>::method_7(int nbit)
     // Create 4 identical vectors, 4 identical matrices (easier to check results at first)
     for (int m=0; m < nb_mat; m++) {
         for (int r=0; r < nb_rows; r++) {
-            for (int n=0; n < nz; n++) {
-                DATA(m,n,r) = data[r+n*nb_rows];
-            }
             VEC(m,r) = vec_v[r];
         }
     }
@@ -1043,6 +1039,24 @@ void ELL_OPENMP<T>::method_7(int nbit)
             COL(n,r) = col_id[r + nb_rows*n];
         }
     }
+ 
+    // Restructure data array
+    // order:[r=0,m=0,n=(0,1,2,3)],[r=0,m=1,n=(0,1,2,3)],...,[r=0,m=3,n=(0,1,2,3)]
+    //       [r=1,m=0,n=(0,1,2,3)],....
+    int nz4 = nz / 4;
+    int n_skip = 4;
+    for (int r=0; r < nb_rows; r++) {
+    for (int n=0; n < nz; n+=n_skip) {
+        int n4 = n >> 2; // if n_skip == 4
+        for (int m=0; m < nb_mat; m++) {
+            for (int in=0; in < n_skip; in++) {
+                //data(in,m,c,r)
+                //data_t[in+nb_mat*(m+nz*r)] = data[r+(n+in)*nb_rows];
+                data_t[in+n_skip*(m+nb_mat*(n4+nz4*r))] = data[r+(n+in)*nb_rows];
+            }
+        }
+    }}
+
 
     printf("after initialization\n");
 
@@ -1158,48 +1172,59 @@ void ELL_OPENMP<T>::method_7(int nbit)
                 int    icol;
                 float* addr_vector;
 
+                // (m=[0,..,3],c=0),(m=[0,..,3],c=1),..,(m=[0,..,3],c=3) == 16 elements
+                // Left is least significant (in Intel vectorization charts, right is least significant
+                // Left here, is right in the Intel documents.
+                // m0c0,m0c1,m0c2,m0c3,  m1c0,m1c1,m1c2,m2c3,  ...., m3c0,m3c1,m3c2,m3c3
                 v1_old = _mm512_load_ps(data_t + n*nb_mat); // load 16 at a time
 
-                icol         = col_id_t[n+nz*r];
-                addr_vector  = vec_vt + nb_vec*icol;
+                // icol is the same for all matrices
+                icol         = col_id_t[n+nz*r+0];   // single element (but next 4 in cache)
+                addr_vector  = vec_vt + nb_vec*icol; 
+                // f0v0 means 0th element of function 0
+                // read 4 vectors (f0v0,f1v0,f2v0,f3v0) and create vector (f0v0,f1v0,f2v0,f3v0, f0v0,f1v0,f2v0,f3v0,...)
                 v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+                // m0c0,m0c0,m0c0,m0c0, m1c0,m1c0,m1c0,m1c0, m2c0,m2c0,m2c0,m2c0,   m3c0,m3c0,m3c0,m3c0
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
                 icol         = col_id_t[n+nz*r+1];
+                //icol         = col_id_t[n+nz*r+1];
+                addr_vector  = vec_vt + nb_vec*icol;
+                // read 4 vectors (m0v0,m0v1,m0v2,m0v3) and create vector (m0v0,m0v1,m0v2,m0v3,m0v0,m0v1,m0v2,m0v3,...)
+                v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+                // m0c0,m0c0,m0c0,m0c0, m1c0,m1c0,m1c0,m1c0, m2c0,m2c0,m2c0,m2c0,   m3c0,m3c0,m3c0,m3c0
+                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
+                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+
+                icol         = col_id_t[n+nz*r+1];
+                //icol         = col_id_t[n+nz*r+1];
                 addr_vector  = vec_vt + nb_vec*icol;
                 v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+                // m0c1,m0c1,m0c1,m0c1, m1c1,m1c1,m1c1,m1c1, m2c1,m2c1,m2c1,m2c1,   m3c1,m3c1,m3c1,m3c1
+                v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+                // m0c1,m0c1,m0c1,m0c1, m1c1,m1c1,m1c1,m1c1, m2c1,m2c1,m2c1,m2c1,   m3c1,m3c1,m3c1,m3c1
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_BBBB);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
                 icol         = col_id_t[n+nz*r+2];
                 addr_vector  = vec_vt + nb_vec*icol;
                 v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+                // m0c2,m0c2,m0c2,m0c2, m1c2,m1c2,m1c2,m1c2, m2c2,m2c2,m2c2,m2c2,   m3c2,m3c2,m3c2,m3c2
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_CCCC);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
                 icol         = col_id_t[n+nz*r+3];
                 addr_vector  = vec_vt + nb_vec*icol;
                 v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+                // m0c3,m0c3,m0c3,m0c3, m1c3,m1c3,m1c3,m1c3, m2c3,m2c3,m2c3,m2c3,   m3c3,m3c3,m3c3,m3c3
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_DDDD);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-
-                //__m512 va = read_aaaa(addr_weights); // retrieve four weights
-                //v1_old = _mm512_mask_loadunpacklo_ps(v1_old, _mm512_int2mask(int_mask_lo), addr_weights);
-                //v1_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
-
-                // MOST INEFFICIENT, probably, for random case
-                //__m512 vb = read_abcd(addr_vector); // retrieve four vector values (3 Gfl)
-                //v2_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NONE);
-                //v2_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
-
-                // accu corresponds to 16 terms for the tensor product
-                //accu = _mm512_fmadd_ps(v1_old, v2_old, accu);
             }
             //if (r % skip == 0)
-            //_mm512_store_ps(result_vt+nb_mat*nb_vec*r, accu);
+            _mm512_store_ps(result_vt+nb_mat*nb_vec*r, accu);
             // nr: no register
-            _mm512_storenr_ps(result_vt+nb_mat*nb_vec*r, accu);
+            //_mm512_storenr_ps(result_vt+nb_mat*nb_vec*r, accu);
             // no ordering and no read of cache lines from memory
             //_mm512_storenrngo_ps(result_vt+nb_mat*nb_vec*r, accu);
         } 
@@ -1223,6 +1248,9 @@ void ELL_OPENMP<T>::method_7(int nbit)
     spmv_serial(mat, vec_v, result_v);
     printf("method_7, l2norm of serial version: %f\n", l2norm(result_v));
 #endif
+
+    // All 16 omp versions are the same. 
+    // But off by factor of approximately 6 from exact version. 
 
 
     _mm_free(result_vt);
@@ -1311,16 +1339,20 @@ void ELL_OPENMP<T>::method_8(int nbit)
     float gflops;
     float elapsed; 
 
-        //----------------------------
+    //----------------------------
     // Restructure data array
     // order:[r=0,m=0,n=(0,1,2,3)],[r=0,m=1,n=(0,1,2,3)],...,[r=0,m=3,n=(0,1,2,3)]
     //       [r=1,m=0,n=(0,1,2,3)],....
     int nz4 = nz / 4;
+    int n_skip = 4;
     for (int r=0; r < nb_rows; r++) {
-    for (int n=0; n < nz; n+=4) {
+    for (int n=0; n < nz; n+=n_skip) {
+        int n4 = n >> 2; // if n_skip == 4
         for (int m=0; m < nb_mat; m++) {
-            for (int in=0; in < 4; in++) {
-                data_t[in+nb_mat*(m+nz*r)] = data[r+in*nb_rows];
+            for (int in=0; in < n_skip; in++) {
+                //data(in,m,c,r)
+                //data_t[in+nb_mat*(m+nz*r)] = data[r+(n+in)*nb_rows];
+                data_t[in+n_skip*(m+nb_mat*(n4+nz4*r))] = data[r+(n+in)*nb_rows];
             }
         }
     }}
