@@ -18,12 +18,12 @@ F=compact_x_weights_direct__no_hv_stsize_32_3d_32x_32y_32z.mtxb
 F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb  
 F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 F=random_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
-F=compact_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.mtxb
 F=random_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.mtxb  
+F=compact_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.mtxb
 export F=$F
 # export OMP_DYNAMIC=FALSE
-export OMP_NUM_THREADS=1
 export OMP_NUM_THREADS=180
+export OMP_NUM_THREADS=1
 # 2nd argument must be as low as possible in random case
 # export OMP_SCHEDULE=guided,16  # 27 Gflop/random
 # export OMP_SCHEDULE=guided,8  # 22 Gflop/random
