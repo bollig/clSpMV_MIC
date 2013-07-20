@@ -1430,18 +1430,19 @@ void ELL_OPENMP<T>::method_8(int nbit)
 #pragma omp for 
         for (int r=0; r < nb_rows; r++) {
             printf("****************** row %d\n", r);
-            if (r == 4) exit(0);
+            if (r == 1) exit(0);
 //#pragma simd
             __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
 
 #pragma simd
             for (int n=0; n < nz; n+=4) {  // nz is multiple of 32 (for now)
+                if (n == 1) exit(0);
                 int    icol;
                 float* addr_vector;
                 //printf("*** n= %d\n", n);
 
                 v1_old = _mm512_load_ps(data_t + nb_mat*(n + r*nz)); // load 16 at a time
-                //print_ps(v1_old, "v1_old, data_t");
+                print_ps(v1_old, "--- v1_old, data_t");
 
                 //v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
          
@@ -1476,22 +1477,27 @@ void ELL_OPENMP<T>::method_8(int nbit)
 
                 v3_old = permute(v, _MM_PERM_AAAA);
        print_ps(v3_old, "v3_old, vec_vt");
+       print_ps(v1_old, "v1_old, data_t, before swizzle (multiply with v3_old)"); // WRONG: all values the same. 
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
-       print_ps(v2_old, "v2_old, data_t, swizzle (multiply with v3_old)");
+       print_ps(v2_old, "v2_old, data_t, swizzle (multiply with v3_old)"); // WRONG: all values the same. 
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
                 v3_old = permute(v, _MM_PERM_BBBB);
-       print_ps(v3_old, "v3_old");
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_BBBB);
+       print_ps(v3_old, "v3_old");
        print_ps(v2_old, "v2_old (multiply with v3_old)");
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
                 v3_old = permute(v, _MM_PERM_CCCC);
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_CCCC);
+       print_ps(v3_old, "v3_old");
+       print_ps(v2_old, "v2_old (multiply with v3_old)");
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
                 v3_old = permute(v, _MM_PERM_DDDD);
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_DDDD);
+       print_ps(v3_old, "v3_old");
+       print_ps(v2_old, "v2_old (multiply with v3_old)");
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
                 //accu = _mm512_setzero_ps();  generates zero norm as expected
 
