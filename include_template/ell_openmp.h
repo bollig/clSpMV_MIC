@@ -1351,6 +1351,9 @@ void ELL_OPENMP<T>::method_8(int nbit)
         }
     }
 
+    print_f(vec_vt, "vec_vt, first 16");
+    print_i(col_id_t, "col_id_t, first 16");
+
     printf("after initialization\n");
 
     //for (int i=0; i < 128; i++) {
@@ -1406,15 +1409,22 @@ void ELL_OPENMP<T>::method_8(int nbit)
     __m512 v2_old = _mm512_setzero_ps();
     __m512 v3_old = _mm512_setzero_ps();
     __m512i i3_old = _mm512_setzero_ps();
-   // 0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3
+   // 0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3 (OK)
    const __m512i offsets = _mm512_set4_epi32(3,2,1,0); 
+   const __m512i four = _mm512_set4_epi32(4,4,4,4); 
    // (c4,c4,c4,c4,c3,c3,c3,c3,c2,c2,c2,c2,c1,c1,c1,c1)
    // value of vperm has no effect
    const __m512i vperm = _mm512_set_epi32(15,11,7,3,14,10,6,2,13,9,5,1,12,8,4,0);
-   //const __m512i vperm = _mm512_set_epi32(1,1,1,1,1,1,1,2,13,9,5,4,4,4,4,4);
+   //const __m512i vperm = _mm512_set_epi32(15,11,7,3,14,10,6,2,13,9,5,1,12,8,4,0);
+   //const __m512i vperm = _mm512_set_epi32(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15);
+   //const __m512i vperm = _mm512_set_epi32(0,4,8,,4,5,6,7,8,9,10,11,12,13,14,15);
+   //const __m512i vperm = _mm512_set_epi32(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1);
+   //print_epi32(offsets, "offsets");
 
 #pragma omp for 
         for (int r=0; r < nb_rows; r++) {
+            //printf("****************** row %d\n", r);
+            //if (r == 1) exit(0);
 //#pragma simd
             __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
 
@@ -1422,8 +1432,10 @@ void ELL_OPENMP<T>::method_8(int nbit)
             for (int n=0; n < nz; n+=4) {  // nz is multiple of 32 (for now)
                 int    icol;
                 float* addr_vector;
+                //printf("*** n= %d\n", n);
 
                 v1_old = _mm512_load_ps(data_t + nb_mat*(n + r*nz)); // load 16 at a time
+                //print_ps(v1_old, "v1_old, data_t");
 
                 //v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
          
@@ -1440,17 +1452,32 @@ void ELL_OPENMP<T>::method_8(int nbit)
        // (c4,c3,c2,c1,  c4,c3,c2,c1,   )
         // read 4 values, broadcast to 16
        __m512i v3_oldi = _mm512_extload_epi32(col_id_t+n, _MM_UPCONV_EPI32_NONE, _MM_BROADCAST_4X16, _MM_HINT_NONE);
+       //print_epi32(v3_oldi, "v3_oldi (col_id)");
        v3_oldi = _mm512_permutevar_epi32(vperm, v3_oldi);
-       v3_oldi = _mm512_add_epi32(v3_oldi, offsets);
+       //print_epi32(v3_oldi, "a. v3_oldi");
+       //print_epi32(vperm, "vperm");
+       //print_epi32(v3_oldi, "permuted v3_oldi");
+       //v3_oldi = _mm512_mul_epi32(v3_oldi, four);
+       //v3_oldi = _mm512_add_epi32(v3_oldi, offsets);
+       v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets);
+       //print_epi32(v3_oldi, "permuted v3_oldi + offsets");
+       //print_epi32(v3_oldi, "b. v3_oldi");
        __m512  v     = _mm512_i32gather_ps(v3_oldi, vec_vt, scale); // scale = 4 (floats)
+       //print_ps(v, "v");
+       //print_ps(v, "v");
 
                 v3_old = permute(v, _MM_PERM_AAAA);
+       //print_ps(v3_old, "v3_old");
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
+       //print_ps(v2_old, "v2_old (multiply with v3_old)");
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
                 v3_old = permute(v, _MM_PERM_BBBB);
+       //print_ps(v3_old, "v3_old");
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_BBBB);
+       //print_ps(v2_old, "v2_old (multiply with v3_old)");
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+       //exit(0);
 
                 v3_old = permute(v, _MM_PERM_CCCC);
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_CCCC);
