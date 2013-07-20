@@ -132,7 +132,7 @@ void ELL_OPENMP<T>::run()
 	//method_4(4);
 	//method_5(4); // correct results
 	//method_6(4);
-	//method_7(4);
+	//method_7(4); // correct results
 	method_8(4);
 }
 //----------------------------------------------------------------------
@@ -147,6 +147,7 @@ ELL_OPENMP<T>::ELL_OPENMP(coo_matrix<int, T>* coo_mat, int dim2Size, int ntimes)
 //printf("inside ell constructor\n");
     printMatInfo_T(coo_mat);
     //ell_matrix<int, T> mat;
+    //coo_mat->print(1024);
     coo2ell<int, T>(coo_mat, &mat, GPU_ALIGNMENT, 0);
     //vec = (T*)malloc(sizeof(T)*coo_mat->matinfo.width);
 	vec_v.resize(coo_mat->matinfo.width);
@@ -191,7 +192,7 @@ void ELL_OPENMP<T>::method_0(int nbit)
     float gflops;
     float elapsed; 
 
-    printf("maximum nb threads: %d\n", omp_get_max_threads());
+    //printf("maximum nb threads: %d\n", omp_get_max_threads());
 
     int nb_rows = vec_v.size();
     //nb_rows = 262144; // hardcode // did not affect Gflops
@@ -528,7 +529,7 @@ void ELL_OPENMP<T>::method_3(int nbit)
     float gflops;
     float elapsed; 
 
-    printf("maximum nb threads: %d\n", omp_get_max_threads());
+    //printf("maximum nb threads: %d\n", omp_get_max_threads());
 
     printf("aligned_length= %d\n", aligned_length);
     printf("aligned_length= %d\n", aligned_length);
@@ -648,7 +649,7 @@ void ELL_OPENMP<T>::method_4(int nbit)
     float gflops;
     float elapsed; 
 
-    printf("maximum nb threads: %d\n", omp_get_max_threads());
+    //printf("maximum nb threads: %d\n", omp_get_max_threads());
 
     printf("aligned_length= %d\n", aligned_length);
     printf("aligned_length= %d\n", aligned_length);
@@ -778,7 +779,7 @@ void ELL_OPENMP<T>::method_5(int nbit)
     printf("vector length= %d\n", vec_v.size());
     printf("result_length= %d\n", result_v.size());
     printf("nz*aligned_length= %d\n", nz*aligned_length);
-    printf("maximum nb threads: %d\n", omp_get_max_threads());
+    //printf("maximum nb threads: %d\n", omp_get_max_threads());
     printf("size of col_id: %d\n", col_id.size());
     printf("size of data: %d\n", data.size());
 
@@ -904,7 +905,7 @@ void ELL_OPENMP<T>::method_6(int nbit)
     printf("vector length= %d\n", vec_v.size());
     printf("result_length= %d\n", result_v.size());
     printf("nz*aligned_length= %d\n", nz*aligned_length);
-    printf("maximum nb threads: %d\n", omp_get_max_threads());
+    //printf("maximum nb threads: %d\n", omp_get_max_threads());
     printf("size of col_id: %d\n", col_id.size());
     printf("size of data: %d\n", data.size());
 
@@ -1337,7 +1338,7 @@ void ELL_OPENMP<T>::method_8(int nbit)
     for (int m=0; m < nb_mat; m++) {
         for (int r=0; r < nb_rows; r++) {
             for (int n=0; n < nz; n++) {
-                DATA(m,n,r) = data[r+n*nb_rows];
+                //DATA(m,n,r) = data[r+n*nb_rows];
                 //printf("data= %f\n", DATA(m,n,r));
             }
             VEC(m,r) = vec_v[r];
@@ -1351,24 +1352,21 @@ void ELL_OPENMP<T>::method_8(int nbit)
         }
     }
 
-    print_f(vec_vt, "vec_vt, first 16");
-    print_i(col_id_t, "col_id_t, first 16");
-
-    printf("after initialization\n");
-
     //for (int i=0; i < 128; i++) {
         //printf("col_id_t[%d] = %d\n", i, col_id_t[i]);
     //}
  
+#if 0
     printf("nz in row: %d\n", nz);
     printf("nb rows: %d\n", vec_v.size());
     printf("aligned_length= %d\n", aligned_length);
     printf("vector length= %d\n", vec_v.size());
     printf("result_length= %d\n", result_v.size());
     printf("nz*aligned_length= %d\n", nz*aligned_length);
-    printf("maximum nb threads: %d\n", omp_get_max_threads());
+    //printf("maximum nb threads: %d\n", omp_get_max_threads());
     printf("size of col_id: %d\n", col_id.size());
     printf("size of data: %d\n", data.size());
+#endif
 
     float gflops;
     float elapsed; 
@@ -1390,6 +1388,14 @@ void ELL_OPENMP<T>::method_8(int nbit)
             }
         }
     }}
+
+    print_f(vec_vt, "vec_vt, first 16");
+    print_f(vec_vt+16, "vec_vt, second 16");
+    print_i(col_id_t, "col_id_t, first 16");
+    print_i(col_id_t+16, "col_id_t, second 16");
+    print_f(&data[0], "data, first 16");
+    print_f(data_t, "data_t, first 16");
+    print_f(data_t+16, "data_t, second 16");
 
 #if 1
 //.......................................................
@@ -1423,8 +1429,8 @@ void ELL_OPENMP<T>::method_8(int nbit)
 
 #pragma omp for 
         for (int r=0; r < nb_rows; r++) {
-            //printf("****************** row %d\n", r);
-            //if (r == 1) exit(0);
+            printf("****************** row %d\n", r);
+            if (r == 2) exit(0);
 //#pragma simd
             __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
 
@@ -1451,33 +1457,35 @@ void ELL_OPENMP<T>::method_8(int nbit)
        // Change hint to _MM_HINT_NT?
        // (c4,c3,c2,c1,  c4,c3,c2,c1,   )
         // read 4 values, broadcast to 16
+       // m0c0,m0c1,m0c2,m0c3,  m1c0,m1c1,m1c2,m2c3,  ...., m3c0,m3c1,m3c2,m3c3
        __m512i v3_oldi = _mm512_extload_epi32(col_id_t+n, _MM_UPCONV_EPI32_NONE, _MM_BROADCAST_4X16, _MM_HINT_NONE);
-       //print_epi32(v3_oldi, "v3_oldi (col_id)");
+       print_epi32(v3_oldi, "v3_oldi (col_id)");
        v3_oldi = _mm512_permutevar_epi32(vperm, v3_oldi);
        //print_epi32(v3_oldi, "a. v3_oldi");
        //print_epi32(vperm, "vperm");
-       //print_epi32(v3_oldi, "permuted v3_oldi");
+       print_epi32(v3_oldi, "permuted v3_oldi");
+       print_epi32(offsets, "offsets");
        //v3_oldi = _mm512_mul_epi32(v3_oldi, four);
        //v3_oldi = _mm512_add_epi32(v3_oldi, offsets);
        v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets);
-       //print_epi32(v3_oldi, "permuted v3_oldi + offsets");
+       print_epi32(v3_oldi, "permuted v3_oldi + offsets");
        //print_epi32(v3_oldi, "b. v3_oldi");
        __m512  v     = _mm512_i32gather_ps(v3_oldi, vec_vt, scale); // scale = 4 (floats)
-       //print_ps(v, "v");
+       print_ps(v, "v after gather");
        //print_ps(v, "v");
 
                 v3_old = permute(v, _MM_PERM_AAAA);
-       //print_ps(v3_old, "v3_old");
+       print_ps(v3_old, "v3_old, vec_vt");
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
-       //print_ps(v2_old, "v2_old (multiply with v3_old)");
+       print_ps(v2_old, "v2_old, data_t, swizzle (multiply with v3_old)");
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+       exit(0);
 
                 v3_old = permute(v, _MM_PERM_BBBB);
-       //print_ps(v3_old, "v3_old");
+       print_ps(v3_old, "v3_old");
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_BBBB);
-       //print_ps(v2_old, "v2_old (multiply with v3_old)");
+       print_ps(v2_old, "v2_old (multiply with v3_old)");
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-       //exit(0);
 
                 v3_old = permute(v, _MM_PERM_CCCC);
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_CCCC);

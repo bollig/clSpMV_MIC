@@ -1501,6 +1501,7 @@ void ell2coo(ell_matrix<dimType, dataType>* source, coo_matrix<dimType, dataType
 template <class dimType, class dataType>
 void coo2ell(coo_matrix<dimType, dataType>* source, ell_matrix<dimType, dataType>* dest, dimType alignment, dimType ellnum)
 {
+    printf("*** coo2ell ***, ellnum= %d\n", ellnum);
     dest->matinfo.width = source->matinfo.width;
     dest->matinfo.height = source->matinfo.height;
     dest->matinfo.nnz = source->matinfo.nnz;
@@ -1516,8 +1517,8 @@ void coo2ell(coo_matrix<dimType, dataType>* source, ell_matrix<dimType, dataType
 	for (dimType i = (dimType)0; i < csrmat.matinfo.height; i++)
 	{
 	    dimType size = csrmat.csr_row_ptr[i+1] - csrmat.csr_row_ptr[i];
-	    if (size > ellnum)
-		ellnum = size;
+        //printf("size***= %d\n", size);
+	    if (size > ellnum) ellnum = size;
 	}
     }
     dest->ell_num = ellnum;
@@ -1561,6 +1562,7 @@ void coo2ell(coo_matrix<dimType, dataType>* source, ell_matrix<dimType, dataType
 	        dest->ell_data[indx] = data;
 	        lastcolid = colid;
 	    }
+        //printf("end= %d, start= %d, ellnum= %d\n", end, start, ellnum);
 	    for (dimType j = end; j < start + ellnum; j++)
 	    {
             printf("INSIDE PADDING LOOP: shoud not occur\n");
