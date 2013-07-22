@@ -75,3 +75,8 @@ Now create matrix with constant vertical lines. Column i: value: i. Then do row 
 My generation of col_ids is incorrect. When randomized and when I have only 32 columns, and the 
 matrix has only 32 columns. CHECK GENERATING code in rbffd. 
 ----------------------------------------------------------------------
+June 22, 2013
+Errors solved. 
+method_7a: 19 gflops
+method_8a: 18 gflops
+----------------------------------------------------------------------
