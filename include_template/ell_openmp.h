@@ -1892,6 +1892,98 @@ __m512 ELL_OPENMP<T>::read_abcd(float* a)
     return v1_old;
 }
 //----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::generate_ell_matrix_by_row(std::vector<int>& col_id, std::vector<T>& data, 
+        int nb_elem)
+{
+    // successive nonzeros are contiguous in memory. This is different than the standard
+    // ordering for col_id
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::generate_ell_matrix_data(std::vector<int>& data, int nbz, int nb_rows, int nb_mat)
+{
+    int nz4 = nbz / nb_mat;
+    int n_skip = nb_mat;
+    for (int m=0; m < nb_mat; m++) {
+        for (int r=0; r < nb_rows; r++) {
+            for (int n=0; r < nbz; n += nb_mat) {
+                int n4 = n / nb_mat;
+                for (int in=0; in < nb_mat; in++) {
+                    data_out[in+n_skip*(m+nb_mat*(n4+nz4*r))];
+                }
+            }
+        }
+    }
+}
+//----------------------------------------------------------------------
+// Need a stencil_type
+// enum {COMPACT=0, RANDOM} stencil_type;
+#define COMPACT 0
+#define RANDOM 1
+template <typename T>
+void ELL_OPENMP::generate_col_id(std::vector<int>& col_id, int nbz, int nb_rows, int type)
+{
+    assert(col_id.size() == nbz*nb_rows);
+
+    swich (type) {
+    case COMPACT:
+        for (int r=0; r < nb_rows; r++) {
+            for (int c=0; c < nbz; c++) { 
+            }
+        }
+       break;
+    case RANDOM:
+       break;
+    default:
+        printf("generate_col_id, case not treated\n");
+        break;
+    }
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::generate_vector(std::vector<T>& vec, int nb_rows, int nb_vec)
+{
+    assert(vec.size() == nbrows*nb_vec);
+
+    for (int i=0; i < vec.size(); i++) {
+        vec[i] = (T) getRandf();
+    }
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::retrieve_vector(std::vector<T>& vec, std::vector<T>& retrieved, int vec_id, int nb_vec)
+{
+    // vec is stored with vec_id as the fastest varying index
+
+    for (int i=0; i < retrieved.size(); i++) {
+        retrieved[i] = vec[vec_id + nb_vec*i];
+    }
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::retrieve_data(std::vector<T>& data_in, std::vector<T>& data_out, int mat_id, int nbz, int nb_rows, int nb_mat)
+{
+    assert(nb_mat == 4);
+    assert(data_out.size() == nbz*nb_rows);
+
+    int nz4 = nbz / nb_mat;
+    for (int r=0; r < nb_rows; r++) {
+        for (int n=0; r < nbz; n += nb_mat) {
+            int n4 = n / nb_mat;
+            for (int in=0; in < nb_mat; in++) {
+                data_out[r+nb_rows*(n+in)] = data_in[in+n_skip*(mat_id+nb_mat*(n4+nz4*r))];
+            }
+        }
+    }
+}
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
 #if 1
 template <typename  T>
 void spmv_ell_openmp(coo_matrix<int, T>* coo_mat, int dim2Size, int ntimes)
