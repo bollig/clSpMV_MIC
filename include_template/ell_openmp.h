@@ -106,6 +106,7 @@ public:
 	void method_7(int nb=0); // 4 matrices, 4 vectors (correct results)
 	void method_7a(int nb=0); // 4 matrices, 4 vectors, using new matrix generators
 	void method_8(int nb=0); // 4 matrices, 4 vectors
+	void method_8a(int nb=0); // 4 matrices, 4 vectors
 
     inline __m512 permute(__m512 v1, _MM_PERM_ENUM perm);
     inline __m512 read_aaaa(float* a);
@@ -150,10 +151,11 @@ void ELL_OPENMP<T>::run()
 	//method_4(4);
 	//method_5(4); // correct results
 	//method_6(4);
-	method_7(4); // correct results
-	method_7a(4); // correct results
+	//method_7(4); // correct results
+	method_7a(4); // Something wrong with random matrices
+	//method_8(4);
+	method_8a(4);
     exit(0);
-	method_8(4);
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -1232,8 +1234,8 @@ void ELL_OPENMP<T>::method_7(int nbit)
                 // m0c0,m0c0,m0c0,m0c0,   m1c0,m1c0,m1c0,m1c0,   m2c0,m2c0,m2c0,m2c0,   m3c0,m3c0,m3c0,m3c0
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
                 //printf("1st icol= %d\n", icol);
-                print_ps(v3_old, "1st v3old, extload_ps");
-                print_ps(v2_old, "1st swizzle");
+                //print_ps(v3_old, "1st v3old, extload_ps");
+                //print_ps(v2_old, "1st swizzle");
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
                 //-----
@@ -1244,8 +1246,8 @@ void ELL_OPENMP<T>::method_7(int nbit)
                 // m0c0,m0c0,m0c0,m0c0, m1c0,m1c0,m1c0,m1c0, m2c0,m2c0,m2c0,m2c0,   m3c0,m3c0,m3c0,m3c0
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_BBBB);
                 //printf("2nd icol= %d\n", icol);
-                print_ps(v3_old, "2nd v3old, extload_ps");
-                print_ps(v2_old, "2nd swizzle");
+                //print_ps(v3_old, "2nd v3old, extload_ps");
+                //print_ps(v2_old, "2nd swizzle");
                 //exit(0);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
@@ -1319,7 +1321,7 @@ void ELL_OPENMP<T>::method_7a(int nbit)
     // Replace std::vector by pointers to floats and ints. 
     // Process 4 matrices and 4 vectors. Make 4 matrices identical. 
 	printf("============== METHOD 7a ===================\n");
-    printf("Method 7 with new matrix generators\n");
+    printf("Method 7a with new matrix generators\n");
     // vectors are aligned. Start using vector _mm_ constructs. 
 
     int nb_mat = 4; // must be 4
@@ -1341,22 +1343,11 @@ void ELL_OPENMP<T>::method_7a(int nbit)
     }
 
     // generate 4 compact matrices and four vectors
-#if 0
-    void generate_ell_matrix_by_row(std::vector<int>& col_id, std::vector<T>& data, int nb_elem);
-    void generate_ell_matrix_data(std::vector<int>& data, int nbz, int nb_rows, int nb_mat);
-    void generate_col_id(std::vector<int>& col_id, int nbz, int nb_rows, int type);
-    void generate_vector(std::vector<T>& vec, int nb_rows, int nb_vec);
-    void retrieve_vector(std::vector<T>& vec, std::vector<T>& retrieved, int vec_id, int nb_vec);
-    void retrieve_data(std::vector<T>& data_in, std::vector<T>& data_out, int mat_id, int nbz, int nb_rows, int nb_mat);
-#endif
 
     generate_vector(vec_vt, nb_rows, nb_vec);
-    printf("after gen vec\n");
     generate_col_id(col_id_t, nz, nb_rows, COMPACT);
-    printf("after gen col_id\n");
-    printf("data.size= %d, %d\n", data.size(), nz*nb_rows);
+    //generate_col_id(col_id_t, nz, nb_rows, RANDOM);
     generate_ell_matrix_data(data_t, nz, nb_rows, nb_mat);
-    printf("after matrix data\n");
 
 //.......................................................
     // Must now work on alignmentf vectors. 
@@ -1377,24 +1368,17 @@ void ELL_OPENMP<T>::method_7a(int nbit)
 
 #pragma omp for 
         for (int r=0; r < nb_rows; r++) {
-//#pragma simd
-            //printf("***** row %d\n", r);
-            //if (r > 2) exit(0);
             __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
             float* addr_vector;
             int    icol;
 
 #pragma simd
             for (int n=0; n < nz; n+=4) {  // nz is multiple of 32 (for now)
-                    //printf("==== n= %d\n", n);
-
                 // (m=[0,..,3],c=0),(m=[0,..,3],c=1),..,(m=[0,..,3],c=3) == 16 elements
                 // Left is least significant (in Intel vectorization charts, right is least significant
                 // Left here, is right in the Intel documents.
                 // m0c0,m0c1,m0c2,m0c3,  m1c0,m1c1,m1c2,m2c3,  ...., m3c0,m3c1,m3c2,m3c3
                 v1_old = _mm512_load_ps(data_t + nb_mat*(n + r*nz)); // load 16 at a time
-                //printf("v1_old offset: %d, nb_mat= %d\n", n*nb_mat, nb_mat);
-                //print_ps(v1_old, "v1_old: data_t");
 
                 // icol is the same for all matrices
                 icol         = col_id_t[n+nz*r+0];   // single element (but next 4 in cache)
@@ -1404,9 +1388,6 @@ void ELL_OPENMP<T>::method_7a(int nbit)
                 v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
                 // m0c0,m0c0,m0c0,m0c0,   m1c0,m1c0,m1c0,m1c0,   m2c0,m2c0,m2c0,m2c0,   m3c0,m3c0,m3c0,m3c0
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
-                //printf("1st icol= %d\n", icol);
-                print_ps(v3_old, "1st v3old, extload_ps");
-                print_ps(v2_old, "1st swizzle");
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
                 //-----
@@ -1416,10 +1397,6 @@ void ELL_OPENMP<T>::method_7a(int nbit)
                 v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
                 // m0c0,m0c0,m0c0,m0c0, m1c0,m1c0,m1c0,m1c0, m2c0,m2c0,m2c0,m2c0,   m3c0,m3c0,m3c0,m3c0
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_BBBB);
-                //printf("2nd icol= %d\n", icol);
-                print_ps(v3_old, "2nd v3old, extload_ps");
-                print_ps(v2_old, "2nd swizzle");
-                //exit(0);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
                 //-----
@@ -1429,9 +1406,6 @@ void ELL_OPENMP<T>::method_7a(int nbit)
                 // m0c2,m0c2,m0c2,m0c2, m1c2,m1c2,m1c2,m1c2, m2c2,m2c2,m2c2,m2c2,   m3c2,m3c2,m3c2,m3c2
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_CCCC);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-                //printf("3rd icol= %d\n", icol);
-                //print_ps(v3_old, "3rd v3old, extload_ps");
-                //print_ps(v2_old, "3rd swizzle");
 
                 //-----
                 icol         = col_id_t[n+nz*r+3];
@@ -1440,13 +1414,7 @@ void ELL_OPENMP<T>::method_7a(int nbit)
                 // m0c3,m0c3,m0c3,m0c3, m1c3,m1c3,m1c3,m1c3, m2c3,m2c3,m2c3,m2c3,   m3c3,m3c3,m3c3,m3c3
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_DDDD);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-                //printf("4th icol= %d\n", icol);
-                //print_ps(v3_old, "4th v3old, extload_ps");
-                //print_ps(v2_old, "4th swizzle");
-                //print_ps(accu, "accu");
-                //if (n >= 8) exit(0);
             }
-            //if (r % skip == 0)
             _mm512_store_ps(result_vt+nb_mat*nb_vec*r, accu);
             // nr: no register
             //_mm512_storenr_ps(result_vt+nb_mat*nb_vec*r, accu);
@@ -1472,16 +1440,15 @@ void ELL_OPENMP<T>::method_7a(int nbit)
         }
         printf("method_7a, l2norm[%d]=of omp version: %f\n", w, l2norm(one_res));
 
-    //void retrieve_vector(std::vector<T>& vec, std::vector<T>& retrieved, int vec_id, int nb_vec);
-    //void retrieve_data(std::vector<T>& data_in, std::vector<T>& data_out, int mat_id, int nbz, int nb_rows, int nb_mat);
-        int vec_id = 0;
-        retrieve_vector(vec_vt, v, vec_id, nb_vec, nb_rows); 
-        //void retrieve_data(std::vector<T>& data_in, std::vector<T>& data_out, int mat_id, int nbz, int nb_rows, int nb_mat);
-        int mat_id = 0;
-        retrieve_data(&data_t[0], d,  mat_id, nz, nb_rows, nb_mat);
-        spmv_serial_row(&col_id[0], d, v, &one_res[0], nz, nb_rows) ;
-        printf("method_7a, l2norm of serial version: %f\n", l2norm(result_v)); // need matrix and vector index
     }
+    
+    for (int mat_id=0; mat_id < nb_mat; mat_id++) {
+        retrieve_data(&data_t[0], d, mat_id, nz, nb_rows, nb_mat);
+    for (int vec_id=0; vec_id < nb_vec; vec_id++) {
+        retrieve_vector(vec_vt, v, vec_id, nb_vec, nb_rows); 
+        spmv_serial_row(&col_id_t[0], d, v, &one_res[0], nz, nb_rows);
+        printf("method_7a, l2norm of serial vec/mat= %d/%d, %f\n", vec_id, mat_id, l2norm(one_res)); // need matrix and vector index
+    }}
 
     _mm_free(v);
     _mm_free(d);
@@ -1773,7 +1740,201 @@ void ELL_OPENMP<T>::method_8(int nbit)
 
 }
 //----------------------------------------------------------------------
-//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::method_8a(int nbit)
+{
+    // Align the vectors so I can use vector instrincis and other technique.s 
+    // Replace std::vector by pointers to floats and ints. 
+    // Process 4 matrices and 4 vectors. Make 4 matrices identical. 
+	printf("============== METHOD 8a ===================\n");
+    printf("Implement streaming\n");
+    // vectors are aligned. Start using vector _mm_ constructs. 
+
+    fill_random(mat, vec_v);
+
+    int nb_mat = 4; // must be 4
+    int nb_vec = 4; // must be 4
+    int nz = mat.ell_num;
+    std::vector<int>& col_id = mat.ell_col_id;
+    std::vector<float>& data = mat.ell_data;
+    int nb_rows = vec_v.size();
+
+    float* vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * vec_v.size(), 64);
+    float* result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * vec_v.size(), 64);
+    int*   col_id_t  = (int*)   _mm_malloc(sizeof(int)   * col_id.size(), 16);
+    float* data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * col_id.size(), 64);
+
+    if (vec_vt == 0 || result_vt == 0 || col_id_t == 0 || data_t == 0) {
+        printf("1. memory allocation failed\n");
+        exit(0);
+    }
+    //
+    // generate 4 compact matrices and four vectors
+
+    generate_vector(vec_vt, nb_rows, nb_vec);
+    generate_col_id(col_id_t, nz, nb_rows, COMPACT);
+    //generate_col_id(col_id_t, nz, nb_rows, RANDOM);
+    generate_ell_matrix_data(data_t, nz, nb_rows, nb_mat);
+
+    #define COL(c,r)   col_id_t[(c) + nz*(r)]
+    #define DATA(m,c,r)    data_t[(m) + nb_mat*((c) + nz*(r))]
+    #define VEC(m,r)       vec_vt[(m) + nb_mat*(r)]
+    #define RES(m,v,r)  result_vt[(m) + nb_mat*((v) + nb_vec*(r))]
+
+    float gflops;
+    float elapsed; 
+
+#if 1
+//.......................................................
+    // Must now work on alignmentf vectors. 
+    // Produces the correct serial result
+    for (int it=0; it < 10; it++) {
+        tm["spmv"]->start();
+#pragma omp parallel firstprivate(nb_rows, nz)
+{
+    //const int skip = 1;
+    const int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
+    const int nb_mat = 4;
+    const int nb_vec = 4;
+    const int scale = 4;
+
+    __m512 v1_old = _mm512_setzero_ps();
+    __m512 v2_old = _mm512_setzero_ps();
+    __m512 v3_old = _mm512_setzero_ps();
+    __m512i i3_old = _mm512_setzero_ps();
+   // 0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3 (OK)
+   const __m512i offsets = _mm512_set4_epi32(3,2,1,0); 
+   const __m512i four = _mm512_set4_epi32(4,4,4,4); 
+   const __m512i offsets1 = _mm512_set_epi32(15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);
+   // (c4,c4,c4,c4,c3,c3,c3,c3,c2,c2,c2,c2,c1,c1,c1,c1)
+   // value of vperm has no effect
+   const __m512i vperm = _mm512_set_epi32(15,11,7,3,14,10,6,2,13,9,5,1,12,8,4,0);
+   //const __m512i vperm = _mm512_set_epi32(15,11,7,3,14,10,6,2,13,9,5,1,12,8,4,0);
+   //const __m512i vperm = _mm512_set_epi32(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15);
+   //const __m512i vperm = _mm512_set_epi32(0,4,8,,4,5,6,7,8,9,10,11,12,13,14,15);
+   //const __m512i vperm = _mm512_set_epi32(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1);
+   //print_epi32(offsets, "offsets");
+
+#pragma omp for 
+        for (int r=0; r < nb_rows; r++) {
+            //printf("****************** row %d\n", r);
+            //if (r == 1) exit(0);
+//#pragma simd
+            __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
+
+#pragma simd
+            for (int n=0; n < nz; n+=4) {  // nz is multiple of 32 (for now)
+                //if (n == 4) exit(0);
+                int    icol;
+                float* addr_vector;
+                //printf("*** n= %d, %d\n", n, nz);
+
+                v1_old = _mm512_load_ps(data_t + nb_mat*(n + r*nz)); // load 16 at a time
+                //print_ps(v1_old, "--- v1_old, data_t");
+
+                //v3_old = _mm512_extload_ps(addr_vector, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NT);
+         
+        // if col_id is (2,35,52,30)=(c1,c2,c3,c4), the offsets into the vector are
+        //   (4*2+0,4*2+1,4*2+2,4*2+3,  4*35+0,4*35+1,4*35+2,4*35+3,   4*52+0,4*52+1,4*52+2,4*52+3,  4*30+0,4*30+1, ... )
+        //   4*(c1,c1,c1,c1,  c2,c2,c2,c2,  c3,c3,c3,c3,   c4,c4,c4,c4)
+        // +   ( 0, 1, 2, 3,   0, 1, 2, 3,   0, 1, 2, 3,    0, 1, 2, 3
+       //__m512i vecidv = _mm512_load_epi32(col_id_ta+matoffset);  // only need 1/2 registers if dealing with doubles
+
+       //Using broadcast, I can read  c1,c2,c3,c4   c1,c2,c3,c4,  c1,c2,c3,c4,  c1,c2,c3,c4)
+
+
+       // Change hint to _MM_HINT_NT?
+       // (c4,c3,c2,c1,  c4,c3,c2,c1,   )
+        // read 4 values, broadcast to 16
+       // m0c0,m0c1,m0c2,m0c3,  m1c0,m1c1,m1c2,m2c3,  ...., m3c0,m3c1,m3c2,m3c3
+       //__m512i v3_oldi = _mm512_extload_epi32(col_id_t+n, _MM_UPCONV_EPI32_NONE, _MM_BROADCAST_4X16, _MM_HINT_NONE);
+       __m512i v3_oldi = read_aaaa(&col_id_t[0]+n);
+       //printf("col_id: %d, %d, %d, %d\n", col_id[0], col_id[1], col_id[2], col_id[3]);
+       //print_epi32(v3_oldi, "v3_oldi (col_id, load, 4x16)");
+       //v3_oldi = _mm512_permutevar_epi32(vperm, v3_oldi);
+       //print_epi32(v3_oldi, "a. v3_oldi");
+       //print_epi32(vperm, "vperm");
+       //print_epi32(v3_oldi, "permuted v3_oldi");
+       //print_epi32(offsets1, "offsets1");
+       //v3_oldi = _mm512_mul_epi32(v3_oldi, four);
+       //v3_oldi = _mm512_add_epi32(v3_oldi, offsets);
+       v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets);
+       //print_epi32(v3_oldi, "permuted v3_oldi + offsets");
+       //print_epi32(v3_oldi, "b. v3_oldi");
+       __m512  v     = _mm512_i32gather_ps(v3_oldi, vec_vt, scale); // scale = 4 bytes (floats)
+       //print_ps(v, "v after gather");
+       //print_ps(v, "v");
+
+                v3_old = permute(v, _MM_PERM_AAAA);
+       //print_ps(v3_old, "v3_old, vec_vt");
+       //print_ps(v1_old, "v1_old, data_t, before swizzle (multiply with v3_old)"); // WRONG: all values the same. 
+                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
+       //print_ps(v2_old, "v2_old, data_t, swizzle (multiply with v3_old)"); // WRONG: all values the same. 
+                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+
+                v3_old = permute(v, _MM_PERM_BBBB);
+                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_BBBB);
+       //print_ps(v3_old, "v3_old");
+       //print_ps(v2_old, "v2_old, data_t, swizzle (multiply with v3_old)"); // WRONG: all values the same. 
+                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+
+                v3_old = permute(v, _MM_PERM_CCCC);
+                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_CCCC);
+       //print_ps(v3_old, "v3_old");
+       //print_ps(v2_old, "v2_old, data_t, swizzle (multiply with v3_old)"); // WRONG: all values the same. 
+                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+
+                v3_old = permute(v, _MM_PERM_DDDD);
+                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_DDDD);
+       //print_ps(v3_old, "v3_old");
+       //print_ps(v2_old, "v2_old, data_t, swizzle (multiply with v3_old)"); // WRONG: all values the same. 
+                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
+                //accu = _mm512_setzero_ps();  generates zero norm as expected
+
+      //printf("---- end of n=%d loop\n", n);
+            }
+            _mm512_storenrngo_ps(result_vt+nb_mat*nb_vec*r, accu);
+        } 
+}
+    tm["spmv"]->end();  // time for each matrix/vector multiply
+    elapsed = tm["spmv"]->getTime();
+    gflops = nb_mat * nb_vec * 2.*nz*vec_v.size()*1e-9 / (1e-3*elapsed); // assumes count of 1
+    printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
+   }
+#endif
+
+#if 1
+    std::vector<float> one_res(nb_rows);  // single result
+    T* v = (T*) _mm_malloc(sizeof(T)*nb_rows, 16);
+    T* d = (T*) _mm_malloc(sizeof(T)*nb_rows*nz, 16);
+    for (int w=0; w < 16; w++) {
+        for (int i=0; i < nb_rows; i++) {
+            one_res[i] = result_vt[16*i+w];
+        }
+        printf("method_8a, l2norm[%d]=of omp version: %f\n", w, l2norm(one_res));
+
+    }
+    
+    for (int mat_id=0; mat_id < nb_mat; mat_id++) {
+        retrieve_data(&data_t[0], d, mat_id, nz, nb_rows, nb_mat);
+    for (int vec_id=0; vec_id < nb_vec; vec_id++) {
+        retrieve_vector(vec_vt, v, vec_id, nb_vec, nb_rows); 
+        spmv_serial_row(&col_id_t[0], d, v, &one_res[0], nz, nb_rows);
+        printf("method_8a, l2norm of serial vec/mat= %d/%d, %f\n", vec_id, mat_id, l2norm(one_res)); // need matrix and vector index
+    }}
+
+    _mm_free(v);
+    _mm_free(d);
+#endif
+
+
+
+    _mm_free(result_vt);
+    _mm_free(vec_vt);
+    _mm_free(data_t);
+    _mm_free(col_id_t);
+
+}
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 template <typename T>
@@ -1932,55 +2093,18 @@ void ELL_OPENMP<T>::spmv_serial_row(int* col_id, T* data, T* v, T* res, int nbz,
 // results should be same as spmv_serial (which is really spmv_serial_col)
 {
     T accumulant;
-    //int vecid;
-    //int aligned = mat.ell_height_aligned;
-    //int nz = mat.ell_num;
-    //std::vector<int>& col_id = mat.ell_col_id;
-    //std::vector<T>& data = mat.ell_data;
-    //int nb_rows = v.size();
-#if 0
-    printf(" mat.ell_num = %d\n", mat.ell_num);
-    printf("tot nb nonzeros: %d\n", mat.matinfo.nnz);
-    printf("nb rows: %d\n", v.size());
-    printf("aligned= %d\n", aligned);
-    printf("nz*nb_rows= %d\n", nz*nb_rows);
-    printf("data size= %d\n", data.size());
-    printf("col_id size= %d\n", col_id.size());
-    mat.print();
-#endif
+   int matoffset;
 
-    //std::fill(result.begin(), result.end(), (T) 0.);
     for (int i=0; i < nb_rows; i++) res[i] = 0.;
 
-    //std::vector<int> col_id_t(nbz*nb_rows); //col_id.size());
-    //std::vector<T>     data_t(nbz*nb_rows); //data.size());
-
-     #if 0
-    // Transpose rows and columns
     for (int row=0; row < nb_rows; row++) {
-        for (int n=0; n < nz; n++) {
-            //col_id_t[row+n*nb_rows] = col_id[n+nz*row];
-            //data_t[row+n*nb_rows] = data[n+nz*row];
-            //ct[nrows][nz], c[nz][nrows]
-            // ct[nz][n] = c[n][nz]
-            col_id_t[n+nz*row] = col_id[row+n*nb_rows];
-              data_t[n+nz*row]   = data[row+n*nb_rows];
-        }
-    }
-    #endif
-    
-    for (int row=0; row < nb_rows; row++) {
-        //if (row >= 1) break;
         float accumulant = 0.;
         for (int i=0; i < nbz; i++) {
-            int matoffset = row*nbz+i;
+            matoffset = row*nbz+i;
             int vecid = col_id[matoffset];
             float   d = data[matoffset];
             accumulant += d * v[vecid];  // most efficient, 12 Gflops
-            //printf("row, i=%d, accu= %f,  ", i, accumulant);
-            //printf("vecid= %d, d = %f\n, v= %f\n", vecid, d, v[vecid]);
         }
-        //printf("accumulant= %f\n", accumulant);
         res[row] = accumulant;
     }
 }
@@ -2174,6 +2298,8 @@ void ELL_OPENMP<T>::generate_ell_matrix_data(T* data, int nbz, int nb_rows, int 
                 int n4 = n / n_skip;
                 for (int in=0; in < n_skip; in++) {
                     data[in+n_skip*(m+nb_mat*(n4+nz4*r))] = getRandf();
+                    //data[in+n_skip*(m+nb_mat*(n4+nz4*r))] = 1.0; // correct norms
+                    // handling of vector is ok. Problem is related to data or col_id
                 }
             }
         }
@@ -2187,7 +2313,8 @@ template <typename T>
 void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows, int type)
 {
     //assert(col_id.size() == nbz*nb_rows);
-    std::vector<int> indices(nbz);
+    printf("inside generate_col_id\n");
+    std::vector<int> indices;
 
     switch (type) {
     case COMPACT:
@@ -2220,15 +2347,18 @@ void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows, int type)
         break;
 
     case RANDOM:
-        for (int i=0; i < indices.size(); i++) {
+        indices.resize(1000);
+        for (int i=0; i < 1000; i++) {
             indices[i] = i;
         }
-
+        printf("indices size= %d\n", indices.size());
         for (int i=0; i < nb_rows; i++) {
             std::random_shuffle(indices.begin(), indices.end());
-            for (int j=0; j < indices.size(); j++) {
-                col_id[i*nbz+j] = indices[j];
-            }
+            if (i % 1000 == 0) printf("i = %d\n", i);
+            //for (int j=0; j < nbz; j++) {
+                //printf("index[%d]= %d\n", j, indices[j]);
+                //col_id[i*nbz+j] = indices[j];
+            //}
         }
         break;
 
@@ -2244,10 +2374,14 @@ void ELL_OPENMP<T>::generate_vector(T* vec, int nb_rows, int nb_vec)
 {
     //assert(vec.size() == nb_rows*nb_vec);
     int sz = nb_rows*nb_vec;
+    printf("sz= %d\n", sz);
 
     for (int i=0; i < sz; i++) {
+        //if (!(i % 10000))  printf("i= %d\n", i);
         vec[i] = (T) getRandf();
+        //vec[i] = 1.0; // wrong norms when matrices random, although only 4 different norms
     }
+    printf("exit generate vector\n");
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -2270,10 +2404,11 @@ void ELL_OPENMP<T>::retrieve_data(T* data_in, T* data_out, int mat_id, int nbz, 
     int n_skip = nb_mat;
     int nz4 = nbz / n_skip;
     for (int r=0; r < nb_rows; r++) {
-        for (int n=0; r < nbz; n += n_skip) {
+        for (int n=0; n < nbz; n += n_skip) {
             int n4 = n / nb_mat;
             for (int in=0; in < nb_mat; in++) {
-                data_out[r+nb_rows*(n+in)] = data_in[in+n_skip*(mat_id+nb_mat*(n4+nz4*r))];
+                //data_out[r+nb_rows*(n+in)] = data_in[in+n_skip*(mat_id+nb_mat*(n4+nz4*r))];
+                data_out[n+in + nbz*r] = data_in[in+n_skip*(mat_id+nb_mat*(n4+nz4*r))];
             }
         }
     }
