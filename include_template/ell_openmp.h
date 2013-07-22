@@ -111,6 +111,12 @@ public:
     void print_i(int* res, const std::string msg="");
     void print_ps(const __m512 v1, const std::string msg="");
     void print_epi32(const __m512i v1, const std::string msg="");
+    void generate_ell_matrix_by_row(std::vector<int>& col_id, std::vector<T>& data, int nb_elem);
+    void generate_ell_matrix_data(std::vector<int>& data, int nbz, int nb_rows, int nb_mat);
+    void generate_col_id(std::vector<int>& col_id, int nbz, int nb_rows, int type);
+    void generate_vector(std::vector<T>& vec, int nb_rows, int nb_vec);
+    void retrieve_vector(std::vector<T>& vec, std::vector<T>& retrieved, int vec_id, int nb_vec);
+    void retrieve_data(std::vector<T>& data_in, std::vector<T>& data_out, int mat_id, int nbz, int nb_rows, int nb_mat);
 
 protected:
 	virtual void method_0(int nb=0);
@@ -1893,8 +1899,7 @@ __m512 ELL_OPENMP<T>::read_abcd(float* a)
 }
 //----------------------------------------------------------------------
 template <typename T>
-void ELL_OPENMP<T>::generate_ell_matrix_by_row(std::vector<int>& col_id, std::vector<T>& data, 
-        int nb_elem)
+void ELL_OPENMP<T>::generate_ell_matrix_by_row(std::vector<int>& col_id, std::vector<T>& data, int nb_elem)
 {
     // successive nonzeros are contiguous in memory. This is different than the standard
     // ordering for col_id
@@ -1922,7 +1927,7 @@ void ELL_OPENMP<T>::generate_ell_matrix_data(std::vector<int>& data, int nbz, in
 #define COMPACT 0
 #define RANDOM 1
 template <typename T>
-void ELL_OPENMP::generate_col_id(std::vector<int>& col_id, int nbz, int nb_rows, int type)
+void ELL_OPENMP<T>::generate_col_id(std::vector<int>& col_id, int nbz, int nb_rows, int type)
 {
     assert(col_id.size() == nbz*nb_rows);
 
