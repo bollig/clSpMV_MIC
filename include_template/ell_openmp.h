@@ -1346,8 +1346,8 @@ void ELL_OPENMP<T>::method_7a(int nbit)
     // generate 4 compact matrices and four vectors
 
     generate_vector(vec_vt, nb_rows, nb_vec);
-    //generate_col_id(col_id_t, nz, nb_rows, COMPACT);
-    generate_col_id(col_id_t, nz, nb_rows, RANDOM);
+    generate_col_id(col_id_t, nz, nb_rows, COMPACT);
+    //generate_col_id(col_id_t, nz, nb_rows, RANDOM);
     generate_ell_matrix_data(data_t, nz, nb_rows, nb_mat);
 
 //.......................................................
@@ -1431,7 +1431,7 @@ void ELL_OPENMP<T>::method_7a(int nbit)
     printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
    }
 
-#if 1
+#if 0
     std::vector<float> one_res(nb_rows);  // single result
     for (int w=0; w < 16; w++) {
         for (int i=0; i < nb_rows; i++) {
@@ -1762,8 +1762,8 @@ void ELL_OPENMP<T>::method_8a(int nbit)
     // generate 4 compact matrices and four vectors
 
     generate_vector(vec_vt, nb_rows, nb_vec);
-    //generate_col_id(col_id_t, nz, nb_rows, COMPACT);
-    generate_col_id(col_id_t, nz, nb_rows, RANDOM);
+    generate_col_id(col_id_t, nz, nb_rows, COMPACT);
+    //generate_col_id(col_id_t, nz, nb_rows, RANDOM);
     generate_ell_matrix_data(data_t, nz, nb_rows, nb_mat);
 
     float gflops;
@@ -1820,7 +1820,6 @@ void ELL_OPENMP<T>::method_8a(int nbit)
                 v3_old = permute(v, _MM_PERM_DDDD);
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_DDDD);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-
             }
             _mm512_storenrngo_ps(result_vt+nb_mat*nb_vec*r, accu);
         } 
@@ -1832,7 +1831,7 @@ void ELL_OPENMP<T>::method_8a(int nbit)
    }
 
 
-#if 1
+#if 0
     std::vector<float> one_res(nb_rows);  // single result
     for (int w=0; w < 16; w++) {
         for (int i=0; i < nb_rows; i++) {
