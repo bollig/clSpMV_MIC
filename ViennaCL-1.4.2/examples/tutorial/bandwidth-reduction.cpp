@@ -71,13 +71,26 @@ int calc_reordered_bw(std::vector< std::map<int, double> > const & matrix,  std:
 {
     std::vector<int> r2(r.size());
     int bw = 0;
+
+    // evaluate the number of nodes outside a specified bandwidth
+    int spec_bw = 4000;  // specified bandwidth
+    int count_outside; // number of nodes outside a bandwidth of 4000
     
     for (std::size_t i = 0; i < r.size(); i++)
         r2[r[i]] = i;
 
-    for (std::size_t i = 0; i < r.size(); i++)
-        for (std::map<int, double>::const_iterator it = matrix[r[i]].begin();  it != matrix[r[i]].end(); it++)
+    for (std::size_t i = 0; i < r.size(); i++) {
+        int row_bw = 0.0;
+        for (std::map<int, double>::const_iterator it = matrix[r[i]].begin();  it != matrix[r[i]].end(); it++) {
+            int width = static_cast<int>(r2[it->first]);
+            if (width > spec_bw) count_outside++;
+            row_bw = std::max(bw, std::abs(static_cast<int>(i - r2[it->first])));
             bw = std::max(bw, std::abs(static_cast<int>(i - r2[it->first])));
+        }
+        //printf("row %d, bw: %d\n", i, row_bw);
+   }
+
+    printf("nb points ouside bandwidth of %d : %d\n", spec_bw, count_outside);
     
     return bw;
 }
@@ -221,7 +234,7 @@ int main(int, char **)
 {
   srand(42);
   std::cout << "-- Generating matrix --" << std::endl;
-  std::size_t dof_per_dim = 64;   //number of grid points per coordinate direction
+  std::size_t dof_per_dim = 96;   //number of grid points per coordinate direction
   std::size_t n = dof_per_dim * dof_per_dim * dof_per_dim; //total number of unknowns
   std::vector< std::map<int, double> > matrix = gen_3d_mesh_matrix(dof_per_dim, dof_per_dim, dof_per_dim, false);  //If last parameter is 'true', a tetrahedral grid instead of a hexahedral grid is used.
   
@@ -258,9 +271,9 @@ int main(int, char **)
   //
   // Reorder using Gibbs-Poole-Stockmeyer algorithm
   //
-  std::cout << "-- Gibbs-Poole-Stockmeyer algorithm --" << std::endl;
-  r = viennacl::reorder(matrix2, viennacl::gibbs_poole_stockmeyer_tag());
-  std::cout << " * Reordered bandwidth: " << calc_reordered_bw(matrix2, r) << std::endl;
+  //std::cout << "-- Gibbs-Poole-Stockmeyer algorithm --" << std::endl;
+  //r = viennacl::reorder(matrix2, viennacl::gibbs_poole_stockmeyer_tag());
+  //std::cout << " * Reordered bandwidth: " << calc_reordered_bw(matrix2, r) << std::endl;
     
   //
   //  That's it.

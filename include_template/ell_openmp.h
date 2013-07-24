@@ -10,6 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include "projectsettings.h"
 
 #include <omp.h>
 
@@ -23,9 +24,6 @@
 #include <immintrin.h>
 #define _mm512_loadnr_pd(block) _mm512_extload_pd(block, _MM_UPCONV_PD_NONE, _MM_BROADCAST64_NONE, _MM_HINT_NT)
 #define _mm512_loadnr_ps(block) _mm512_extload_ps(block, _MM_UPCONV_PD_NONE, _MM_BROADCAST64_NONE, _MM_HINT_NT)
-
-#define COMPACT 0
-#define RANDOM 1
 
 namespace spmv {
 
@@ -68,6 +66,13 @@ public:
 	std::vector<T> vec_v;
 	std::vector<T> result_v;
 	std::vector<T> coores_v;
+
+    // read fro data file test.conf
+    std::string sparsity;
+    int diag_sep;
+    int inner_bandwidth;
+    enum stencilType {COMPACT=0, RANDOM, RANDOMWITHDIAG};
+    stencilType stencil_type;
 
     USE(dim2); // relates to workgroups
 
@@ -120,8 +125,7 @@ public:
     void generate_ell_matrix_by_row(std::vector<int>& col_id, std::vector<T>& data, int nb_elem);
     void generate_ell_matrix_data(T* data, int nbz, int nb_rows, int nb_mat);
     //void generate_ell_matrix_data(std::vector<T> data, int nbz, int nb_rows, int nb_mat);
-    void generate_col_id(int* col_id, int nbz, int nb_rows, int type);
-    //void generate_col_id(std::vector<int>& col_id, int nbz, int nb_rows, int type);
+    void generate_col_id(int* col_id, int nbz, int nb_rows);
     void generate_vector(T* vec, int nb_rows, int nb_vec);
     //void generate_vector(std::vector<T>& vec, int nb_rows, int nb_vec);
     //void retrieve_vector(std::vector<T>& vec, std::vector<T>& retrieved, int vec_id, int nb_vec);
@@ -152,8 +156,8 @@ void ELL_OPENMP<T>::run()
 	//method_4(4);
 	//method_5(4); // correct results
 	//method_6(4);
-	method_7(4); // correct results
-	method_7a(4); // Something wrong with random matrices
+	//method_7(4); // correct results
+	//method_7a(4); // Something wrong with random matrices
 	//method_8(4);
 	method_8a(4);
     exit(0);
@@ -165,6 +169,19 @@ ELL_OPENMP<T>::ELL_OPENMP(coo_matrix<int, T>* coo_mat, int dim2Size, int ntimes)
 {
     int offset = 3;
     tm["spmv"] = new EB::Timer("[method_0] Matrix-Vector multiply", offset);
+
+    // Read relevant parameters
+	ProjectSettings pj("test.conf");
+	std::string asci_binary = REQUIRED<std::string>("asci_binary");
+    std::string sparsity = REQUIRED<std::string>("sparsity");
+    diag_sep = REQUIRED<int>("diag_sep");
+    inner_bandwidth = REQUIRED<int>("inner_bandwidth");
+
+    printf("sparsity = %s\n", sparsity.c_str());
+    if (sparsity == "COMPACT")  stencil_type = COMPACT;
+    else if (sparsity == "RANDOM") stencil_type = RANDOM;
+    else if (sparsity == "RANDOM_WITH_DIAG") stencil_type = RANDOMWITHDIAG;
+    else { printf("Unknown sparsity\n"); exit(1); }
 
 	// Create matrices
 //printf("inside ell constructor\n");
@@ -1346,8 +1363,7 @@ void ELL_OPENMP<T>::method_7a(int nbit)
     // generate 4 compact matrices and four vectors
 
     generate_vector(vec_vt, nb_rows, nb_vec);
-    generate_col_id(col_id_t, nz, nb_rows, COMPACT);
-    //generate_col_id(col_id_t, nz, nb_rows, RANDOM);
+    generate_col_id(col_id_t, nz, nb_rows);
     generate_ell_matrix_data(data_t, nz, nb_rows, nb_mat);
 
 //.......................................................
@@ -1762,8 +1778,7 @@ void ELL_OPENMP<T>::method_8a(int nbit)
     // generate 4 compact matrices and four vectors
 
     generate_vector(vec_vt, nb_rows, nb_vec);
-    generate_col_id(col_id_t, nz, nb_rows, COMPACT);
-    //generate_col_id(col_id_t, nz, nb_rows, RANDOM);
+    generate_col_id(col_id_t, nz, nb_rows);
     generate_ell_matrix_data(data_t, nz, nb_rows, nb_mat);
 
     float gflops;
@@ -1831,7 +1846,7 @@ void ELL_OPENMP<T>::method_8a(int nbit)
    }
 
 
-#if 0
+#if 1
     std::vector<float> one_res(nb_rows);  // single result
     for (int w=0; w < 16; w++) {
         for (int i=0; i < nb_rows; i++) {
@@ -2252,21 +2267,21 @@ void ELL_OPENMP<T>::generate_vector(T* vec, int nb_rows, int nb_vec)
     printf("exit generate vector\n");
 }
 //----------------------------------------------------------------------
-// Need a stencil_type
-// enum {COMPACT=0, RANDOM} stencil_type;
 template <typename T>
-//void ELL_OPENMP<T>::generate_col_id(std::vector<int>& col_id, int nbz, int nb_rows, int type)
-void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows, int type)
+void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
 {
     //assert(col_id.size() == nbz*nb_rows);
-    printf("inside generate_col_id\n");
     std::vector<int> indices;
+    int left;
+    int right;
+    int width;
+    int half_width;
+    printf("generate_col_id::stencil_type= %d\n", stencil_type);
 
-    switch (type) {
+    switch (stencil_type) {
     case COMPACT:
+        printf("COMPACT CASE\n");
 	    int sz2 = nbz >> 1;
-        int left;
-        int right;
 
         for (int i=0; i < nb_rows; i++) {
             if (i < nbz) {
@@ -2293,16 +2308,73 @@ void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows, int type)
         break;
 
     case RANDOM:
+        // limit the randomness to a specified band about the center node. 
         // random with repeat. Would probably create a problem  with smaller arrays? Do not know.
+        printf("RANDOM CASE\n");
+        left = 0;
+        right = 0;
+        width = 6000;
+        half_width = width / 2;
         for (int i=0; i < nb_rows; i++) {
+                left = i - half_width;
+                right = i + half_width;
+                if (left < 0) {
+                    right = right - left;
+                    left = 0;
+                }
+                if (right >= nb_rows) {
+                    left = left - (right-nb_rows);
+                    right = nb_rows - 1;
+                }
             for (int j=0; j < nbz; j++) {
-                col_id[i*nbz+j] = getRand(nb_rows);
+                int r = getRand(width);
+                col_id[i*nbz+j] = left + r;
+                if ((left+r) >= nb_rows) {
+                    printf("(left+r) >= nb_rows: should not happened. Fix code\n");
+                }
             }
         }
         break;
 
-        default:
-            printf("generate_col_id, case not treated\n");
+    case RANDOMWITHDIAG:
+        printf("RANDOM CASE WITH DIAGONAL\n");
+        // same as RANDOM, but add two additional diagonals a fixed distance away from the main diagaonal
+        left = 0;
+        right = 0;
+        width = 1000;
+        half_width = width / 2;
+        int nbzm2 = nbz-2;
+        //int diag_separation = 200000;
+        int diag_separation = 30000;
+        for (int i=0; i < nb_rows; i++) {
+                left = i - half_width;
+                right = i + half_width;
+                if (left < 0) {
+                    right = right - left;
+                    left = 0;
+                }
+                if (right >= nb_rows) {
+                    left = left - (right-nb_rows);
+                    right = nb_rows - 1;
+                }
+            for (int j=1; j < (nbz-1); j++) {
+                int r = getRand(width);
+                col_id[i*nbz+j] = left + r;
+                if ((left+r) >= nb_rows) {
+                    printf("(left+r) >= nb_rows: should not happened. Fix code\n");
+                }
+            }
+            if (i-diag_separation >= 0) {
+                col_id[i*nbz+0] = i-diag_separation;
+            }
+            if (i+diag_separation < nb_rows) {
+                col_id[i*nbz+nbz-1] = i + diag_separation;
+            }
+        }
+        break;
+
+    default:
+        printf("generate_col_id, case not treated\n");
         break;
     }
 }
