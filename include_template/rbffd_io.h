@@ -42,6 +42,9 @@ public:
 			std::vector<T>& value, int& nonzeros_per_row, std::string& filename);
 		#endif
 
+		int loadFromBinaryEllpackFile(std::vector<int>& col_id, 
+				int& nb_rows, int& stencil_size, std::string& filename);
+
 		int loadFromBinaryMMFile(std::vector<int>& rows, std::vector<int>& cols, 
 				std::vector<T>& values,int& width, int& height, std::string& filename);
 

@@ -88,6 +88,7 @@ public:
 
 public:
 	ELL_OPENMP(coo_matrix<int, T>* mat, int dim2Size, int ntimes);
+	ELL_OPENMP(std::vector<int>& col_id, int nb_rows, int nb_nonzeros_per_row);
 	~ELL_OPENMP<T>() {
     	//free_ell_matrix(mat);
     //	free(vec);
@@ -161,6 +162,13 @@ void ELL_OPENMP<T>::run()
 	//method_8(4);
 	method_8a(4);
     exit(0);
+}
+//----------------------------------------------------------------------
+template <typename T>
+	ELL_OPENMP(std::vector<int>& col_id, int nb_rows, int nb_nonzeros_per_row) :
+            OPENMP_BASE<T>(col_id, nb_rows, nb_nonzeros_per_row)
+            // MUST DEBUG THE BASE CODE
+{
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -1846,7 +1854,7 @@ void ELL_OPENMP<T>::method_8a(int nbit)
    }
 
 
-#if 1
+#if 0
     std::vector<float> one_res(nb_rows);  // single result
     for (int w=0; w < 16; w++) {
         for (int i=0; i < nb_rows; i++) {
@@ -2342,10 +2350,9 @@ void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
         left = 0;
         right = 0;
         width = 1000;
-        half_width = width / 2;
+        half_width = inner_bandwidth / 2;
         int nbzm2 = nbz-2;
         //int diag_separation = 200000;
-        int diag_separation = 30000;
         for (int i=0; i < nb_rows; i++) {
                 left = i - half_width;
                 right = i + half_width;
@@ -2364,11 +2371,11 @@ void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
                     printf("(left+r) >= nb_rows: should not happened. Fix code\n");
                 }
             }
-            if (i-diag_separation >= 0) {
-                col_id[i*nbz+0] = i-diag_separation;
+            if (i-diag_sep>= 0) {
+                col_id[i*nbz+0] = i-diag_sep;
             }
-            if (i+diag_separation < nb_rows) {
-                col_id[i*nbz+nbz-1] = i + diag_separation;
+            if (i+diag_sep< nb_rows) {
+                col_id[i*nbz+nbz-1] = i + diag_sep;
             }
         }
         break;
@@ -2417,12 +2424,20 @@ void ELL_OPENMP<T>::retrieve_data(T* data_in, T* data_out, int mat_id, int nbz, 
 //----------------------------------------------------------------------
 #if 1
 template <typename  T>
+//void spmv_ell_openmp(coo_matrix<int, T>* coo_mat, int dim2Size, int ntimes)
+void spmv_ell_openmp(col_id, nb_rows, stencil_size)
+{
+    printf("spmv_ell_openmp: handle ELLPACK MATRIX\n");
+	ELL_OPENMP<T> ell_ocl(col_id, nb_rows, stencil_size);
+	ell_ocl.run();
+}
+
+template <typename  T>
 void spmv_ell_openmp(coo_matrix<int, T>* coo_mat, int dim2Size, int ntimes)
 {
 
 	printf("** GORDON, spmv_ell\n");
 	ELL_OPENMP<T> ell_ocl(coo_mat, dim2Size, ntimes);
-
 	ell_ocl.run();
 
 	printf("GORDON: after ell_ocl.run\n");

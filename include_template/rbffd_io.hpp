@@ -73,6 +73,31 @@ int RBFFD_IO<T>::loadFromAsciMMFile(std::vector<int>& rows, std::vector<int>& co
 }
 //--------------------------------------------------------------------
 template <typename T>
+int RBFFD_IO<T>::loadFromBinaryEllpackFile(std::vector<int>& col_id, 
+        int& nb_rows, int& stencil_size, std::string& filename)
+{
+    char* line = (char*) malloc(255);
+    FILE* fd = fopen(filename.c_str(), "rb");
+    // comment line
+    size_t nbchars = 250;
+    getline(&line, &nbchars, fd);
+    printf("line= %s\n", line);
+    getline(&line, &nbchars, fd);
+    printf("line= %s\n", line);
+    sscanf(line, "%d %d", &nb_rows, &stencil_size);
+    printf("nb_rows= %d, stencil_size= %d\n", nb_rows, stencil_size);
+
+    col_id.resize(nb_rows*stencil_size);
+    int nb = fread(&col_id[0], sizeof(int), col_id.size(), fd);
+    if (nb != col_id.size()) {
+        printf("loadFromBinaryEllpackFile: nb elements read is incorrect\n");
+    }
+    for (int i=0; i < 100; i++) {
+        printf("col_id[%d]= %d\n", i, col_id[i]);
+   }
+}
+//--------------------------------------------------------------------
+template <typename T>
 int RBFFD_IO<T>::loadFromBinaryMMFile(std::vector<int>& rows, std::vector<int>& cols, 
 		std::vector<T>& values, int& width, int& height, std::string& filename)
 {

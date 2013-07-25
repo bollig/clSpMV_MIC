@@ -105,6 +105,16 @@ int main(int argc, char* argv[])
 	std::vector<float> values;
 	int width, height;
 
+    // need way to read either mmx or ellpack format. 
+    // need to create new routines: readMM, readEllpack. 
+    std::vector<int> col_id;
+    int nb_rows;
+    int stencil_size;
+    // seems to load correctly
+    io.loadFromBinaryEllpackFile(col_id, nb_rows, stencil_size, filename);
+	spmv::spmv_ell_openmp(col_id, nb_rows, stencil_size); // choice == 1
+    exit(0);
+
 
 	if (asci_binary == "asci" || asci_binary == "ascii") {
 		printf("*** load ASCI FILE %s ***\n", filename.c_str());
