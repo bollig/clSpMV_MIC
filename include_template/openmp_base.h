@@ -60,6 +60,7 @@ public:
 
 public:
 	OPENMP_BASE(coo_matrix<int, T>* mat, int dim2Size, int ntimes);
+    OPENMP_BASE<T>::OPENMP_BASE(int ntimes);
 	~OPENMP_BASE() {
 		//printf("inside base destructor\n");
     	//free_ell_matrix(mat);
@@ -86,26 +87,22 @@ public:
 //void spmv_ell_ocl_T(ell_matrix<int, T>* mat, T* vec, T* result, int dim2Size, double& opttime, int& optmethod, char* oclfilename, cl_device_type deviceType, T* coores, int ntimes)
 template <typename T>
 OPENMP_BASE<T>::OPENMP_BASE(coo_matrix<int, T>* coo_mat, int dim2Size, int ntimes) 
-    //: CLBaseClass()
 {
-    //devices = NULL;
-    //context = NULL;
-    //cmdQueue = NULL;
-    //program = NULL;
-
-	//if (oclfilename) filename = oclfilename;
-
 	this->coo_mat = coo_mat;
-
-    //assert(initialization(deviceType, devices, &context, &cmdQueue, &program, oclfilename) == 1);
-
-    //errorCode = CL_SUCCESS;
-    //errorCode = 0;
 	this->ntimes = ntimes;
 
     opttime = 10000.0f;
     optmethod = 0;
     dim2 = dim2Size;
+}
+//----------------------------------------------------------------------
+template <typename T>
+OPENMP_BASE<T>::OPENMP_BASE(int ntimes) 
+{
+	this->ntimes = ntimes;
+
+    opttime = 10000.0f;
+    optmethod = 0;
 }
 //----------------------------------------------------------------------
 template <typename T>

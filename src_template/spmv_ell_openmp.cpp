@@ -88,72 +88,69 @@ int main(int argc, char* argv[])
 	//int c = OPTIONAL<int>("case", "10"); // ERROR, see next line
 	//src_template/spmv_all.cpp:85: error: no matching function for call to ‘ProjectSettingsSingleton::getOptional(const char [5], int)’
 //	printf("c= %d\n", c);
+//
+    std::string in_format = REQUIRED<std::string>("in_format");
 
 	printf("filename = %s\n", filename.c_str());
 	printf("choice= %d\n", choice);
 
 
+#if 0
     coo_matrix<int, float> mat;
     coo_matrix<int, double> mat_d;
-    init_coo_matrix(mat);
-    init_coo_matrix(mat_d);
-    //spmv::ReadMMF(filename.c_str(), &mat);
-    //spmv::ReadMMF(filename.c_str(), &mat_d);
-	
 	RBFFD_IO<float> io;
 	std::vector<int> rows, cols;
 	std::vector<float> values;
 	int width, height;
-
-    // need way to read either mmx or ellpack format. 
-    // need to create new routines: readMM, readEllpack. 
     std::vector<int> col_id;
     int nb_rows;
     int stencil_size;
-    // seems to load correctly
-    io.loadFromBinaryEllpackFile(col_id, nb_rows, stencil_size, filename);
-	spmv::spmv_ell_openmp(col_id, nb_rows, stencil_size); // choice == 1
-    exit(0);
 
+    if (in_format == "MM") {
+        init_coo_matrix(mat);
+        init_coo_matrix(mat_d);
+        //spmv::ReadMMF(filename.c_str(), &mat);
+        //spmv::ReadMMF(filename.c_str(), &mat_d);
+        if (asci_binary == "asci" || asci_binary == "ascii") {
+            printf("*** load ASCI FILE %s ***\n", filename.c_str());
+            io.loadFromAsciMMFile(rows, cols, values, width, height, filename);
+        } else if (asci_binary == "binary") {
+            printf("*** load BINARY FILE %s ***\n", filename.c_str());
+            io.loadFromBinaryMMFile(rows, cols, values, width, height, filename);
+        } else {
+            printf("*** unknown read format type (asci/binary)\n");
+        }
 
-	if (asci_binary == "asci" || asci_binary == "ascii") {
-		printf("*** load ASCI FILE %s ***\n", filename.c_str());
-		io.loadFromAsciMMFile(rows, cols, values, width, height, filename);
-	} else if (asci_binary == "binary") {
-		printf("*** load BINARY FILE %s ***\n", filename.c_str());
-		io.loadFromBinaryMMFile(rows, cols, values, width, height, filename);
-	} else {
-		printf("*** unknown read format type (asci/binary)\n");
-	}
-
-    mat.matinfo.height = height;
-    mat.matinfo.width = width;
-    mat.matinfo.nnz = rows.size();
-    mat_d.matinfo.height = height;
-    mat_d.matinfo.width = width;
-    mat_d.matinfo.nnz = rows.size();
-	mat.coo_row_id = rows; // copy is expensive
-	mat.coo_col_id = cols;
-	mat.coo_data = values;
-	mat_d.coo_row_id = rows; // copy is expensive
-	mat_d.coo_col_id = cols;
-	mat_d.coo_data.resize(values.size());
-	for (int i=0; i < values.size(); i++)  {
-		mat_d.coo_data[i] = (double) values[i];
-	}
-
-#if 0
-	for (int i=0; i < 1000; i++) {
-		printf("%d, %d, %f\n", rows[i], cols[i], values[i]);
-	}
+        mat.matinfo.height = height;
+        mat.matinfo.width = width;
+        mat.matinfo.nnz = rows.size();
+        mat_d.matinfo.height = height;
+        mat_d.matinfo.width = width;
+        mat_d.matinfo.nnz = rows.size();
+        mat.coo_row_id = rows; // copy is expensive
+        mat.coo_col_id = cols;
+        mat.coo_data = values;
+        mat_d.coo_row_id = rows; // copy is expensive
+        mat_d.coo_col_id = cols;
+        mat_d.coo_data.resize(values.size());
+        for (int i=0; i < values.size(); i++)  {
+            mat_d.coo_data[i] = (double) values[i];
+        }
+	    printf("rows.size: %d\n", rows.size());
+	    printf("READ INPUT FILE: \n");
+	    mat.print();
+    } else if (in_format == "ELL") {
+        io.loadFromBinaryEllpackFile(col_id, nb_rows, stencil_size, filename);
+	    spmv::spmv_ell_openmp(col_id, nb_rows, stencil_size); // choice == 1
+        printf("Read ELLPACK file\n");
+    }
 #endif
-	printf("rows.size: %d\n", rows.size());
 
-		//int loadFromBinaryMMFile(std::vector<int>& rows, std::vector<int>& cols, 
-				//std::vector<T>& values,int& width, int& height, std::string& filename);
+    // need way to read either mmx or ellpack format. 
+    // need to create new routines: readMM, readEllpack. 
+    // seems to load correctly
+    //exit(0);
 
-	printf("READ INPUT FILE: \n");
-	mat.print();
 
     char* clspmvpath = getenv("CLSPMVPATH");
     char clfilename[1000];
@@ -162,7 +159,8 @@ int main(int argc, char* argv[])
     if (choice == 1)
     {
         printf("spmv in ell format using OpenNP in Native mode\n");
-	    spmv::spmv_ell_openmp(&mat, dim2Size, ntimes);
+	    //spmv::spmv_ell_openmp(&mat, dim2Size, ntimes);
+	    spmv::spmv_ell_openmp<float>();
     }
 #endif
 

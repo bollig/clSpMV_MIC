@@ -18,6 +18,7 @@
 #include "openmp_base.h"
 
 #include "timer_eb.h"
+#include "rbffd_io.h"
 
 
 // load 8 double precision floats converted from block (which presumably can be float or double.)
@@ -65,7 +66,6 @@ public:
 	std::vector<T> paddedvec_v;
 	std::vector<T> vec_v;
 	std::vector<T> result_v;
-	std::vector<T> coores_v;
 
     // read fro data file test.conf
     std::string sparsity;
@@ -87,6 +87,7 @@ public:
     ell_matrix<int, T> mat;
 
 public:
+	ELL_OPENMP(int ntimes);
 	ELL_OPENMP(coo_matrix<int, T>* mat, int dim2Size, int ntimes);
 	ELL_OPENMP(std::vector<int>& col_id, int nb_rows, int nb_nonzeros_per_row);
 	~ELL_OPENMP<T>() {
@@ -165,7 +166,7 @@ void ELL_OPENMP<T>::run()
 }
 //----------------------------------------------------------------------
 template <typename T>
-	ELL_OPENMP(std::vector<int>& col_id, int nb_rows, int nb_nonzeros_per_row) :
+ELL_OPENMP<T>::ELL_OPENMP(std::vector<int>& col_id, int nb_rows, int nb_nonzeros_per_row) :
             OPENMP_BASE<T>(col_id, nb_rows, nb_nonzeros_per_row)
             // MUST DEBUG THE BASE CODE
 {
@@ -174,6 +175,13 @@ template <typename T>
 template <typename T>
 ELL_OPENMP<T>::ELL_OPENMP(coo_matrix<int, T>* coo_mat, int dim2Size, int ntimes) : 
    OPENMP_BASE<T>(coo_mat, dim2Size, ntimes)
+{
+    ;
+}
+//----------------------------------------------------------------------
+template <typename T>
+ELL_OPENMP<T>::ELL_OPENMP(int ntimes) : 
+   OPENMP_BASE<T>(ntimes)
 {
     int offset = 3;
     tm["spmv"] = new EB::Timer("[method_0] Matrix-Vector multiply", offset);
@@ -191,34 +199,79 @@ ELL_OPENMP<T>::ELL_OPENMP(coo_matrix<int, T>* coo_mat, int dim2Size, int ntimes)
     else if (sparsity == "RANDOM_WITH_DIAG") stencil_type = RANDOMWITHDIAG;
     else { printf("Unknown sparsity\n"); exit(1); }
 
-	// Create matrices
-//printf("inside ell constructor\n");
-    printMatInfo_T(coo_mat);
-    //ell_matrix<int, T> mat;
-    //coo_mat->print(1024);
-    coo2ell<int, T>(coo_mat, &mat, GPU_ALIGNMENT, 0);
-    //vec = (T*)malloc(sizeof(T)*coo_mat->matinfo.width);
-	vec_v.resize(coo_mat->matinfo.width);
-    //result = (T*)malloc(sizeof(T)*coo_mat->matinfo.height);
-    result_v.resize(coo_mat->matinfo.height);
+    std::string in_format = REQUIRED<std::string>("in_format");
+
+    coo_matrix<int, float> cmat;
+    coo_matrix<int, double> cmat_d;
+	RBFFD_IO<float> io;
+	std::vector<int> rows, cols;
+	std::vector<float> values;
+	int width, height;
+    std::vector<int> col_id;
+    int nb_rows;
+    int stencil_size;
+
+    if (in_format == "MM") {
+        init_coo_matrix(cmat);
+        init_coo_matrix(cmat_d);
+        if (asci_binary == "asci" || asci_binary == "ascii") {
+            printf("*** load ASCI FILE %s ***\n", filename.c_str());
+            io.loadFromAsciMMFile(rows, cols, values, width, height, filename);
+        } else if (asci_binary == "binary") {
+            printf("*** load BINARY FILE %s ***\n", filename.c_str());
+            io.loadFromBinaryMMFile(rows, cols, values, width, height, filename);
+        } else {
+            printf("*** unknown read format type (asci/binary)\n");
+        }
+
+        cmat.matinfo.height = height;
+        cmat.matinfo.width = width;
+        cmat.matinfo.nnz = rows.size();
+        cmat_d.matinfo.height = height;
+        cmat_d.matinfo.width = width;
+        cmat_d.matinfo.nnz = rows.size();
+        cmat.coo_row_id = rows; // copy is expensive
+        cmat.coo_col_id = cols;
+        cmat.coo_data = values;
+        cmat_d.coo_row_id = rows; // copy is expensive
+        cmat_d.coo_col_id = cols;
+        cmat_d.coo_data.resize(values.size());
+        for (int i=0; i < values.size(); i++)  {
+            cmat_d.coo_data[i] = (double) values[i];
+        }
+	    printf("rows.size: %d\n", rows.size());
+	    printf("READ INPUT FILE: \n");
+	    cmat.print();
+        //
+        //Initialize values
+        aligned_length = mat.ell_height_aligned;
+        nnz = mat.matinfo.nnz;
+        rownum = mat.matinfo.height;
+        vecsize = mat.matinfo.width;
+        ellnum = mat.ell_num;
+        printMatInfo_T(coo_mat);
+        coo2ell<int, T>(&cmat, &mat, GPU_ALIGNMENT, 0);
+        vec_v.resize(coo_mat->matinfo.width);
+        result_v.resize(coo_mat->matinfo.height);
+    } else if (in_format == "ELL") {
+        io.loadFromBinaryEllpackFile(col_id, nb_rows, stencil_size, filename);
+        vec_v.resize(nb_rows);
+        result_v.resize(nb_rows);
+	    //spmv::spmv_ell_openmp(col_id, nb_rows, stencil_size); // choice == 1
+        printf("Read ELLPACK file\n");
+        nnz = stencil_size * nb_rows; // nnz not used except in print
+    } else {
+        printf("input format not support. Must be MM or ELL\n");
+        exit(1);
+    }
+
 	std::fill(vec_v.begin(), vec_v.end(), 1.);
 	std::fill(result_v.begin(), result_v.end(), 0.);
-    coores_v.resize(coo_mat->matinfo.height);
-	// CHECKING Supposedly on CPU, but execution is on GPU!!
-    //spmv_only_T<T>(coo_mat, vec_v, coores_v);
 
-    //Initialize values
-    aligned_length = mat.ell_height_aligned;
-    printf("aligned_length= %d\n", aligned_length);
-    nnz = mat.matinfo.nnz;
-    rownum = mat.matinfo.height;
-    vecsize = mat.matinfo.width;
-    ellnum = mat.ell_num;
-
-	printf("nnz= %d\n", nnz);
-	printf("rownum= %d\n", rownum);
-	printf("vecsize= %d\n", vecsize);
-	printf("ellnum= %d\n", ellnum);
+	//printf("nnz= %d\n", nnz);
+	//printf("rownum= %d\n", rownum);
+	//printf("vecsize= %d\n", vecsize);
+	//printf("ellnum= %d\n", ellnum);
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -943,10 +996,6 @@ void ELL_OPENMP<T>::method_6(int nbit)
         }
     }
 
-    //for (int i=0; i < 128; i++) {
-        //printf("col_id_t[%d] = %d\n", i, col_id_t[i]);
-    //}
- 
     printf("nz in row: %d\n", nz);
     printf("nb rows: %d\n", vec_v.size());
     printf("aligned_length= %d\n", aligned_length);
@@ -984,7 +1033,7 @@ void ELL_OPENMP<T>::method_6(int nbit)
     // Must now work on alignmentf vectors. 
     // Produces the correct serial result
     for (int it=0; it < 1; it++) { // check for correctness
-    //for (int it=0; it < 10; it++) {
+    //for (int it=0; it < 10; it++) { // }
         tm["spmv"]->start();
 #pragma omp parallel firstprivate(nb_rows, nz)
 {
@@ -2423,16 +2472,23 @@ void ELL_OPENMP<T>::retrieve_data(T* data_in, T* data_out, int mat_id, int nbz, 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 #if 1
-template <typename  T>
+template <typename T>
+void spmv_ell_openmp()
+{
+    int ntimes = 10;
+    ELL_OPENMP<T> ell_ocl(ntimes);
+}
+//----------------------------------------------------------------------
+template <typename T>
 //void spmv_ell_openmp(coo_matrix<int, T>* coo_mat, int dim2Size, int ntimes)
-void spmv_ell_openmp(col_id, nb_rows, stencil_size)
+void spmv_ell_openmp(std::vector<int>& col_id, int& nb_rows, int& stencil_size)
 {
     printf("spmv_ell_openmp: handle ELLPACK MATRIX\n");
 	ELL_OPENMP<T> ell_ocl(col_id, nb_rows, stencil_size);
 	ell_ocl.run();
 }
 
-template <typename  T>
+template <typename T>
 void spmv_ell_openmp(coo_matrix<int, T>* coo_mat, int dim2Size, int ntimes)
 {
 
