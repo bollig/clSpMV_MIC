@@ -76,6 +76,7 @@ template <typename T>
 int RBFFD_IO<T>::loadFromBinaryEllpackFile(std::vector<int>& col_id, 
         int& nb_rows, int& stencil_size, std::string& filename)
 {
+    printf("inside loadFromBinaryEllpackFile\n");
     char* line = (char*) malloc(255);
     FILE* fd = fopen(filename.c_str(), "rb");
     // comment line

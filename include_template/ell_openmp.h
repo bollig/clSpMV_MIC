@@ -66,6 +66,7 @@ public:
 	std::vector<T> paddedvec_v;
 	std::vector<T> vec_v;
 	std::vector<T> result_v;
+    std::vector<int> col_id;
 
     // read fro data file test.conf
     std::string sparsity;
@@ -87,7 +88,7 @@ public:
     ell_matrix<int, T> mat;
 
 public:
-	ELL_OPENMP(int ntimes);
+	ELL_OPENMP(std::string filename, int ntimes);
 	ELL_OPENMP(coo_matrix<int, T>* mat, int dim2Size, int ntimes);
 	ELL_OPENMP(std::vector<int>& col_id, int nb_rows, int nb_nonzeros_per_row);
 	~ELL_OPENMP<T>() {
@@ -180,7 +181,7 @@ ELL_OPENMP<T>::ELL_OPENMP(coo_matrix<int, T>* coo_mat, int dim2Size, int ntimes)
 }
 //----------------------------------------------------------------------
 template <typename T>
-ELL_OPENMP<T>::ELL_OPENMP(int ntimes) : 
+ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) : 
    OPENMP_BASE<T>(ntimes)
 {
     int offset = 3;
@@ -242,26 +243,33 @@ ELL_OPENMP<T>::ELL_OPENMP(int ntimes) :
 	    printf("rows.size: %d\n", rows.size());
 	    printf("READ INPUT FILE: \n");
 	    cmat.print();
-        //
+        printMatInfo_T(&cmat);
         //Initialize values
+        coo2ell<int, T>(&cmat, &mat, GPU_ALIGNMENT, 0);
         aligned_length = mat.ell_height_aligned;
         nnz = mat.matinfo.nnz;
         rownum = mat.matinfo.height;
         vecsize = mat.matinfo.width;
         ellnum = mat.ell_num;
-        printMatInfo_T(coo_mat);
-        coo2ell<int, T>(&cmat, &mat, GPU_ALIGNMENT, 0);
-        vec_v.resize(coo_mat->matinfo.width);
-        result_v.resize(coo_mat->matinfo.height);
+        vec_v.resize(cmat.matinfo.width);
+        result_v.resize(cmat.matinfo.height);
     } else if (in_format == "ELL") {
-        io.loadFromBinaryEllpackFile(col_id, nb_rows, stencil_size, filename);
+        //mat.col_id.resize(nb_rows*stencil_size); // perhaps allocate inside load routine?
+        io.loadFromBinaryEllpackFile(mat.ell_col_id, nb_rows, stencil_size, filename);
         vec_v.resize(nb_rows);
-        result_v.resize(nb_rows);
+        result_v.resize(nb_rows); // might have to change if height aligned is wrong. 
+        mat.matinfo.height = nb_rows;
+        mat.matinfo.width = nb_rows;
+        mat.matinfo.nnz = nb_rows * stencil_size;
+        // if divisible by 32, else next largest multiple of 32. MUST IMPLEMENT GE. 
+        mat.ell_height_aligned = nb_rows;
+        mat.ell_num = stencil_size;
 	    //spmv::spmv_ell_openmp(col_id, nb_rows, stencil_size); // choice == 1
-        printf("Read ELLPACK file\n");
+        printf("\nRead ELLPACK file\n");
+        printf("col_id size: %d\n", mat.ell_col_id.size());
         nnz = stencil_size * nb_rows; // nnz not used except in print
     } else {
-        printf("input format not support. Must be MM or ELL\n");
+        printf("input format not supported. Must be MM or ELL\n");
         exit(1);
     }
 
@@ -1538,7 +1546,7 @@ void ELL_OPENMP<T>::method_8(int nbit)
     printf("Implement streaming\n");
     // vectors are aligned. Start using vector _mm_ constructs. 
 
-    fill_random(mat, vec_v);
+    //fill_random(mat, vec_v);
 
     int nb_mat = 4; // must be 4
     int nb_vec = 4; // must be 4
@@ -1562,6 +1570,7 @@ void ELL_OPENMP<T>::method_8(int nbit)
         exit(0);
     }
 
+    exit(1);
     // transpose col_id array 
     // Current version, from ell_matrix:  [nz][nrow]
     // Transform to [nrow][nz]
@@ -1813,14 +1822,17 @@ void ELL_OPENMP<T>::method_8a(int nbit)
     printf("Implement streaming\n");
     // vectors are aligned. Start using vector _mm_ constructs. 
 
-    fill_random(mat, vec_v);
+    //fill_random(mat, vec_v);
 
     int nb_mat = 4; // must be 4
     int nb_vec = 4; // must be 4
     int nz = mat.ell_num;
     std::vector<int>& col_id = mat.ell_col_id;
-    std::vector<float>& data = mat.ell_data;
+    //std::vector<float>& data = mat.ell_data;
     int nb_rows = vec_v.size();
+    printf("col_id.size= %d\n", col_id.size());
+    printf("nz= %d, nb_rows= %d, nb_rows*nz = %d", nz, nb_rows, nb_rows*nz);
+    //printf("data size= %d\n", data.size());
 
     float* vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * vec_v.size(), 64);
     float* result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * vec_v.size(), 64);
@@ -1831,9 +1843,10 @@ void ELL_OPENMP<T>::method_8a(int nbit)
         printf("1. memory allocation failed\n");
         exit(0);
     }
-    //
+ 
     // generate 4 compact matrices and four vectors
 
+    printf("nz= %d, nb_rows= %d, nb_mat= %d\n", nz, nb_rows, nb_mat);
     generate_vector(vec_vt, nb_rows, nb_vec);
     generate_col_id(col_id_t, nz, nb_rows);
     generate_ell_matrix_data(data_t, nz, nb_rows, nb_mat);
@@ -1903,7 +1916,7 @@ void ELL_OPENMP<T>::method_8a(int nbit)
    }
 
 
-#if 0
+#if 1
     std::vector<float> one_res(nb_rows);  // single result
     for (int w=0; w < 16; w++) {
         for (int i=0; i < nb_rows; i++) {
@@ -2473,10 +2486,11 @@ void ELL_OPENMP<T>::retrieve_data(T* data_in, T* data_out, int mat_id, int nbz, 
 //----------------------------------------------------------------------
 #if 1
 template <typename T>
-void spmv_ell_openmp()
+void spmv_ell_openmp(std::string filename)
 {
     int ntimes = 10;
-    ELL_OPENMP<T> ell_ocl(ntimes);
+    ELL_OPENMP<T> ell_ocl(filename, ntimes);
+	ell_ocl.run();
 }
 //----------------------------------------------------------------------
 template <typename T>

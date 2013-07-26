@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
     {
         printf("spmv in ell format using OpenNP in Native mode\n");
 	    //spmv::spmv_ell_openmp(&mat, dim2Size, ntimes);
-	    spmv::spmv_ell_openmp<float>();
+	    spmv::spmv_ell_openmp<float>(filename);
     }
 #endif
 
