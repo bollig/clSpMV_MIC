@@ -6,7 +6,7 @@
 class RunData
 {
 public:
-    enum stencilType {COMPACT=0, RANDOM, RANDOMWITHDIAG};
+    enum stencilType {COMPACT=0, RANDOM, RANDOMWITHDIAG, RANDOMDIAGS};
     enum nonzeroStats {UNIFORM=0, NORMAL};
 
 	std::string data_filename;
@@ -36,6 +36,7 @@ public:
     int sort_col_indices = 1;
     int nonzero_stats;  // random, Gaussian, etc.
     int n3d; // average size of 3d grid. nb_rows = n3d^3
+    int random_seed = 0;
 
 public:
 	void print();

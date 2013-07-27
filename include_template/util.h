@@ -21,7 +21,9 @@ void two_vec_compare(float* coovec, float* newvec, int size);
 unsigned int getRandMax();
 unsigned int getRand(unsigned int upper);
 double getRandf();
+void setSeed();
 
+//----------------------------------------------------------------------
 //----------------------------------------------------------------------
 template <typename T>
 double distance_T(std::vector<T>& vec1, std::vector<T>& vec2, int size)

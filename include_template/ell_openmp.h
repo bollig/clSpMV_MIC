@@ -75,7 +75,7 @@ public:
     std::string sparsity;
     int diag_sep;
     int inner_bandwidth;
-    enum stencilType {COMPACT=0, RANDOM, RANDOMWITHDIAG};
+    enum stencilType {COMPACT=0, RANDOM, RANDOMWITHDIAG, RANDOMDIAGS};
     enum nonzeroStats {UNIFORM=0, NORMAL};
     stencilType stencil_type;
 
@@ -219,11 +219,14 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
     inner_bandwidth = REQUIRED<int>("inner_bandwidth");
     sort_col_indices = REQUIRED<int>("sort_col_indices");
     rd.n3d = REQUIRED<int>("n3d");
+    rd.random_seed = REQUIRED<int>("random_seed");
+    if (rd.random_seed == 1) setSeed();
 
     printf("sparsity = %s\n", sparsity.c_str());
     if (sparsity == "COMPACT")  stencil_type = COMPACT;
     else if (sparsity == "RANDOM") stencil_type = RANDOM;
     else if (sparsity == "RANDOM_WITH_DIAG") stencil_type = RANDOMWITHDIAG;
+    else if (sparsity == "RANDOM_DIAGS") stencil_type = RANDOMDIAGS;
     else { printf("Unknown sparsity\n"); exit(1); }
 
     std::string in_format = REQUIRED<std::string>("in_format");
@@ -1908,6 +1911,7 @@ void ELL_OPENMP<T>::method_8a(int nbit)
    const __m512i offsets = _mm512_set4_epi32(3,2,1,0);  // original
    const __m512i four = _mm512_set4_epi32(4,4,4,4); 
 
+
 #pragma omp for 
         for (int r=0; r < nb_rows; r++) {
             __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
@@ -2418,10 +2422,15 @@ void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
         printf("inner_bandwidth= %d\n", rd.inner_bandwidth);
         printf("diagonal separation= %d\n", rd.diag_sep);
         // same as RANDOM, but add two additional diagonals a fixed distance away from the main diagaonal
+        // Periodicity imposed so that the two diagonals extend across all the rows
         left = 0;
         right = 0;
         half_width = rd.inner_bandwidth / 2;
-        int nbzm2 = nbz-2;
+        if (rd.diag_sep <= half_width) {
+            printf("diag_sep (%d) from main diagonal must be greater than half_width (%d)\n", 
+                rd.diag_sep, half_width);
+            exit(0);
+        }
         for (int i=0; i < nb_rows; i++) {
                 left = i - half_width;
                 right = i + half_width;
@@ -2440,9 +2449,47 @@ void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
                     printf("(left+r) >= nb_rows: should not happened. Fix code\n");
                 }
             }
-            if (rd.diag_sep > half_width) {
-                if (i-rd.diag_sep >= 0)        col_id[i*nbz+0] = i-rd.diag_sep;
-                if (i+rd.diag_sep < nb_rows)   col_id[i*nbz+nbz-1] = i + rd.diag_sep;
+
+            // These two lines create a segmentation fault. WHY? 
+            // The two diagonals will cross through the middle band
+            col_id[0    +nbz*i] = (i-rd.diag_sep+nb_rows) % nb_rows;
+            col_id[nbz-1+nbz*i] = (i+rd.diag_sep+nb_rows) % nb_rows;
+        }
+#if 0
+        for (int i=0; i < nb_rows*nbz; i++) {
+            if (col_id[i] >= nb_rows) {
+                printf("col_id[%] = %d, too large\n");
+                exit(0);
+            }
+        }
+#endif
+        break;
+
+    case RANDOMDIAGS:
+        printf("RANDOM CASE WITH DIAGONAL\n");
+        // nbz diagonals. Periodicity.
+        left = nbz + 1;
+        right = nb_rows - nbz - 1;
+        int inner_bandwidth = right - left;
+        // Generate stencil_size diagonals between left and right
+        // Top row
+        for (int j=0; j < nbz; j++) {
+            col_id[j] = getRand(inner_bandwidth);
+        }
+        std::sort(col_id, col_id+nbz);
+        //for (int i=0; i < nbz; i++) printf("col_id[%d]= %d\n", i, col_id[i]);
+ 
+        // Create diagonals
+        for (int i=1; i < nb_rows; i++) {
+            for (int j=0; j < nbz; j++) {
+                col_id[j+nbz*i] = (col_id[j+nbz*(i-1)] + 1) % nb_rows;
+#if 0
+                if (col_id[j+nbz*i] >= nb_rows) {
+                    printf("illegal matrix entry\n"); 
+                    printf("i,j= %d, %d, col_id= %d\n", i, j, col_id[j+nbz*i]);
+                    exit(1);
+                }
+#endif
             }
         }
         break;

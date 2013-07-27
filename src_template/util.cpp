@@ -1,11 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctime>
 #include <sys/time.h>
 #include <math.h>
 #include "spmv_serial.h"
 #include "matrix_storage.h"
 #include "util.h"
 
+void setSeed()
+{
+    long c = time(NULL);
+    printf("seed: %d\n", c);
+    srand(c);
+}
 
 double timestamp ()
 {
