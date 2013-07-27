@@ -79,6 +79,10 @@ public:
     enum nonzeroStats {UNIFORM=0, NORMAL};
     stencilType stencil_type;
 
+    // Set to 1 in order to sort the column indices (smallest to largest) when using 
+    // random elements (read from .conf file)
+    int sort_col_indices;
+
     USE(dim2); // relates to workgroups
 
     //USE(vec);
@@ -167,22 +171,21 @@ void ELL_OPENMP<T>::run()
 	//method_7a(4); // Something wrong with random matrices
 	//method_8(4);
 
-    int r = 64;
-    rd.inner_bandwidth = 2000;
-    rd.diag_sep = 2000;
+    int count = 0;
+    int max_nb_runs = 1;
+
     while (1) {
-        rd.nb_rows = r*r*r;
+        rd.nb_rows = rd.n3d*rd.n3d*rd.n3d;
+
 	    method_8a(4);
-        printf("*** r= %d ***\n", rd.nb_rows);
-        printf("*** inner_bandwidth= %d\n", rd.inner_bandwidth);
-        rd.nb_rows = r*r*r;
-        //r = r + 16;
-        //rd.inner_bandwidth += 2000;
-        rd.diag_sep += 2000;
+        count++;
+
         printf("update inner bandwidth: %d\n", rd.inner_bandwidth);
         if (rd.inner_bandwidth >= 233000) break;
-        if (rd.diag_sep >= 20000) break;
-        if (r > 64) break;
+        if (rd.diag_sep >= 200000) break;
+        if (rd.n3d > 80) break; // maximum size grid to experiment with. 
+        if (rd.sort_col_indices > 1) break;
+        if (count >= max_nb_runs) break;
     }
     exit(0);
 }
@@ -214,6 +217,8 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
     std::string sparsity = REQUIRED<std::string>("sparsity");
     diag_sep = REQUIRED<int>("diag_sep");
     inner_bandwidth = REQUIRED<int>("inner_bandwidth");
+    sort_col_indices = REQUIRED<int>("sort_col_indices");
+    rd.n3d = REQUIRED<int>("n3d");
 
     printf("sparsity = %s\n", sparsity.c_str());
     if (sparsity == "COMPACT")  stencil_type = COMPACT;
@@ -304,6 +309,7 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
     rd.stencil_size = stencil_size;
     rd.diag_sep = diag_sep;
     rd.inner_bandwidth = inner_bandwidth;
+    rd.sort_col_indices = sort_col_indices;
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -1883,10 +1889,6 @@ void ELL_OPENMP<T>::method_8a(int nbit)
     float elapsed; 
 
 //.......................................................
-// SOMETHING WRONG with vector. 
-// works with constant vector and random matrices. Does not work with random vector and 
-// constant matrices. 
-//
     // Must now work on alignmentf vectors. 
     // Produces the correct serial result
     for (int it=0; it < 10; it++) {
@@ -1991,33 +1993,26 @@ void ELL_OPENMP<T>::spmv_serial(ell_matrix<int, T>& mat, std::vector<T>& v, std:
     int nz = mat.ell_num;
     std::vector<int>& col_id = mat.ell_col_id;
     std::vector<T>& data = mat.ell_data;
-    //printf(" mat.ell_num = %d\n", mat.ell_num);
-    //printf("tot nb nonzeros: %d\n", mat.matinfo.nnz);
-    //printf("nb rows: %d\n", v.size());
-    //printf("aligned= %d\n", aligned);
     std::fill(result.begin(), result.end(), (T) 0.);
 
     for (int row=0; row < v.size(); row++) {
-        //if (row >= 1) break;
         int matoffset = row;
         float accumulant = 0.;
 
         for (int i = 0; i < nz; i++) {
             vecid = col_id[matoffset];
             float d= data[matoffset];
-            //printf("vecid= %d, d = %f\n", vecid, d);
             accumulant += data[matoffset] * v[vecid];
-            //printf("col, i=%d, accu= %f,  ", i, accumulant);
-            //printf("vecid= %d, d = %f\n, v= %f\n", vecid, d, v[vecid]);
             matoffset += aligned;
         }
-        //printf("accumulant= %f\n", accumulant);
         result[row] = accumulant;
     }
     
-    //for (int i=0; i < 10; i++) {
-        //printf("serial result: %f\n", result[i]);
-    //}
+#if 0
+    for (int i=0; i < 10; i++) {
+        printf("serial result: %f\n", result[i]);
+    }
+#endif
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -2195,17 +2190,6 @@ void ELL_OPENMP<T>::fill_random(ell_matrix<int, T>& mat, std::vector<T>& v)
         mat.ell_data[i+32*j] = (float) i; // get a zero product. NOT POSSIBLE.
     }}
 #endif
-    /**
-     *   (0 0 0 0) 1
-     *   (1 1 1 1) 1
-     *   (2 2 2 2) 1  = 32*(0,1,2,3,...,31)
-     *   (3 3 3 3) 1
-     *
-     *   (0 1 2 3) 1
-     *   (0 1 2 3) 1
-     *   (0 1 2 3) 1  = (0+1+2+3+...+31)*(1,1,...,1) = 
-     *   (0 1 2 3) 1
-    **/
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -2456,7 +2440,7 @@ void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
                     printf("(left+r) >= nb_rows: should not happened. Fix code\n");
                 }
             }
-            if (diag_sep > half_width) {
+            if (rd.diag_sep > half_width) {
                 if (i-rd.diag_sep >= 0)        col_id[i*nbz+0] = i-rd.diag_sep;
                 if (i+rd.diag_sep < nb_rows)   col_id[i*nbz+nbz-1] = i + rd.diag_sep;
             }
@@ -2465,6 +2449,34 @@ void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
 
     default:
         printf("generate_col_id, case not treated\n");
+        break;
+    }
+
+    switch(stencil_type) {
+    case(RANDOMWITHDIAG):
+    case(RANDOM):
+#if 0
+        for (int i=0; i < 20; i++) {
+            printf("bef, row %d: ");
+            for (int j=0; j < nbz; j++) {
+                printf("%d,", col_id[i*nbz+j]);
+            }
+            printf("\n");
+        }
+#endif
+        if (rd.sort_col_indices == 0) break;
+        for (int i=0; i < nb_rows; i++) {
+            std::sort(col_id+i*nbz, col_id+i*nbz+nbz);
+        }
+#if 0
+        for (int i=0; i < 20; i++) {
+            printf("aft, row %d: ");
+            for (int j=0; j < nbz; j++) {
+                printf("%d,", col_id[i*nbz+j]);
+            }
+            printf("\n");
+        }
+#endif
         break;
     }
 }
