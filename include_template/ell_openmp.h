@@ -19,6 +19,7 @@
 
 #include "timer_eb.h"
 #include "rbffd_io.h"
+#include "runs.h"
 
 
 // load 8 double precision floats converted from block (which presumably can be float or double.)
@@ -62,6 +63,8 @@ public:
 	USE(opttime);
 	USE(optmethod);
 
+    RunData rd;
+
     double overallopttime;
 	std::vector<T> paddedvec_v;
 	std::vector<T> vec_v;
@@ -73,6 +76,7 @@ public:
     int diag_sep;
     int inner_bandwidth;
     enum stencilType {COMPACT=0, RANDOM, RANDOMWITHDIAG};
+    enum nonzeroStats {UNIFORM=0, NORMAL};
     stencilType stencil_type;
 
     USE(dim2); // relates to workgroups
@@ -162,7 +166,18 @@ void ELL_OPENMP<T>::run()
 	//method_7(4); // correct results
 	//method_7a(4); // Something wrong with random matrices
 	//method_8(4);
-	method_8a(4);
+
+    int r = 64;
+    while (1) {
+        rd.nb_rows = r*r*r;
+        if (r > 80) break;
+        printf("*** r= %d ***\n", r);
+        rd.nb_rows = r*r*r;
+        r = r + 16;
+        //for (int i=0; i < 10; i++) {
+	        method_8a(4);
+        //}
+    }
     exit(0);
 }
 //----------------------------------------------------------------------
@@ -251,6 +266,7 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
         rownum = mat.matinfo.height;
         vecsize = mat.matinfo.width;
         ellnum = mat.ell_num;
+        stencil_size = ellnum;
         vec_v.resize(cmat.matinfo.width);
         result_v.resize(cmat.matinfo.height);
     } else if (in_format == "ELL") {
@@ -266,7 +282,7 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
         mat.ell_num = stencil_size;
 	    //spmv::spmv_ell_openmp(col_id, nb_rows, stencil_size); // choice == 1
         printf("\nRead ELLPACK file\n");
-        printf("col_id size: %d\n", mat.ell_col_id.size());
+        //printf("col_id size: %d\n", mat.ell_col_id.size());
         nnz = stencil_size * nb_rows; // nnz not used except in print
     } else {
         printf("input format not supported. Must be MM or ELL\n");
@@ -276,10 +292,12 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
 	std::fill(vec_v.begin(), vec_v.end(), 1.);
 	std::fill(result_v.begin(), result_v.end(), 0.);
 
-	//printf("nnz= %d\n", nnz);
-	//printf("rownum= %d\n", rownum);
-	//printf("vecsize= %d\n", vecsize);
-	//printf("ellnum= %d\n", ellnum);
+    rd.nb_rows = nb_rows;
+    rd.nb_mats = 4;
+    rd.nb_vecs = 4;
+    rd.stencil_size = stencil_size;
+    rd.diag_sep = diag_sep;
+    rd.inner_bandwidth = inner_bandwidth;
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -1819,25 +1837,30 @@ void ELL_OPENMP<T>::method_8a(int nbit)
     // Replace std::vector by pointers to floats and ints. 
     // Process 4 matrices and 4 vectors. Make 4 matrices identical. 
 	printf("============== METHOD 8a ===================\n");
-    printf("Implement streaming\n");
+
+
     // vectors are aligned. Start using vector _mm_ constructs. 
+    int nz = rd.stencil_size;
+    int nb_mat = rd.nb_mats;
+    int nb_vec = rd.nb_vecs;
+    int nb_rows = rd.nb_rows;
+    int tot_nz = nz*nb_rows;
 
-    //fill_random(mat, vec_v);
+    //std::vector<int>& col_id = mat.ell_col_id; // I SHOULD NOT NEED THIS
+    printf("nz= %d, nb_rows= %d, nb_rows*nz = %d\n", nz, nb_rows, nb_rows*nz);
+ 
+    // Create variables new_col_id_size, new_nb_vec (4 or 1), new_nb_mats (4 or 1)
+    // new_nz, new_sparsity, new_diag_sep, new_inner_bandwidth, new_non_zero_stats (uniform, normal, etc. distribution 
+    // of nonzeros in inner_bandwidth section of the matrix. 
+   
+   //newVars(int new_col_id_size, int new_nb_vec, int new_nb_mats, int new_nz, stencilType new_sparsity, int new_diag_step, int new_inner_bandwidth, int  new_nonzero_stats)
+   // newVars(new_col_id_size, new_nb_vec, new_nb_mats, new_nz, new_sparsity, new_diag_step, new_inner_bandwidth, 
+   //   new_nonzero_stats)
 
-    int nb_mat = 4; // must be 4
-    int nb_vec = 4; // must be 4
-    int nz = mat.ell_num;
-    std::vector<int>& col_id = mat.ell_col_id;
-    //std::vector<float>& data = mat.ell_data;
-    int nb_rows = vec_v.size();
-    printf("col_id.size= %d\n", col_id.size());
-    printf("nz= %d, nb_rows= %d, nb_rows*nz = %d", nz, nb_rows, nb_rows*nz);
-    //printf("data size= %d\n", data.size());
-
-    float* vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * vec_v.size(), 64);
-    float* result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * vec_v.size(), 64);
-    int*   col_id_t  = (int*)   _mm_malloc(sizeof(int)   * col_id.size(), 16);
-    float* data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * col_id.size(), 64);
+    float* vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_rows, 64);
+    float* result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * nb_rows, 64);
+    int*   col_id_t  = (int*)   _mm_malloc(sizeof(int)   * tot_nz, 16);
+    float* data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * tot_nz, 64);
 
     if (vec_vt == 0 || result_vt == 0 || col_id_t == 0 || data_t == 0) {
         printf("1. memory allocation failed\n");
@@ -1846,7 +1869,6 @@ void ELL_OPENMP<T>::method_8a(int nbit)
  
     // generate 4 compact matrices and four vectors
 
-    printf("nz= %d, nb_rows= %d, nb_mat= %d\n", nz, nb_rows, nb_mat);
     generate_vector(vec_vt, nb_rows, nb_vec);
     generate_col_id(col_id_t, nz, nb_rows);
     generate_ell_matrix_data(data_t, nz, nb_rows, nb_mat);
@@ -1857,7 +1879,7 @@ void ELL_OPENMP<T>::method_8a(int nbit)
 //.......................................................
 // SOMETHING WRONG with vector. 
 // works with constant vector and random matrices. Does not work with random vector and 
-// constrnat matrices. 
+// constant matrices. 
 //
     // Must now work on alignmentf vectors. 
     // Produces the correct serial result
@@ -1909,14 +1931,16 @@ void ELL_OPENMP<T>::method_8a(int nbit)
             _mm512_storenrngo_ps(result_vt+nb_mat*nb_vec*r, accu);
         } 
 }
-    tm["spmv"]->end();  // time for each matrix/vector multiply
-    elapsed = tm["spmv"]->getTime();
-    gflops = nb_mat * nb_vec * 2.*nz*vec_v.size()*1e-9 / (1e-3*elapsed); // assumes count of 1
-    printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
+        tm["spmv"]->end();  // time for each matrix/vector multiply
+        elapsed = tm["spmv"]->getTime();
+        gflops = nb_mat * nb_vec * 2.*nz*nb_rows*1e-9 / (1e-3*elapsed); // assumes count of 1
+        if (it > 3) {
+            printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
+        }
    }
 
 
-#if 1
+#if 0
     std::vector<float> one_res(nb_rows);  // single result
     for (int w=0; w < 16; w++) {
         for (int i=0; i < nb_rows; i++) {
@@ -1928,13 +1952,10 @@ void ELL_OPENMP<T>::method_8a(int nbit)
     checkAllSerialSolutions(data_t, col_id_t, vec_vt, &one_res[0], nz, nb_mat, nb_vec, nb_rows);
 #endif
 
-
-
     _mm_free(result_vt);
     _mm_free(vec_vt);
     _mm_free(data_t);
     _mm_free(col_id_t);
-
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -2326,7 +2347,6 @@ void ELL_OPENMP<T>::generate_vector(T* vec, int nb_rows, int nb_vec)
 {
     //assert(vec.size() == nb_rows*nb_vec);
     int sz = nb_rows*nb_vec;
-    printf("sz= %d\n", sz);
 
     for (int i=0; i < sz; i++) {
         //if (!(i % 10000))  printf("i= %d\n", i);
@@ -2334,19 +2354,16 @@ void ELL_OPENMP<T>::generate_vector(T* vec, int nb_rows, int nb_vec)
         vec[i] = (T) getRandf();// incorrect norms 
         //vec[i] = 1.0; // wrong norms when matrices random, although only 4 different norms
     }
-    printf("exit generate vector\n");
 }
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
 {
     //assert(col_id.size() == nbz*nb_rows);
-    std::vector<int> indices;
     int left;
     int right;
     int width;
     int half_width;
-    printf("generate_col_id::stencil_type= %d\n", stencil_type);
 
     switch (stencil_type) {
     case COMPACT:

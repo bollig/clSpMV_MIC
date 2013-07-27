@@ -80,3 +80,19 @@ Errors solved.
 method_7a: 19 gflops
 method_8a: 18 gflops
 ----------------------------------------------------------------------
+July 26, 2013
+I get 100 Gflops with 4 functions and 4 matrices with method8a. And generate the correct results. Grids of 
+64^3 and beyond. Time changes depending on cache size. 
+Must order the points on a row from smallest to largest (not yet down) for better efficiency and to be consistent with 
+real stencils. 
+
+Implement cuthill McGee within this program using ViennaCL. 
+
+Tests: Cuthill McGee, Center diagonal control, outer diagonal control.  Array size. 
+
+To implement: double precision and its relation to cache size. 
+
+Calculation of maximum possible speed on the intel based on theoretical bandwidth and estimated number of times
+a function is accessed. As a function of number of zeros and their distribution. Benchmark based on fraction of speed
+relative to maximum possible for a particular algorithm (as opposed to maximum speed of the machine.)
+----------------------------------------------------------------------
