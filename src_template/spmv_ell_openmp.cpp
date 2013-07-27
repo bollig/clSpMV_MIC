@@ -23,6 +23,9 @@
 #include "mem_bandwidth.h"
 #endif
 
+// I do not like the ViennaCL interface
+//#include "cuthill_mckee.hpp"
+
 //#include "globals.h"
 
 //#include "class_ell.h" // renable when bell works

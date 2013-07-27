@@ -111,3 +111,14 @@ bandwidth, Gflops
 Now take inner_bandwidth of 2000 and vary outer diagonal only, from 4000 to 20000. 
 I get for 64^3, 88 Gflops, independent of diagonal separation. 
 ----------------------------------------------------------------------
+July 27, 2013
+- rewrite base version with one matrix and 1 vector
+- rewrite version with four matrices and 1 vector
+- rewrite version with one matrix and 1 vector
+
+Do this in single and double precision. 
+
+Modify inner_bandwidth, number of diagonals
+On GPU: fastest index is down the column (columnwise ordering for col_id)
+OpenMP CPU: rowise ordering is best.
+----------------------------------------------------------------------
