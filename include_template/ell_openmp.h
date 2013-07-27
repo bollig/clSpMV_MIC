@@ -168,15 +168,21 @@ void ELL_OPENMP<T>::run()
 	//method_8(4);
 
     int r = 64;
+    rd.inner_bandwidth = 2000;
+    rd.diag_sep = 2000;
     while (1) {
         rd.nb_rows = r*r*r;
-        if (r > 80) break;
-        printf("*** r= %d ***\n", r);
+	    method_8a(4);
+        printf("*** r= %d ***\n", rd.nb_rows);
+        printf("*** inner_bandwidth= %d\n", rd.inner_bandwidth);
         rd.nb_rows = r*r*r;
-        r = r + 16;
-        //for (int i=0; i < 10; i++) {
-	        method_8a(4);
-        //}
+        //r = r + 16;
+        //rd.inner_bandwidth += 2000;
+        rd.diag_sep += 2000;
+        printf("update inner bandwidth: %d\n", rd.inner_bandwidth);
+        if (rd.inner_bandwidth >= 233000) break;
+        if (rd.diag_sep >= 20000) break;
+        if (r > 64) break;
     }
     exit(0);
 }
@@ -2425,13 +2431,13 @@ void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
 
     case RANDOMWITHDIAG:
         printf("RANDOM CASE WITH DIAGONAL\n");
+        printf("inner_bandwidth= %d\n", rd.inner_bandwidth);
+        printf("diagonal separation= %d\n", rd.diag_sep);
         // same as RANDOM, but add two additional diagonals a fixed distance away from the main diagaonal
         left = 0;
         right = 0;
-        width = 1000;
-        half_width = inner_bandwidth / 2;
+        half_width = rd.inner_bandwidth / 2;
         int nbzm2 = nbz-2;
-        //int diag_separation = 200000;
         for (int i=0; i < nb_rows; i++) {
                 left = i - half_width;
                 right = i + half_width;
@@ -2444,17 +2450,15 @@ void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
                     right = nb_rows - 1;
                 }
             for (int j=1; j < (nbz-1); j++) {
-                int r = getRand(width);
+                int r = getRand(rd.inner_bandwidth);
                 col_id[i*nbz+j] = left + r;
                 if ((left+r) >= nb_rows) {
                     printf("(left+r) >= nb_rows: should not happened. Fix code\n");
                 }
             }
-            if (i-diag_sep>= 0) {
-                col_id[i*nbz+0] = i-diag_sep;
-            }
-            if (i+diag_sep< nb_rows) {
-                col_id[i*nbz+nbz-1] = i + diag_sep;
+            if (diag_sep > half_width) {
+                if (i-rd.diag_sep >= 0)        col_id[i*nbz+0] = i-rd.diag_sep;
+                if (i+rd.diag_sep < nb_rows)   col_id[i*nbz+nbz-1] = i + rd.diag_sep;
             }
         }
         break;

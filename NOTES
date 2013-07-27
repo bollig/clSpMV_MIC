@@ -96,3 +96,18 @@ Calculation of maximum possible speed on the intel based on theoretical bandwidt
 a function is accessed. As a function of number of zeros and their distribution. Benchmark based on fraction of speed
 relative to maximum possible for a particular algorithm (as opposed to maximum speed of the machine.)
 ----------------------------------------------------------------------
+July 26, 2013
+64^3, random_diag. Vary bandwidth (no outside diagonals)
+bandwidth, Gflops
+1000, 100
+3000, 85
+5000, 62
+7000, 49
+9000, 42
+11000, 37
+13000, 35
+31000, 25
+
+Now take inner_bandwidth of 2000 and vary outer diagonal only, from 4000 to 20000. 
+I get for 64^3, 88 Gflops, independent of diagonal separation. 
+----------------------------------------------------------------------
