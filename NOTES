@@ -122,3 +122,7 @@ Modify inner_bandwidth, number of diagonals
 On GPU: fastest index is down the column (columnwise ordering for col_id)
 OpenMP CPU: rowise ordering is best.
 ----------------------------------------------------------------------
+unroll use to have influence on spmv. Does it now? 
+-O3 and -funroll-loops 
+----------------------------------------------------------------------
+----------------------------------------------------------------------

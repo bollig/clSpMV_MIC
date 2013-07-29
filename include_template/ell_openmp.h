@@ -127,6 +127,7 @@ public:
 	void method_5(int nb=0);
 	void method_6(int nb=0);
 	void method_7(int nb=0); // 4 matrices, 4 vectors (correct results)
+    void method_rd_wr(int nbit);
 	void method_7a(int nb=0); // 4 matrices, 4 vectors, using new matrix generators
 	//void method_8(int nb=0); // 4 matrices, 4 vectors
 	void method_8a(int nb=0); // 4 matrices, 4 vectors
@@ -179,10 +180,12 @@ void ELL_OPENMP<T>::run()
 	//method_4(4);
 	//method_5(4); // correct results
 	//method_6(4);
-	//method_7(4); // correct results
     rd.nb_rows = rd.n3d*rd.n3d*rd.n3d;
-	method_7a(4); // Something wrong with random matrices
-	//method_8(4);
+	method_rd_wr(4); // correct results
+    exit(0);
+	method_7(4); // correct results
+    exit(0);
+	//method_7a(4); // Something wrong with random matrices
 
     int count = 0;
     int max_nb_runs = 1;
@@ -1142,6 +1145,63 @@ void ELL_OPENMP<T>::method_6(int nbit)
 }
 //----------------------------------------------------------------------
 template <typename T>
+void ELL_OPENMP<T>::method_rd_wr(int nbit)
+{
+#if 1
+	printf("============== METHOD RD/WR ===================\n");
+    printf("Implement streaming\n");
+
+    float gflops;
+    float max_gflops = 0.;
+    float max_bandwidth = 0.;
+    float elapsed = 0.; 
+    float min_elapsed = 0.; 
+    int nb_rows = rd.nb_rows;
+    int nz = rd.stencil_size;
+
+    // make array large enough
+    //nb_rows = 128*128*128*64; // too large? 134 Mrows
+    nb_rows = 128*128*128*16; // too large? 134 Mrows
+    //nb_rows = 128*128*128; // too large? 134 Mrows
+    printf("nb_rows= %d\n", nb_rows);
+    vec_vt = (float*) _mm_malloc(sizeof(float)*nb_rows, 64);
+    result_vt = (float*) _mm_malloc(sizeof(float)*nb_rows, 64);
+    printf("vec_vt= %ld\n", (long) vec_vt);
+ 
+#if 1
+    // Time pure loads
+    for (int it=0; it < 10; it++) {
+        tm["spmv"]->start();
+#pragma omp parallel
+{
+#pragma omp for
+       for (int r=0; r  < nb_rows; r += 16) {
+           //printf("r = %d\n", r);
+             //if (r > 1000) exit(0);
+            const __m512 v1_old = _mm512_load_ps(vec_vt + r);
+            //print_ps(v1_old, "v1_old");
+             _mm512_store_ps(result_vt + r, v1_old);
+           //continue;
+        }
+}
+       tm["spmv"]->end();
+       elapsed = tm["spmv"]->getTime();
+       float gbytes = nb_rows*sizeof(float) * 2 * 1.e-9;
+       float bandwidth = gbytes / (elapsed*1.e-3);
+        if (bandwidth > max_bandwidth) {
+            max_bandwidth = bandwidth;
+            min_elapsed = elapsed;
+        }
+    }
+    _mm_free(vec_vt);
+    printf("read and write of %f Mbytes, using _mm512_store_ps and _m512_load_ps,\n",
+            nb_rows*sizeof(float)*1.e-6);
+    printf("16 at a time\n");
+    printf("r/w, max bandwidth= %f (gbytes/sec), time: %f (ms)\n", max_bandwidth, min_elapsed);
+#endif
+}
+//----------------------------------------------------------------------
+template <typename T>
 void ELL_OPENMP<T>::method_7(int nbit)
 {
     // Align the vectors so I can use vector instrincis and other technique.s 
@@ -1151,172 +1211,16 @@ void ELL_OPENMP<T>::method_7(int nbit)
     printf("Implement streaming\n");
     // vectors are aligned. Start using vector _mm_ constructs. 
 
-    fill_random(mat, vec_v);
-
-    int nb_mat = 4; // must be 4
-    int nb_vec = 4; // must be 4
-    int nb_rows = vec_v.size();
-    int nz = mat.ell_num;
-
-    std::vector<int>& col_id = mat.ell_col_id;
-    std::vector<float>& data = mat.ell_data;
-
-    //std::vector<float> vec_vt(nb_vec*vec_v.size());
-    //std::vector<float> result_vt(nb_vec*nb_mat*vec_v.size());
-    //std::vector<int> col_id_t(col_id.size()*4);
-    //std::vector<float> data_t(data.size()*4);
-
-    float* vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * vec_v.size(), 64);
-    float* result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * vec_v.size(), 64);
-    int*   col_id_t  = (int*)   _mm_malloc(sizeof(int)   * col_id.size(), 16);
-    float* data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * data.size(), 64);
-
-    if (vec_vt == 0 || result_vt == 0 || col_id_t == 0 || data_t == 0) {
-        printf("1. memory allocation failed\n");
-        exit(0);
-    }
-
-    // transpose col_id array 
-    // Current version, from ell_matrix:  [nz][nrow]
-    // Transform to [nrow][nz]
-    #define COL(c,r)   col_id_t[(c) + nz*(r)]
-    //#define DATA(m,c,r)    data_t[(m) + nb_mat*((c) + nz*(r))]
-    #define VEC(m,r)       vec_vt[(m) + nb_mat*(r)]
-    #define RES(m,v,r)  result_vt[(m) + nb_mat*((v) + nb_vec*(r))]
-
-    // Create 4 identical vectors, 4 identical matrices (easier to check results at first)
-    for (int m=0; m < nb_mat; m++) {
-        for (int r=0; r < nb_rows; r++) {
-            VEC(m,r) = vec_v[r];
-        }
-    }
-
-    for (int r=0; r < nb_rows; r++) {
-        for (int n=0; n < nz; n++) {
-            COL(n,r) = col_id[r + nb_rows*n];
-        }
-    }
- 
-    // Restructure data array
-    // order:[r=0,m=0,n=(0,1,2,3)],[r=0,m=1,n=(0,1,2,3)],...,[r=0,m=3,n=(0,1,2,3)]
-    //       [r=1,m=0,n=(0,1,2,3)],....
-    int n_skip = 4;
-    int nz4 = nz / n_skip; // check that nz is multiple of n_skip
-    for (int r=0; r < nb_rows; r++) {
-    for (int n=0; n < nz; n += n_skip) {
-        int n4 = n / 4; // if n_skip == 4
-        for (int m=0; m < nb_mat; m++) {
-            for (int in=0; in < n_skip; in++) {
-                data_t[in+n_skip*(m+nb_mat*(n4+nz4*r))] = data[r+(n+in)*nb_rows];
-            }
-        }
-    }}
-
-    //for (int i=0; i< nb_rows*nz*nb_mat; i++) {
-        //printf("data_t[%d]= %f\n", i, data_t[i]);
-    //}
-    //exit(0);
-
-    print_f(&data[0], "data");
-    print_f(data_t, "data_t");
-    print_i(&col_id[0], "col_id");
-    print_i(col_id_t, "col_id_t");
-    print_f(&vec_v[0], "vec_v");
-    print_f(vec_vt, "vec_vt");
-
-#if 0
-    printf("after initialization\n");
-
-    //for (int i=0; i < 128; i++) {
-        //printf("col_id_t[%d] = %d\n", i, col_id_t[i]);
-    //}
- 
-    printf("nz in row: %d\n", nz);
-    printf("nb rows: %d\n", vec_v.size());
-    printf("aligned_length= %d\n", aligned_length);
-    printf("vector length= %d\n", vec_v.size());
-    printf("result_length= %d\n", result_v.size());
-    printf("nz*aligned_length= %d\n", nz*aligned_length);
-    printf("maximum nb threads: %d\n", omp_get_max_threads());
-    printf("size of col_id: %d\n", col_id.size());
-    printf("size of data: %d\n", data.size());
-#endif
-
     float gflops;
-    float elapsed; 
+    float max_gflops = 0.;
+    float max_bandwidth = 0.;
+    float elapsed = 0.; 
+    float min_elapsed = 0.; 
+    int nb_rows = rd.nb_rows;
+    int nz = rd.stencil_size;
 
-#if 0
-    float* result_va = (float*) _mm_malloc(result_v.size()*sizeof(float), 64);
-    float* vec_va    = (float*) _mm_malloc(vec_v.size()*sizeof(float), 64);
-    float* data_a    = (float*) _mm_malloc(data.size()*sizeof(float), 64);
-    int* col_id_ta   = (int*)   _mm_malloc(col_id.size()*sizeof(int), 64);
+    generateInputMatricesAndVectors();
 
-    for (int i=0; i < result_v.size(); i++) { result_va[i] = result_v[i]; }
-    for (int i=0; i < vec_v.size(); i++)    { vec_va[i]    = vec_v[i];    }
-    for (int i=0; i < data.size(); i++)     { data_a[i]    = data_t[i];   }
-    for (int i=0; i < col_id.size(); i++)   { col_id_ta[i] = col_id_t[i]; }
-#endif
-
-// work on unpacking 
-    //exit(0);
-
-        //----------------------------
-#if 1
-    int matoffset;
-    int vecid;
-    const int aligned = aligned_length; 
-    //const int aligned = aligned_length; // Gflop goes from 25 to 0.5 (Cannot make it private)
- 
-#if 0
-    // Time pure loads
-    for (int it=0; it < 10; it++) {
-        tm["spmv"]->start();
-#pragma omp parallel
-{
-#pragma omp for
-       for (int r=0; r  < nb_rows; r += 16) {
-            const __m512 v1_old = _mm512_load_ps(vec_vt + r);
-             _mm512_store_ps(result_vt + r, v1_old);
-        }
-}
-       tm["spmv"]->end();
-       float elapsed_mem = tm["spmv"]->getTime();
-       float gbytes = (nb_rows/16)*sizeof(float) * (16+16) * 1.e-9;
-       //printf("gbytes= %f\n", gbytes);
-       float bandwidth = gbytes / (elapsed_mem*1.e-3);
-       printf("bandwidth= %f (gbytes/sec), time: %f (ms)\n", bandwidth, elapsed_mem);
-    }
-#endif
-
-//..................
-// Time read 4 floats at a time with masking
-//
-#if 0
-    // Time pure loads
-    for (int it=0; it < 10; it++) {
-        tm["spmv"]->start();
-
-#pragma omp parallel
-{
-    const int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
-    const int nb_mat = 4;
-    const int nb_vec = 4;
-#pragma omp for
-       for (int r=0; r  < nb_rows; r += 4) {
-            //const __m512 v1_old = _mm512_load_ps(vec_vt + r);
-            //  reading 4 floats
-             __m512 v1_old = _mm512_mask_loadunpacklo_ps(v1_old, _mm512_int2mask(int_mask_lo), vec_vt+r);
-             _mm512_store_ps(result_vt+4*r, v1_old);  // writing 16 floats
-       }
-}
-       tm["spmv"]->end();
-       float elapsed_mem = tm["spmv"]->getTime();
-       float gbytes = (nb_rows/4)*sizeof(float) * (16.+4.) * 1.e-9;
-       float bandwidth = gbytes / (elapsed_mem*1.e-3);
-       printf("bandwidth unpack= %f (gbytes/sec), time: %f (ms)\n", bandwidth, elapsed_mem);
-    }
-#endif
-//.......................................................
     // Must now work on alignmentf vectors. 
     // Produces the correct serial result
     for (int it=0; it < 10; it++) {
@@ -1414,33 +1318,17 @@ void ELL_OPENMP<T>::method_7(int nbit)
 }
     tm["spmv"]->end();  // time for each matrix/vector multiply
     elapsed = tm["spmv"]->getTime();
-    gflops = nb_mat * nb_vec * 2.*nz*vec_v.size()*1e-9 / (1e-3*elapsed); // assumes count of 1
-    printf("Gflops: %f, time: %f (ms)\n", gflops, elapsed);
+    gflops = rd.nb_mats * rd.nb_vecs * 2.*rd.stencil_size*rd.nb_rows*1e-9 / (1e-3*elapsed); 
+    if (gflops > max_gflops) {
+        max_gflops = gflops;
+        min_elapsed = elapsed;
+    }
    }
 #endif
+    printf("Max gflops: %f, time: %f (ms)\n", max_gflops, elapsed);
 
-#if 1
-    std::vector<float> one_res(nb_rows);  // single result
-    for (int w=0; w < 16; w++) {
-        for (int i=0; i < nb_rows; i++) {
-            one_res[i] = result_vt[16*i+w];
-        }
-        printf("method_7, l2norm[%d]=of omp version: %f\n", w, l2norm(one_res));
-    }
-
-    spmv_serial(mat, vec_v, result_v);
-    printf("method_7, l2norm of serial version: %f\n", l2norm(result_v));
-#endif
-
-    // All 16 omp versions are the same. 
-    // But off by factor of approximately 6 from exact version. 
-
-
-    _mm_free(result_vt);
-    _mm_free(vec_vt);
-    _mm_free(data_t);
-    _mm_free(col_id_t);
-
+    //checkSolutions();
+    freeInputMatricesAndVectors();
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -1938,7 +1826,7 @@ void ELL_OPENMP<T>::print_i(int* res, const std::string msg)
 template <typename T>
 void ELL_OPENMP<T>::print_ps(const __m512 v1, const std::string msg)
 {
-    return;
+    //return;
     float* res = (float*) _mm_malloc(32*sizeof(float), 64);
     _mm512_store_ps(res, v1);
     printf("--- %s ---\n", msg.c_str());
@@ -2289,10 +2177,12 @@ void ELL_OPENMP<T>::generateInputMatricesAndVectors()
     col_id_t  = (int*)   _mm_malloc(sizeof(int)   * tot_nz, 16);
     data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * tot_nz, 64);
 
+#if 0
     printf("nb_vec= %d\n", nb_vec);
     printf("nb_mat= %d\n", nb_mat);
     printf("nb_rows= %d\n", nb_rows);
     printf("tot_nz= %d\n", tot_nz);
+#endif
 
     if (vec_vt == 0 || result_vt == 0 || col_id_t == 0 || data_t == 0) {
         printf("1. memory allocation failed\n");
