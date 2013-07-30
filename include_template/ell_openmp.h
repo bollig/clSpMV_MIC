@@ -168,6 +168,7 @@ protected:
 template <typename T>
 void ELL_OPENMP<T>::run()
 {
+    int num_threads[] = {1,2,4,8,16,32,64,96,128,160,192,224,240};
     //spmv_serial(mat, vec_v, result_v);
     //printf("l2norm of serial version: %f\n", l2norm(result_v));
     //spmv_serial_row(mat, vec_v, result_v);
@@ -181,7 +182,12 @@ void ELL_OPENMP<T>::run()
 	//method_5(4); // correct results
 	//method_6(4);
     rd.nb_rows = rd.n3d*rd.n3d*rd.n3d;
-	method_rd_wr(4); // correct results
+    int save_nb_threads = omp_get_num_threads();
+    for (int i=0; i < 13; i++) {
+        omp_set_num_threads(num_threads[i]);
+        printf("nb threads: %d\n", num_threads[i]);
+	    method_rd_wr(4); // correct results
+    }
     exit(0);
 	method_7(4); // correct results
     exit(0);
@@ -1175,14 +1181,24 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
 #pragma omp parallel
 {
 #pragma omp for
+#if 1
+//#pragma noprefetch
        for (int r=0; r  < nb_rows; r += 16) {
-           //printf("r = %d\n", r);
-             //if (r > 1000) exit(0);
             const __m512 v1_old = _mm512_load_ps(vec_vt + r);
-            //print_ps(v1_old, "v1_old");
-             _mm512_store_ps(result_vt + r, v1_old);
-           //continue;
+            //_mm512_store_ps(result_vt + r, v1_old);
+            _mm512_storenrngo_ps(result_vt+r, v1_old);
+            //_mm512_store_ps(result_vt + r, _mm512_load_ps(vec_vt+r));
         }
+#else
+//simd no effect on timing
+//#pragma omp simd
+//#pragma noprefetch
+// 133 Mbytes with prefetch
+//  95 Mbytes with noprefetch
+       for (int r=0; r  < nb_rows; r++) {
+            result_vt[r] = vec_vt[r];
+        }
+#endif
 }
        tm["spmv"]->end();
        elapsed = tm["spmv"]->getTime();
@@ -1199,6 +1215,7 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
     printf("16 at a time\n");
     printf("r/w, max bandwidth= %f (gbytes/sec), time: %f (ms)\n", max_bandwidth, min_elapsed);
 #endif
+//---------------------------
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -1221,6 +1238,7 @@ void ELL_OPENMP<T>::method_7(int nbit)
 
     generateInputMatricesAndVectors();
 
+// -----------------------------------------------
     // Must now work on alignmentf vectors. 
     // Produces the correct serial result
     for (int it=0; it < 10; it++) {
