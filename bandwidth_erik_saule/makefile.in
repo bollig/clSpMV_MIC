@@ -1,6 +1,6 @@
-MODE=gcc
+MODE=icc
 DEBUG=no
-MIC=no
+MIC=yes
 VERBOSE=no
 DEBUGMIC=no
 O1=no
