@@ -1,0 +1,6 @@
+make sure by setting KMP_AFFINITY to verbose that the first 61 openmp threads map to different cores.
+(tid: 0, core: 0) timeof[0], sec to download 1023410176 bytes. BW: 2.01472e+09 bytes/s
+(tid: 0, core: 1) timeof[1], sec to download 1023410176 bytes. BW: 2.0155e+09 bytes/s
+(tid: 0, core: 2) timeof[2], sec to download 1023410176 bytes. BW: 2.01419e+09 bytes/s
+(tid: 0, core: 3) timeof[3], sec to download 1023410176 bytes. BW: 2.01147e+09 bytes/s
+aggregated:8.05588e+09

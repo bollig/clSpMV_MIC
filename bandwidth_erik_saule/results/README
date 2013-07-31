@@ -1,0 +1,21 @@
+results/memcpy-61-4:aggregated:8.00128e+10
+results/memcpy-vect-61-4:aggregated:7.65305e+10
+results/memset-61-4:aggregated:8.27676e+10
+results/memset-nr-61-4:aggregated:1.06118e+11
+results/memset-nrngo-61-4:aggregated:1.76122e+11
+results/vectsum-61-4:aggregated:1.15645e+17
+results/vectsum-pref-61-4:aggregated:1.94432e+11
+----------------------------------------------------------------------
+Best results: 194 Gbytes/sec (vect + prefetch)
+----------------------------------------------------------------------
+Another run
+results/memcpy-61-4:aggregated:7.99416e+10
+results/memcpy-vect-61-4:aggregated:7.67774e+10
+results/memset-61-4:aggregated:8.26701e+10
+results/memset-nr-61-4:aggregated:1.06135e+11
+results/memset-nrngo-61-4:aggregated:1.7608e+11
+results/vectsum-61-4:aggregated:1.09505e+17
+results/vectsum-pref-61-4:aggregated:1.94574e+11
+Best results: vectsum-pref: 194 Gflops maximum bandwidth cross all processors
+----------------------------------------------------------------------
+

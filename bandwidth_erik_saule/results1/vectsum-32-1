@@ -1,0 +1,34 @@
+make sure by setting KMP_AFFINITY to verbose that the first 61 openmp threads map to different cores.
+(tid: 0, core: 0) timeof[0], sec to download 1023410176 bytes. BW: 1.88389e+09 bytes/s
+(tid: 0, core: 1) timeof[1], sec to download 1023410176 bytes. BW: 1.77076e+09 bytes/s
+(tid: 0, core: 2) timeof[2], sec to download 1023410176 bytes. BW: 1.88386e+09 bytes/s
+(tid: 0, core: 3) timeof[3], sec to download 1023410176 bytes. BW: 1.8835e+09 bytes/s
+(tid: 0, core: 4) timeof[4], sec to download 1023410176 bytes. BW: 1.88093e+09 bytes/s
+(tid: 0, core: 5) timeof[5], sec to download 1023410176 bytes. BW: 1.88591e+09 bytes/s
+(tid: 0, core: 6) timeof[6], sec to download 1023410176 bytes. BW: 1.88366e+09 bytes/s
+(tid: 0, core: 7) timeof[7], sec to download 1023410176 bytes. BW: 1.87303e+09 bytes/s
+(tid: 0, core: 8) timeof[8], sec to download 1023410176 bytes. BW: 1.87451e+09 bytes/s
+(tid: 0, core: 9) timeof[9], sec to download 1023410176 bytes. BW: 1.89991e+09 bytes/s
+(tid: 0, core: 10) timeof[10], sec to download 1023410176 bytes. BW: 1.89956e+09 bytes/s
+(tid: 0, core: 11) timeof[11], sec to download 1023410176 bytes. BW: 1.90197e+09 bytes/s
+(tid: 0, core: 12) timeof[12], sec to download 1023410176 bytes. BW: 1.89925e+09 bytes/s
+(tid: 0, core: 13) timeof[13], sec to download 1023410176 bytes. BW: 1.89924e+09 bytes/s
+(tid: 0, core: 14) timeof[14], sec to download 1023410176 bytes. BW: 1.90291e+09 bytes/s
+(tid: 0, core: 15) timeof[15], sec to download 1023410176 bytes. BW: 1.90312e+09 bytes/s
+(tid: 0, core: 16) timeof[16], sec to download 1023410176 bytes. BW: 1.90388e+09 bytes/s
+(tid: 0, core: 17) timeof[17], sec to download 1023410176 bytes. BW: 1.90792e+09 bytes/s
+(tid: 0, core: 18) timeof[18], sec to download 1023410176 bytes. BW: 1.90645e+09 bytes/s
+(tid: 0, core: 19) timeof[19], sec to download 1023410176 bytes. BW: 1.91155e+09 bytes/s
+(tid: 0, core: 20) timeof[20], sec to download 1023410176 bytes. BW: 1.90953e+09 bytes/s
+(tid: 0, core: 21) timeof[21], sec to download 1023410176 bytes. BW: 1.88486e+09 bytes/s
+(tid: 0, core: 22) timeof[22], sec to download 1023410176 bytes. BW: 1.87375e+09 bytes/s
+(tid: 0, core: 23) timeof[23], sec to download 1023410176 bytes. BW: 1.87356e+09 bytes/s
+(tid: 0, core: 24) timeof[24], sec to download 1023410176 bytes. BW: 1.87391e+09 bytes/s
+(tid: 0, core: 25) timeof[25], sec to download 1023410176 bytes. BW: 1.91442e+09 bytes/s
+(tid: 0, core: 26) timeof[26], sec to download 1023410176 bytes. BW: 1.91323e+09 bytes/s
+(tid: 0, core: 27) timeof[27], sec to download 1023410176 bytes. BW: 1.90815e+09 bytes/s
+(tid: 0, core: 28) timeof[28], sec to download 1023410176 bytes. BW: 1.91088e+09 bytes/s
+(tid: 0, core: 29) timeof[29], sec to download 1023410176 bytes. BW: 1.90912e+09 bytes/s
+(tid: 0, core: 30) timeof[30], sec to download 1023410176 bytes. BW: 1.91087e+09 bytes/s
+(tid: 0, core: 31) timeof[31], sec to download 1023410176 bytes. BW: 1.90385e+09 bytes/s
+aggregated:6.0542e+10

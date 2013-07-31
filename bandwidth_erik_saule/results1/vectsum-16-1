@@ -1,0 +1,18 @@
+make sure by setting KMP_AFFINITY to verbose that the first 61 openmp threads map to different cores.
+(tid: 0, core: 0) timeof[0], sec to download 1023410176 bytes. BW: 1.9742e+09 bytes/s
+(tid: 0, core: 1) timeof[1], sec to download 1023410176 bytes. BW: 1.79913e+09 bytes/s
+(tid: 0, core: 2) timeof[2], sec to download 1023410176 bytes. BW: 1.97563e+09 bytes/s
+(tid: 0, core: 3) timeof[3], sec to download 1023410176 bytes. BW: 1.97814e+09 bytes/s
+(tid: 0, core: 4) timeof[4], sec to download 1023410176 bytes. BW: 1.97887e+09 bytes/s
+(tid: 0, core: 5) timeof[5], sec to download 1023410176 bytes. BW: 1.98205e+09 bytes/s
+(tid: 0, core: 6) timeof[6], sec to download 1023410176 bytes. BW: 1.97923e+09 bytes/s
+(tid: 0, core: 7) timeof[7], sec to download 1023410176 bytes. BW: 1.9649e+09 bytes/s
+(tid: 0, core: 8) timeof[8], sec to download 1023410176 bytes. BW: 1.96473e+09 bytes/s
+(tid: 0, core: 9) timeof[9], sec to download 1023410176 bytes. BW: 1.99071e+09 bytes/s
+(tid: 0, core: 10) timeof[10], sec to download 1023410176 bytes. BW: 1.98845e+09 bytes/s
+(tid: 0, core: 11) timeof[11], sec to download 1023410176 bytes. BW: 1.99173e+09 bytes/s
+(tid: 0, core: 12) timeof[12], sec to download 1023410176 bytes. BW: 1.99218e+09 bytes/s
+(tid: 0, core: 13) timeof[13], sec to download 1023410176 bytes. BW: 1.99294e+09 bytes/s
+(tid: 0, core: 14) timeof[14], sec to download 1023410176 bytes. BW: 1.99126e+09 bytes/s
+(tid: 0, core: 15) timeof[15], sec to download 1023410176 bytes. BW: 1.99364e+09 bytes/s
+aggregated:3.15378e+10

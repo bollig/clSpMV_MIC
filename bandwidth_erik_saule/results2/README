@@ -1,0 +1,10 @@
+From slowest to fastest
+results/memcpy-61-4:aggregated:7.79192e+10
+results/memset-61-4:aggregated:8.23673e+10
+results/simplesum-char-61-4:aggregated:9.79749e+10
+results/memset-nr-61-4:aggregated:1.05834e+11
+results/memset-nrngo-61-4:aggregated:1.72504e+11
+results/vectsum-61-4:aggregated:1.89292e+11
+
+
+Best results: 189.29 Gflops 
