@@ -1184,6 +1184,7 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
 #if 1
 //#pragma noprefetch
        for (int r=0; r  < nb_rows; r += 16) {
+       	   //_mm_prefetch ((const char*) vec_vt+r+2*4096, _MM_HINT_T1);
             const __m512 v1_old = _mm512_load_ps(vec_vt + r);
             //_mm512_store_ps(result_vt + r, v1_old);
             _mm512_storenrngo_ps(result_vt+r, v1_old);
