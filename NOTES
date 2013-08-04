@@ -161,4 +161,57 @@ nb threads: 244, tot_bw= 125.267735 Gbytes/sec, mean/max/min time per thread: 38
 
 NOT CLEAR WHY RESULST SO CRUMMY. 
 -
+Reached 289 Gflops on 96 threds. Seems too good. 
+nb threads: 1, tot_bw= 6.116375 Gbytes/sec, avg/max/min time per thread:  2.74/ 2.74/ 2.74 (ms)
+nb threads: 2, tot_bw= 11.947276 Gbytes/sec, avg/max/min time per thread:  2.81/ 2.87/ 2.75 (ms)
+nb threads: 4, tot_bw= 23.575794 Gbytes/sec, avg/max/min time per thread:  2.85/ 2.94/ 2.74 (ms)
+nb threads: 8, tot_bw= 46.789210 Gbytes/sec, avg/max/min time per thread:  2.87/ 2.98/ 2.81 (ms)
+nb threads: 16, tot_bw= 90.290370 Gbytes/sec, avg/max/min time per thread:  2.97/ 3.16/ 2.90 (ms)
+nb threads: 32, tot_bw= 158.332026 Gbytes/sec, avg/max/min time per thread:  3.41/ 3.72/ 3.03 (ms)
+nb threads: 64, tot_bw= 241.835555 Gbytes/sec, avg/max/min time per thread:  4.47/ 5.46/ 3.92 (ms)
+nb threads: 96, tot_bw= 289.143710 Gbytes/sec, avg/max/min time per thread:  5.86/ 8.55/ 3.99 (ms)
+nb threads: 128, tot_bw= 272.711227 Gbytes/sec, avg/max/min time per thread: 11.17/22.67/ 2.94 (ms)
+nb threads: 160, tot_bw= 272.330875 Gbytes/sec, avg/max/min time per thread: 14.08/22.76/ 4.02 (ms)
+nb threads: 192, tot_bw= 223.125175 Gbytes/sec, avg/max/min time per thread: 16.51/22.19/ 5.33 (ms)
+nb threads: 224, tot_bw= 188.170859 Gbytes/sec, avg/max/min time per thread: 20.73/25.03/11.47 (ms)
+nb threads: 244, tot_bw= 174.308685 Gbytes/sec, avg/max/min time per thread: 23.58/25.13/17.34 (ms)
 
+How can I get to 700 Gbytes/sec? 
+size= 0.524288 Mbytes
+nb threads: 1, tot_bw= 9.709037 Gbytes/sec, avg/max/min time per thread:  0.11/ 0.11/ 0.11 (ms)
+size= 0.524288 Mbytes
+nb threads: 2, tot_bw= 19.889387 Gbytes/sec, avg/max/min time per thread:  0.11/ 0.11/ 0.10 (ms)
+size= 0.524288 Mbytes
+nb threads: 4, tot_bw= 39.146526 Gbytes/sec, avg/max/min time per thread:  0.11/ 0.11/ 0.10 (ms)
+size= 0.524288 Mbytes
+nb threads: 8, tot_bw= 79.806978 Gbytes/sec, avg/max/min time per thread:  0.11/ 0.11/ 0.10 (ms)
+size= 0.524288 Mbytes
+nb threads: 16, tot_bw= 160.586642 Gbytes/sec, avg/max/min time per thread:  0.10/ 0.11/ 0.10 (ms)
+size= 0.524288 Mbytes
+nb threads: 32, tot_bw= 313.285011 Gbytes/sec, avg/max/min time per thread:  0.11/ 0.12/ 0.10 (ms)
+size= 0.524288 Mbytes
+nb threads: 64, tot_bw= 586.886075 Gbytes/sec, avg/max/min time per thread:  0.12/ 0.19/ 0.10 (ms)
+size= 0.524288 Mbytes
+nb threads: 96, tot_bw= 728.971373 Gbytes/sec, avg/max/min time per thread:  0.15/ 0.26/ 0.10 (ms)
+size= 0.524288 Mbytes
+nb threads: 128, tot_bw= 619.778873 Gbytes/sec, avg/max/min time per thread:  0.26/ 0.44/ 0.11 (ms)
+size= 0.524288 Mbytes
+nb threads: 160, tot_bw= 553.717678 Gbytes/sec, avg/max/min time per thread:  0.43/ 0.97/ 0.11 (ms)
+size= 0.524288 Mbytes
+nb threads: 192, tot_bw= 529.078822 Gbytes/sec, avg/max/min time per thread:  0.50/ 0.69/ 0.12 (ms)
+size= 0.524288 Mbytes
+nb threads: 224, tot_bw= 579.728739 Gbytes/sec, avg/max/min time per thread:  0.58/ 0.84/ 0.12 (ms)
+size= 0.524288 Mbytes
+nb threads: 244, tot_bw= 418.467162 Gbytes/sec, avg/max/min time per thread:  0.79/ 1.66/ 0.14 (ms)
+
+-
+            __m512 v1_old = _mm512_load_ps(buf_orig + r);
+            v1_old = _mm512_mul_ps(v1_old, v1_old);
+            //_mm512_store_ps(buf_dest + r, v1_old);
+            _mm512_storenrngo_ps(buf_dest+r, v1_old);
+
+Adding _mul_ps (multiply), changes peak performance from 290 Gbytes/sec to 270 Gbytes/sec with 
+96 threads. 
+
+I really should control how many threads per core for better understanding. 
+----------------------------------------------------------------------
