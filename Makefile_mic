@@ -55,9 +55,9 @@ LINK       := g++ -g
 
 MMIC       :=  
 MMIC       := -mmic
-CXX        := icpc  -openmp $(MMIC)  -diag-enable openmp  -vec-report3
+CXX        := icpc  -openmp $(MMIC)  -diag-enable openmp  -vec-report3 -O2
 CC         := icc
-LINK       := icpc  -openmp $(MMIC)
+LINK       := icpc  -openmp $(MMIC)  -O2
 
 
 # Includes

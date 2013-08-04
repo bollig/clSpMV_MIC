@@ -18,6 +18,7 @@
 #include "openmp_base.h"
 
 #include "timer_eb.h"
+#include "timestamp.hpp"
 #include "rbffd_io.h"
 #include "runs.h"
 
@@ -128,6 +129,8 @@ public:
 	void method_6(int nb=0);
 	void method_7(int nb=0); // 4 matrices, 4 vectors (correct results)
     void method_rd_wr(int nbit);
+    // read/write benchmarks. Memory is local to each thread. 
+    void method_rd_wr_local_thread(int nbit);
 	void method_7a(int nb=0); // 4 matrices, 4 vectors, using new matrix generators
 	//void method_8(int nb=0); // 4 matrices, 4 vectors
 	void method_8a(int nb=0); // 4 matrices, 4 vectors
@@ -168,7 +171,7 @@ protected:
 template <typename T>
 void ELL_OPENMP<T>::run()
 {
-    int num_threads[] = {1,2,4,8,16,32,64,96,128,160,192,224,240};
+    int num_threads[] = {1,2,4,8,16,32,64,96,128,160,192,224,244};
     //spmv_serial(mat, vec_v, result_v);
     //printf("l2norm of serial version: %f\n", l2norm(result_v));
     //spmv_serial_row(mat, vec_v, result_v);
@@ -183,10 +186,16 @@ void ELL_OPENMP<T>::run()
 	//method_6(4);
     rd.nb_rows = rd.n3d*rd.n3d*rd.n3d;
     int save_nb_threads = omp_get_num_threads();
+    //for (int i=0; i < 13; i++) {
+    for (int i=1; i < 0; i++) {
+        omp_set_num_threads(num_threads[i]);
+        printf("rd/wr, nb threads: %d\n", num_threads[i]);
+	    method_rd_wr(4); // correct results
+    }
+	printf("\n============== METHOD RD/WR LOCAL THREAD ===================\n");
     for (int i=0; i < 13; i++) {
         omp_set_num_threads(num_threads[i]);
-        printf("nb threads: %d\n", num_threads[i]);
-	    method_rd_wr(4); // correct results
+        method_rd_wr_local_thread(4);
     }
     exit(0);
 	method_7(4); // correct results
@@ -1150,6 +1159,108 @@ void ELL_OPENMP<T>::method_6(int nbit)
 
 }
 //----------------------------------------------------------------------
+//----------------------------------------------------------------------
+#if 0
+template <typename T>
+void ELL_OPENMP<T>::method_rd_wr_local_thread(int nbit)
+{
+    double tot_bw = 0.;
+    int nb_threads = omp_get_max_threads();
+      std::vector<double> bw(nb_threads); // 244 = max nb threads
+    std::vector<double> tim(nb_threads);
+    //util::timestamp* timeof = new util::timestamp[nb_threads];
+      const int size = 128*128*128;
+
+#pragma omp parallel
+  {
+      // assign memory on each thread
+    int nb_threads = omp_get_max_threads();
+      std::vector<double> bw(nb_threads); // 244 = max nb threads
+      const int size = 128*128*128;
+    std::vector<double> tim(nb_threads);
+      EB::Timer tm("tid");
+      int* buf_orig = (int*) _mm_malloc(sizeof(int)*size, 64);
+      int* buf_dest = (int*) _mm_malloc(sizeof(int)*size, 64);
+      int tid = omp_get_thread_num();
+      //timeof[tid] = util::timestamp(0,0);
+
+#pragma omp barrier
+//#pragma optimize("", off)
+      for (int d=0; d < 10; d++) {
+        tm.start();
+        printf("size= %d\n", size);
+	    //util::timestamp beg;
+        for (int r=0; r  < size; r += 16) {
+            printf("r= %d\n", r);
+       	   //_mm_prefetch ((const char*) vec_vt+r+2*4096, _MM_HINT_T1);
+            const __m512 v1_old = _mm512_load_ps(buf_orig + r);
+            _mm512_store_ps(result_vt + r, v1_old);
+            //_mm512_storenrngo_ps(buf_dest+r, v1_old);
+            //_mm512_store_ps(result_vt + r, _mm512_load_ps(vec_vt+r));
+        }
+//#pragma optimize("", on)
+        //tm.end();
+	    //util::timestamp end;
+        if (d == 6) {
+            tim[tid] = tm.getTime();
+	        //tim[tid] = end-beg;
+        }
+      }
+      _mm_free(buf_orig);
+      _mm_free(buf_dest);
+  }
+  exit(0);
+  float mean = 0;
+  for (int i=0; i < nb_threads; i++) {
+    tim[i] *= 1000;   // from sec to ms
+    bw[i] = 2*sizeof(int)*size *1.e-9/ (tim[i]*1.e-3); // rd + wr (Gbytes/sec)
+    tot_bw += bw[i];
+    mean += tim[i];
+  }
+  mean /= nb_threads;
+  printf("nb threads: %d, tot_bw= %f Gbytes/sec, mean time per thread: %f (ms)\n", nb_threads, tot_bw, mean);
+}
+#endif
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::method_rd_wr_local_thread(int nbit)
+{
+    double tot_bw = 0.;
+    int nb_threads = omp_get_max_threads();
+    std::vector<double> tim(nb_threads);
+
+#pragma omp parallel
+  {
+      // assign memory on each thread
+      EB::Timer tm("tid");
+      int size = 128*128*128;
+      int* buf_orig = (int*) _mm_malloc(sizeof(int)*size, 64);
+      int* buf_dest = (int*) _mm_malloc(sizeof(int)*size, 64);
+      int tid = omp_get_thread_num();
+      std::vector<double> bw(244); // 244 = max nb threads
+
+#pragma omp barrier
+//#pragma optimize("", off)
+      for (int d=0; d < 10; d++) {
+        tm.start();
+        tm.end();
+        if (d == 6) {
+            tim[tid] = tm.getTime();
+            bw[tid] = 2*sizeof(int)*size *1.e-9/ (tim[tid]*1.e-3); // rd + wr (Gbytes/sec)
+            tot_bw += bw[tid];
+        }
+      }
+      _mm_free(buf_orig);
+      _mm_free(buf_dest);
+  }
+  float mean = 0;
+  for (int i=0; i < nb_threads; i++) {
+    mean += tim[i];
+  }
+  mean /= nb_threads;
+  printf("nb threads: %d, tot_bw= %f Gbytes/sec, mean time per thread: %f (ms)\n", nb_threads, tot_bw,      mean);
+}
+//----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP<T>::method_rd_wr(int nbit)
 {
@@ -1184,10 +1295,10 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
 #if 1
 //#pragma noprefetch
        for (int r=0; r  < nb_rows; r += 16) {
-       	   //_mm_prefetch ((const char*) vec_vt+r+2*4096, _MM_HINT_T1);
+       	    //_mm_prefetch ((const char*) vec_vt+r+2048, _MM_HINT_T1);
             const __m512 v1_old = _mm512_load_ps(vec_vt + r);
             //_mm512_store_ps(result_vt + r, v1_old);
-            _mm512_storenrngo_ps(result_vt+r, v1_old);
+            //_mm512_storenrngo_ps(result_vt+r, v1_old);
             //_mm512_store_ps(result_vt + r, _mm512_load_ps(vec_vt+r));
         }
 #else
@@ -1254,7 +1365,7 @@ void ELL_OPENMP<T>::method_7(int nbit)
     __m512  v1_old  = _mm512_setzero_ps();
     __m512  v2_old  = _mm512_setzero_ps();
     __m512  v3_old  = _mm512_setzero_ps();
-    __m512i i3_old  = _mm512_setzero_ps();
+    __m512i i3_old  = _mm512_setzero_epi32();
 
 #pragma omp for 
         for (int r=0; r < nb_rows; r++) {
@@ -1488,7 +1599,7 @@ void ELL_OPENMP<T>::method_8a(int nbit)
     __m512 v1_old = _mm512_setzero_ps();
     __m512 v2_old = _mm512_setzero_ps();
     __m512 v3_old = _mm512_setzero_ps();
-    __m512i i3_old = _mm512_setzero_ps();
+    __m512i i3_old = _mm512_setzero_epi32();
    const __m512i offsets = _mm512_set4_epi32(3,2,1,0);  // original
    const __m512i four = _mm512_set4_epi32(4,4,4,4); 
 
@@ -1926,11 +2037,11 @@ void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
     int right;
     int width;
     int half_width;
+    int sz2 = nbz >> 1;
 
     switch (stencil_type) {
     case COMPACT:
         printf("COMPACT CASE\n");
-	    int sz2 = nbz >> 1;
 
         for (int i=0; i < nb_rows; i++) {
             if (i < nbz) {
