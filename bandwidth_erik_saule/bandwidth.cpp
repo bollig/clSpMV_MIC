@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdio.h>
 #include <omp.h>
 #include "timestamp.hpp"
 #include <string.h>
@@ -36,20 +37,26 @@ int main(int argc, char* argv[])
   char** dest_location = new char*[nbthread];
 #endif
 
+    int max_threads = omp_get_max_threads();
+    std::cout << "max number threads: " << max_threads << std::endl;
+    std::cout << "nb core active: " << NBCOREACTIVE << std::endl;
+    std::cout << "nb threads active per core: " << NBTHREADACTIVE << std::endl;
+
 #pragma omp parallel
-  {
+{
     //memory allocs
 
     int tid = omp_get_thread_num();
 
     timeof[tid] = util::timestamp(0,0);
 
+    // buffers is a shared variable (array of pointers)
+    // size of each buffer[i]: SIZE bytes (16 Mbytes)
     if (tid < nbcore) {
       buffers[tid] = (char*) _mm_malloc( SIZE, 64); //let's allocate on the 64 bytes boundary
       for (long int i=0; i <SIZE; ++i)
-	buffers[tid][i] = 0;
+	    buffers[tid][i] = 0;
     }
-
 
 
 #pragma omp barrier
@@ -67,10 +74,10 @@ int main(int argc, char* argv[])
 
     int t = tid/61;
     int c = tid%61;
-    if (c < NBCOREACTIVE && t < NBTHREADACTIVE)
-      {
-	for (int doit=0; doit<10; ++doit)
-	  {
+    if (c < NBCOREACTIVE && t < NBTHREADACTIVE) {
+
+	//for (int doit=0; doit<10; ++doit) {
+	for (int doit=0; doit<10; ++doit) {
 	    //      char* destination = new char[SIZE];
 	    util::timestamp beg;
 #ifndef CHARBASED
@@ -82,7 +89,16 @@ int main(int argc, char* argv[])
 #if defined MEMCOPYBASED || defined MEMCOPYVECTBASED || defined MEMSETBASED || defined MEMSETNOREAD || defined MEMSETNOREADNOORDER
 	      char* destination = dest_location[tid];
 #endif
+          //fprintf(stderr, "c= %d, t= %d, i= %d, buf offset: %d\n", c, t, i, (c+i+16*t)%nbcore);
+          // t = 0,1,2,3
+          // c = 0,1,..,60
+          // loop i = 0,..,60
+#if 1
 	      char* in = buffers[(c + i + 16*t)%nbcore];
+#else
+// seg fault
+	      char* in = buffers[tid];
+#endif
 	      
 #if defined MEMCOPYBASED || defined MEMCOPYVECTBASED || defined MEMSETBASED || defined MEMSETNOREAD || defined MEMSETNOREADNOORDER
 
@@ -97,8 +113,8 @@ int main(int argc, char* argv[])
 	      char* ini = (char*) in;
 #endif
 	      long int S = SIZE/sizeof(*ini);
-	      for (long int j = 0; j<S; ++j){
-		sum += ini[j];
+	      for (long int j = 0; j<S; ++j) {
+		    sum += ini[j];
 	      }
 #endif
 	      
@@ -155,20 +171,24 @@ int main(int argc, char* argv[])
 	    if (doit == 4)
 	      timeof[tid] = end-beg;
 
-	    std::cerr<<"sum is "<<(int) sum<<std::endl;
+	    //std::cerr<<"sum is "<<(int) sum<<std::endl;
 	  }
 
 
     }
-  }
+} // end omp parallel
 
   double aggregatedBW = 0.;
   for (int i=0; i<nbthread;++i) {
+    int t = i/61;
+    int c = i%61;
     double BW = SIZE*nbcore/(timeof[i]);
-    if (timeof[i] == util::timestamp(0,0))
-      BW = 0;
+    if (timeof[i] == util::timestamp(0,0)) BW = 0;
     aggregatedBW += BW;
-    std::cout<<"time: "<<timeof[i]<<" seconds to download "<<SIZE*nbcore<<" bytes. BW: "<<BW<<" bytes per seconds"<<std::endl;
+    if (BW > 1) {
+        std::cout<<"(tid: "<<t<<", core: "<<c<<"), timeof[i] sec to download "<< SIZE*nbcore <<" bytes. BW: "<<BW<<" bytes/s"<<std::endl;
+    }
+    //std::cout<<"time,id=%d: "<< (tid %d, core %d) timeof[i] <<" sec to download "<< SIZE*nbcore <<" bytes. BW: "<<BW<<" bytes/s"<<std::endl;
   }
 
   std::cout<<"aggregated:" <<aggregatedBW<<std::endl;
