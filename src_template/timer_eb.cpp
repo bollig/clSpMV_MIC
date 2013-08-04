@@ -132,20 +132,18 @@ void Timer::begin()
 		return;
 	}
 	gettimeofday(&t_start, NULL);
-	t1 = clock();
-	t2 = (clock_t)0;
+	//t1 = clock();
+	//t2 = (clock_t)0;
 	count++;
 }
 //----------------------------------------------------------------------
 double Timer::end()
 {
-	if (count <= offset) return;
+	if (count <= offset) return(0.);
 
 	gettimeofday(&t_end, NULL);
-	double tt = (t_end.tv_sec - t_start.tv_sec) +
-	     (t_end.tv_usec - t_start.tv_usec) * 1.e-6;
-	//printf("tt= %f\n", tt);
-    elapsed = 1000.*tt;
+	elapsed = (t_end.tv_sec - t_start.tv_sec) +
+	     (t_end.tv_usec - t_start.tv_usec) * 1.e-3;
 	t += elapsed;
 
 	if (count == nbCalls) {

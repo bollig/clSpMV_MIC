@@ -126,3 +126,39 @@ unroll use to have influence on spmv. Does it now?
 -O3 and -funroll-loops 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
+============== METHOD RD/WR LOCAL THREAD ===================
+Using timestamp timing routines
+nb threads: 1, tot_bw= 6.105246 Gbytes/sec, mean/max/min time per thread:  2.75/ 2.75/ 2.75 (ms)
+nb threads: 2, tot_bw= 12.172888 Gbytes/sec, mean/max/min time per thread:  2.76/ 2.76/ 2.75 (ms)
+nb threads: 4, tot_bw= 24.076849 Gbytes/sec, mean/max/min time per thread:  2.79/ 2.82/ 2.76 (ms)
+nb threads: 8, tot_bw= 46.373275 Gbytes/sec, mean/max/min time per thread:  2.89/ 2.95/ 2.85 (ms)
+nb threads: 16, tot_bw= 82.423080 Gbytes/sec, mean/max/min time per thread:  3.26/ 3.38/ 3.05 (ms)
+nb threads: 32, tot_bw= 128.604299 Gbytes/sec, mean/max/min time per thread:  4.18/ 4.57/ 3.95 (ms)
+nb threads: 64, tot_bw= 173.066414 Gbytes/sec, mean/max/min time per thread:  6.22/ 8.36/ 5.83 (ms)
+nb threads: 96, tot_bw= 197.574192 Gbytes/sec, mean/max/min time per thread:  8.18/ 9.41/ 7.31 (ms)
+nb threads: 128, tot_bw= 207.951850 Gbytes/sec, mean/max/min time per thread: 10.47/11.59/ 6.28 (ms)
+nb threads: 160, tot_bw= 226.940644 Gbytes/sec, mean/max/min time per thread: 12.35/16.66/ 4.53 (ms)
+nb threads: 192, tot_bw= 221.888762 Gbytes/sec, mean/max/min time per thread: 15.51/19.62/ 4.30 (ms)
+nb threads: 224, tot_bw= 207.345530 Gbytes/sec, mean/max/min time per thread: 19.07/23.43/ 4.89 (ms)
+nb threads: 244, tot_bw= 192.782415 Gbytes/sec, mean/max/min time per thread: 22.05/25.23/ 6.70 (ms)
+
+Using Bollig timing routines (one per thread)
+============== METHOD RD/WR LOCAL THREAD ===================
+nb threads: 1, tot_bw= 6.056757 Gbytes/sec, mean/max/min time per thread:  2.77/ 2.77/ 2.77 (ms)
+nb threads: 2, tot_bw= 11.199328 Gbytes/sec, mean/max/min time per thread:  3.00/ 3.14/ 2.86 (ms)
+nb threads: 4, tot_bw= 23.785083 Gbytes/sec, mean/max/min time per thread:  2.82/ 2.88/ 2.73 (ms)
+nb threads: 8, tot_bw= 45.813418 Gbytes/sec, mean/max/min time per thread:  2.93/ 3.07/ 2.82 (ms)
+nb threads: 16, tot_bw= 84.057565 Gbytes/sec, mean/max/min time per thread:  3.19/ 3.34/ 3.06 (ms)
+nb threads: 32, tot_bw= 130.285900 Gbytes/sec, mean/max/min time per thread:  4.13/ 4.44/ 3.86 (ms)
+nb threads: 64, tot_bw= 174.191875 Gbytes/sec, mean/max/min time per thread:  6.17/ 6.62/ 5.90 (ms)
+nb threads: 96, tot_bw= 199.341356 Gbytes/sec, mean/max/min time per thread:  8.37/ 9.64/ 3.94 (ms)
+nb threads: 128, tot_bw= 180.347140 Gbytes/sec, mean/max/min time per thread: 12.30/15.37/ 5.06 (ms)
+nb threads: 160, tot_bw= 175.823237 Gbytes/sec, mean/max/min time per thread: 16.83/22.95/ 4.16 (ms)
+nb threads: 192, tot_bw= 145.818360 Gbytes/sec, mean/max/min time per thread: 25.69/32.13/ 4.09 (ms)
+nb threads: 224, tot_bw= 149.611855 Gbytes/sec, mean/max/min time per thread: 31.29/43.96/ 4.30 (ms)
+nb threads: 244, tot_bw= 125.267735 Gbytes/sec, mean/max/min time per thread: 38.41/51.28/ 6.57 (ms)
+
+
+NOT CLEAR WHY RESULST SO CRUMMY. 
+-
+

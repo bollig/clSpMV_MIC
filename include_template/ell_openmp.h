@@ -1228,37 +1228,54 @@ void ELL_OPENMP<T>::method_rd_wr_local_thread(int nbit)
     double tot_bw = 0.;
     int nb_threads = omp_get_max_threads();
     std::vector<double> tim(nb_threads);
+    std::vector<double> bw(244); // 244 = max nb threads
+    const int size = 128*128*128;
+    util::timestamp* timeof = new util::timestamp[nb_threads];
 
 #pragma omp parallel
   {
       // assign memory on each thread
       EB::Timer tm("tid");
-      int size = 128*128*128;
       int* buf_orig = (int*) _mm_malloc(sizeof(int)*size, 64);
       int* buf_dest = (int*) _mm_malloc(sizeof(int)*size, 64);
       int tid = omp_get_thread_num();
-      std::vector<double> bw(244); // 244 = max nb threads
 
 #pragma omp barrier
 //#pragma optimize("", off)
+      //printf("size= %d\n", size);
       for (int d=0; d < 10; d++) {
-        tm.start();
-        tm.end();
+        //tm.start();
+	    util::timestamp beg;
+//#pragma unroll(4)  // does not help
+        for (int r=0; r  < size; r += 16) {
+            //printf("r= %d\n", r);
+       	   //_mm_prefetch ((const char*) vec_vt+r+2*4096, _MM_HINT_T1);
+            const __m512 v1_old = _mm512_load_ps(buf_orig + r);
+            //_mm512_store_ps(buf_dest + r, v1_old);
+            _mm512_storenrngo_ps(buf_dest+r, v1_old);
+        }
+        //tm.end();
+	    util::timestamp end;
         if (d == 6) {
-            tim[tid] = tm.getTime();
-            bw[tid] = 2*sizeof(int)*size *1.e-9/ (tim[tid]*1.e-3); // rd + wr (Gbytes/sec)
-            tot_bw += bw[tid];
+            //tim[tid] = tm.getTime();
+	        tim[tid] = (end-beg) * 1000; // in ms
         }
       }
       _mm_free(buf_orig);
       _mm_free(buf_dest);
   }
-  float mean = 0;
+  float mean = 0.;
+  float mx = 0.;
+  float mn = 1.e6;
   for (int i=0; i < nb_threads; i++) {
+    bw[i] = 2*sizeof(int)*size *1.e-9/ (tim[i]*1.e-3); // rd + wr (Gbytes/sec)
+    tot_bw += bw[i];
     mean += tim[i];
+    mx = tim[i] > mx ? tim[i] : mx;
+    mn = tim[i] < mn ? tim[i] : mn;
   }
   mean /= nb_threads;
-  printf("nb threads: %d, tot_bw= %f Gbytes/sec, mean time per thread: %f (ms)\n", nb_threads, tot_bw,      mean);
+  printf("nb threads: %d, tot_bw= %f Gbytes/sec, avg/max/min time per thread: %5.2f/%5.2f/%5.2f (ms)\n", nb_threads, tot_bw, mean, mx, mn);
 }
 //----------------------------------------------------------------------
 template <typename T>
