@@ -148,7 +148,9 @@ else
 endif
 
 # Add common flags
-CXXFLAGS  += $(COMMONFLAGS) $(DEFINEFLAGS)
+ASM_GENERATE = -S -fsource-asm -fcode-asm
+ASM_GENERATE = 
+CXXFLAGS  += $(COMMONFLAGS) $(DEFINEFLAGS) $(ASM_GENERATE)
 CFLAGS    += $(COMMONFLAGS) $(DEFINEFLAGS)
 
 
@@ -171,7 +173,7 @@ $(OBJDIR)/%.c.o : $(SRCDIR)/%.c $(C_DEPS)
 	$(VERBOSE)$(CXX) $(CFLAGS) -o $@ -c $<
 
 $(OBJDIR)/%.cpp.o : $(SRCDIR)/%.cpp $(C_DEPS)
-	$(VERBOSE)$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(VERBOSE)$(CXX) $(CXXFLAGS) -o $@ -c $< 
 
 all: openmp
 #all: makedirectories single bench cocktail
@@ -218,3 +220,13 @@ clobber : clean
 	$(VERBOSE)find $(TARGETDIR) | egrep "ptx" | xargs rm -f
 	$(VERBOSE)find $(TARGETDIR) | egrep "txt" | xargs rm -f
 	$(VERBOSE)rm -f $(TARGETDIR)/samples.list
+###   
+###   -[no-]ip  enable(DEFAULT)/disable single-file IP optimization
+###             within files
+###   
+###   -ipo[n]   enable multi-file IP optimization between files
+###   
+###   -ipo-c    generate a multi-file object file (ipo_out.o)
+###   
+###   -ipo-S    generate a multi-file assembly file (ipo_out.S) 
+###   

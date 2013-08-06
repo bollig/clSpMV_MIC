@@ -34,21 +34,28 @@ F=ell_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.bmtx
 F=random_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 F=compact_x_weights_direct__no_hv_stsize_32_3d_32x_32y_32z.mtxb
 F=ell_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
+F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtxb
+F=ell_subdomain_64x_64y_64z.bmtx
 export F=$F
 # export OMP_DYNAMIC=FALSE
+export OMP_NUM_THREADS=1
 export OMP_NUM_THREADS=1
 export OMP_NUM_THREADS=240
 # 2nd argument must be as low as possible in random case
 # export OMP_SCHEDULE=guided,16  # 27 Gflop/random
 # export OMP_SCHEDULE=guided,8  # 22 Gflop/random
+
 export OMP_SCHEDULE=guided,8  # 15 GF (best results with mymethod_2. 
 export OMP_SCHEDULE=dynamic,128  # 27 Gflop/random (and scatter). 22Gflop with copact
-export OMP_SCHEDULE=dynamic,64  # 27 Gflop/random (and scatter). 22Gflop with copact
 export OMP_SCHEDULE=static,64  # no influence 2.5 Gf
-export KMP_AFFINITY=compact  # 22 GF
-export KMP_AFFINITY=scatter  # 25 GF
+export OMP_SCHEDULE=dynamic,64  # 27 Gflop/random (and scatter). 22Gflop with copact
+
 export KMP_AFFINITY=compact  # 22 GF
 export KMP_AFFINITY=granularity=fine,scatter
+export KMP_AFFINITY=verbose,compact  # 22 GF
+export KMP_AFFINITY=scatter  # 25 GF
+
+#export KMP_AFFINITY=verbose,proclist=[3,2,1,0]
 
 #./linux/release/spmv_openmp matrix/compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb 1 5
 ./linux/release/spmv_openmp matrix/$F 1 5

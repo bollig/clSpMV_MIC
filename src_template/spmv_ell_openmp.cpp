@@ -82,9 +82,6 @@ int main(int argc, char* argv[])
 	ProjectSettings pj("test.conf");
 	//pj.ParseFile("in_file.txt"); // parameters change run to run
 
-	//std::string sparsity = REQUIRED<std::string>("sparsity");
-	//printf("sparsity= %s\n", sparsity.c_str());
-
 	std::string asci_binary = REQUIRED<std::string>("asci_binary");
     printf("asci_binary= %s\n", asci_binary.c_str());
 	//filename = OPTIONAL<std::string>("data_filename", filename);
@@ -98,64 +95,6 @@ int main(int argc, char* argv[])
 	printf("choice= %d\n", choice);
 
 
-#if 0
-    coo_matrix<int, float> mat;
-    coo_matrix<int, double> mat_d;
-	RBFFD_IO<float> io;
-	std::vector<int> rows, cols;
-	std::vector<float> values;
-	int width, height;
-    std::vector<int> col_id;
-    int nb_rows;
-    int stencil_size;
-
-    if (in_format == "MM") {
-        init_coo_matrix(mat);
-        init_coo_matrix(mat_d);
-        //spmv::ReadMMF(filename.c_str(), &mat);
-        //spmv::ReadMMF(filename.c_str(), &mat_d);
-        if (asci_binary == "asci" || asci_binary == "ascii") {
-            printf("*** load ASCI FILE %s ***\n", filename.c_str());
-            io.loadFromAsciMMFile(rows, cols, values, width, height, filename);
-        } else if (asci_binary == "binary") {
-            printf("*** load BINARY FILE %s ***\n", filename.c_str());
-            io.loadFromBinaryMMFile(rows, cols, values, width, height, filename);
-        } else {
-            printf("*** unknown read format type (asci/binary)\n");
-        }
-
-        mat.matinfo.height = height;
-        mat.matinfo.width = width;
-        mat.matinfo.nnz = rows.size();
-        mat_d.matinfo.height = height;
-        mat_d.matinfo.width = width;
-        mat_d.matinfo.nnz = rows.size();
-        mat.coo_row_id = rows; // copy is expensive
-        mat.coo_col_id = cols;
-        mat.coo_data = values;
-        mat_d.coo_row_id = rows; // copy is expensive
-        mat_d.coo_col_id = cols;
-        mat_d.coo_data.resize(values.size());
-        for (int i=0; i < values.size(); i++)  {
-            mat_d.coo_data[i] = (double) values[i];
-        }
-	    printf("rows.size: %d\n", rows.size());
-	    printf("READ INPUT FILE: \n");
-	    mat.print();
-    } else if (in_format == "ELL") {
-        io.loadFromBinaryEllpackFile(col_id, nb_rows, stencil_size, filename);
-	    spmv::spmv_ell_openmp(col_id, nb_rows, stencil_size); // choice == 1
-        printf("Read ELLPACK file\n");
-    }
-#endif
-
-    // need way to read either mmx or ellpack format. 
-    // need to create new routines: readMM, readEllpack. 
-    // seems to load correctly
-    //exit(0);
-
-
-    char* clspmvpath = getenv("CLSPMVPATH");
     char clfilename[1000];
     
     #if 1

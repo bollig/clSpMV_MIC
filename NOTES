@@ -215,3 +215,87 @@ Adding _mul_ps (multiply), changes peak performance from 290 Gbytes/sec to 270 G
 
 I really should control how many threads per core for better understanding. 
 ----------------------------------------------------------------------
+First: I can go higher than 220 Gflops if I have no need to use the interconnect network on the card. 
+SO WHEN IS IT NECESSARY. 
+
+Erik Saule: 
+I make all thread read/write
+it multiple times (in a stagered way to avoid cache reuse)
+
+Question: why does my code have cache reuse? Store followed by load on a continuous array should 
+have no cache reuse at all!!!
+----------------------------------------------------------------------
+To Erik Saule
+I learned a lot from
+
+http://www.multicore-challenge.org/resources/FMCCII_Tutorial_Treibig.pdf
+
+---
+I now measure 150 Gbytes/sec. Same as you. One problem: when I execute
+10 times load/store, and I have less than 3*128*128 per thread, I get
+cache reuseevn with 4 threads per core. Everything works when I have
+at least 8*128*128 ints per core (which is equal to 512 kbytes).
+
+
+The problems I was having were because I had not initialized the arrays.
+
+Running the same code as above, and not initailizing destination and
+source buffers with zeros,
+
+      for (int i=0; i < size; i++) {
+            buf_orig[i] = 0.0;
+            buf_dest[i] = 0.0;
+      }
+
+I get 250 Gbytes/sec.
+
+I have NO IDEA why initialization is so important. From what I read,
+initialize simply helps determined which pages from ccNuma the arrays
+get initialized in.
+-
+----------------------------------------------------------------------
+KMP_AFFINITITY=compact
+size= 1.048576 Mbytes per thread
+nb threads: 1, tot_bw= 5.112237 Gbytes/sec, avg/max/min time per thread:  0.41/ 0.41/ 0.41 (ms)
+nb threads: 2, tot_bw= 5.512416 Gbytes/sec, avg/max/min time per thread:  0.76/ 0.76/ 0.76 (ms)
+nb threads: 4, tot_bw= 5.598056 Gbytes/sec, avg/max/min time per thread:  1.50/ 1.50/ 1.50 (ms)
+nb threads: 8, tot_bw= 11.164134 Gbytes/sec, avg/max/min time per thread:  1.50/ 1.50/ 1.50 (ms)
+nb threads: 16, tot_bw= 22.126849 Gbytes/sec, avg/max/min time per thread:  1.52/ 1.52/ 1.52 (ms)
+nb threads: 32, tot_bw= 43.505020 Gbytes/sec, avg/max/min time per thread:  1.54/ 1.54/ 1.54 (ms)
+nb threads: 64, tot_bw= 74.363241 Gbytes/sec, avg/max/min time per thread:  1.80/ 1.80/ 1.80 (ms)
+nb threads: 96, tot_bw= 92.755669 Gbytes/sec, avg/max/min time per thread:  2.17/ 2.17/ 2.17 (ms)
+nb threads: 128, tot_bw= 114.015883 Gbytes/sec, avg/max/min time per thread:  2.35/ 2.35/ 2.35 (ms)
+nb threads: 160, tot_bw= 136.912422 Gbytes/sec, avg/max/min time per thread:  2.45/ 2.45/ 2.45 (ms)
+nb threads: 192, tot_bw= 149.607330 Gbytes/sec, avg/max/min time per thread:  2.69/ 2.69/ 2.69 (ms)
+nb threads: 224, tot_bw= 151.128338 Gbytes/sec, avg/max/min time per thread:  3.11/ 3.11/ 3.11 (ms)
+nb threads: 244, tot_bw= 150.227323 Gbytes/sec, avg/max/min time per thread:  3.41/ 3.41/ 3.41 (ms)
+
+KMP_AFFINITITY=scatter
+size= 1.048576 Mbytes per thread
+nb threads: 1, tot_bw= 5.102125 Gbytes/sec, avg/max/min time per thread:  0.41/ 0.41/ 0.41 (ms)
+nb threads: 2, tot_bw= 9.820989 Gbytes/sec, avg/max/min time per thread:  0.43/ 0.43/ 0.43 (ms)
+nb threads: 4, tot_bw= 20.151275 Gbytes/sec, avg/max/min time per thread:  0.42/ 0.42/ 0.42 (ms)
+nb threads: 8, tot_bw= 39.297070 Gbytes/sec, avg/max/min time per thread:  0.43/ 0.43/ 0.43 (ms)
+nb threads: 16, tot_bw= 70.658974 Gbytes/sec, avg/max/min time per thread:  0.47/ 0.47/ 0.47 (ms)
+nb threads: 32, tot_bw= 108.631956 Gbytes/sec, avg/max/min time per thread:  0.62/ 0.62/ 0.62 (ms)
+nb threads: 64, tot_bw= 126.540541 Gbytes/sec, avg/max/min time per thread:  1.06/ 1.06/ 1.06 (ms)
+nb threads: 96, tot_bw= 149.491905 Gbytes/sec, avg/max/min time per thread:  1.35/ 1.35/ 1.35 (ms)
+nb threads: 128, tot_bw= 138.259319 Gbytes/sec, avg/max/min time per thread:  1.94/ 1.94/ 1.94 (ms)
+nb threads: 160, tot_bw= 151.106817 Gbytes/sec, avg/max/min time per thread:  2.22/ 2.22/ 2.22 (ms)
+nb threads: 192, tot_bw= 141.080290 Gbytes/sec, avg/max/min time per thread:  2.85/ 2.85/ 2.85 (ms)
+nb threads: 224, tot_bw= 150.603428 Gbytes/sec, avg/max/min time per thread:  3.12/ 3.12/ 3.12 (ms)
+nb threads: 244, tot_bw= 149.481833 Gbytes/sec, avg/max/min time per thread:  3.42/ 3.42/ 3.42 (ms)
+
+AFFINITY has to do with how threads are allocated to cores. 
+----------------------------------------------------------------------
+AFFINITY: compact: threads 0,1,2,3 are on core 0, threads 4,5,6,7 are on core 1, etc.
+AFFINITY: random: thread 0 is on core 0, thread 1 is on core 1, thread 2 is on core 2, thread 60 
+is on core 61, thread 61 is on core 0, etc.
+----------------------------------------------------------------------
+Even if one achieves the maximum bandwidth in a benchmark, the memory layout in a practical application
+will be different and bandwidth will decrease. 
+----------------------------------------------------------------------
+Aug. 5, 2013
+Create a new omp.cpp program, for reading multi-domains. The current program is getting too long. 
+Make this program independent of spmv_ell_openmp.cpp.  Call this program spmv_ell_multi_open.cpp . 
+----------------------------------------------------------------------

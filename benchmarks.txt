@@ -61,5 +61,6 @@ IMPORTANT TO ALWAYS USE KMP_AFFINITY=compact for maximum speed. (WHY IS THAT?)
 [Project Settings]  sparsity = COMPACT
 55 Gflops, AFFINITY=scatter, dynamic=64
 110 Gflops, AFFINITY=compact, dynamic=64
-
+Aug. 5, 2013 (after OS upgrade)
+173 Gflops, AFFINITY=random, static=64
 

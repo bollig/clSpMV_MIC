@@ -100,6 +100,43 @@ int RBFFD_IO<T>::loadFromBinaryEllpackFile(std::vector<int>& col_id,
 }
 //--------------------------------------------------------------------
 template <typename T>
+int RBFFD_IO<T>::loadFromBinaryEllpackFileMulti(int& nb_subdomains, 
+                std::vector<int>& col_id, std::vector<int>& nb_rows_multi, 
+                std::vector<int>& nb_vec_elem_multi, std::vector<int>& offsets, 
+                int& stencil_size, std::string& filename)
+{
+    // the file contains multiple subdomains
+    //printf("inside loadFromBinaryEllpackFile\n");
+    char* line = (char*) malloc(255);
+    FILE* fd = fopen(filename.c_str(), "rb");
+    // comment line
+    size_t nbchars = 250;
+    getline(&line, &nbchars, fd);
+    getline(&line, &nbchars, fd);
+    sscanf(line, "%d", &nb_subdomains);
+
+    offsets.resize(nb_subdomains);
+    offsets[0] = 0;
+
+    for (int i=0; i < nb_subdomains; i++) {
+        getline(&line, &nbchars, fd);
+        int nb_rows, nb_vec;
+        sscanf(line, "%d %d %d", &nb_rows, &stencil_size, &nb_vec);
+        nb_rows_multi.push_back(nb_rows);
+        nb_vec_elem_multi.push_back(nb_vec);
+        offsets[i+1] = offsets[i] + nb_rows*stencil_size;
+    }
+
+    col_id.resize(offsets[nb_subdomains]);
+    int nb = fread(&col_id[0], sizeof(int), col_id.size(), fd);
+
+    if (nb != col_id.size()) {
+        printf("loadFromBinaryEllpackFileMulti: nb elements read is incorrect\n");
+        exit(0);
+    }
+}
+//--------------------------------------------------------------------
+template <typename T>
 int RBFFD_IO<T>::loadFromBinaryMMFile(std::vector<int>& rows, std::vector<int>& cols, 
 		std::vector<T>& values, int& width, int& height, std::string& filename)
 {
