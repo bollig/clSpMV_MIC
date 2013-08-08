@@ -241,7 +241,12 @@ void ELL_OPENMP<T>::run()
     }
 #endif
 
-    method_8a_multi(4);
+    if (rd.use_subdomains == 0) {
+        //method_8a(4);
+        method_8a_multi(4); // temporary? 
+    } else {
+        method_8a_multi(4);
+    }
     exit(0);
 
     if (nb_subdomains > 0) {
@@ -307,6 +312,8 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
     nb_subdomains = -1; // for all formats execept ELL_MULTI
 
     if (in_format == "MM") {
+        rd.use_subdomains = 0;
+        nb_subdomains = 1;
         init_coo_matrix(cmat);
         init_coo_matrix(cmat_d);
         if (asci_binary == "asci" || asci_binary == "ascii") {
@@ -349,6 +356,11 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
         vec_v.resize(cmat.matinfo.width);
         result_v.resize(cmat.matinfo.height);
     } else if (in_format == "ELL") {
+        nb_rows_multi.resize(1);
+        nb_vec_elem_multi.resize(1);
+        rd.use_subdomains = 0;
+        subdomains.resize(1);
+        nb_subdomains = 1;
         //mat.col_id.resize(nb_rows*stencil_size); // perhaps allocate inside load routine?
         io.loadFromBinaryEllpackFile(mat.ell_col_id, nb_rows, stencil_size, filename);
         vec_v.resize(nb_rows);
@@ -363,6 +375,11 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
         printf("\nRead ELLPACK file\n");
         //printf("col_id size: %d\n", mat.ell_col_id.size());
         nnz = stencil_size * nb_rows; // nnz not used except in print
+        nb_rows_multi[0] = nb_rows;
+        nb_vec_elem_multi[0] = nb_rows;
+        offsets_multi.resize(2);
+        offsets_multi[0] = 0;
+        offsets_multi[1] = nb_rows_multi[0]*stencil_size;
     } else if (in_format == "ELL_MULTI") {
         // need variables mat_multi, vec_v_multi, result_v_multi
         // stencil size is identical for all subdomains
@@ -374,6 +391,7 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
         for (int i=0; i < 20; i++) {
             printf("col_id[%d]= %d\n", i, mat.ell_col_id[i]);
         }
+        rd.use_subdomains = 1; // IGNORE INPUT FROM TEST.CONF
         subdomains.resize(nb_subdomains);
         nb_rows = mat.ell_col_id.size() / stencil_size;
         printf("top, nb_rows= %d\n", nb_rows);
@@ -1645,7 +1663,11 @@ void ELL_OPENMP<T>::method_8a(int nbit)
 {
 	printf("============== METHOD 8a ===================\n");
 
-    generateInputMatricesAndVectors();
+    //generateInputMatricesAndVectors();
+    generateInputMatricesAndVectorsMulti();
+    // I created a dummy subdomain that is the entire domain
+    //printf("subdomains[0].col_id_t[262000] = %d\n", subdomains[0].col_id_t[262000]); exit(0);
+    bandwidth(subdomains[0].col_id_t, rd.nb_rows, rd.stencil_size, rd.nb_rows);
 
     float gflops;
     float max_gflops = 0.;
@@ -1728,9 +1750,8 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
     printf("nb_rows_multi = %d\n", nb_rows_multi[0]);
 
     generateInputMatricesAndVectorsMulti();
-    bandwidth(subdomains[0].col_id_t, rd.nb_rows, rd.stencil_size, rd.nb_vecs);
-    bandwidth(subdomains[1].col_id_t, rd.nb_rows, rd.stencil_size, rd.nb_vecs);
-    exit(0);
+    bandwidth(subdomains[0].col_id_t, nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
+    //bandwidth(subdomains[1].col_id_t, rd.nb_rows, rd.stencil_size, rd.nb_vecs);
 
     float gflops;
     float max_gflops = 0.;
@@ -2521,6 +2542,8 @@ void ELL_OPENMP<T>::generateInputMatricesAndVectorsMulti()
     int nb_mat = rd.nb_mats;
     int nb_vec = rd.nb_vecs;
 
+    printf("inside generate Miulti\n");
+
     if (rd.use_subdomains == 0) {
         printf("generate: nb_subdomains = %d\n", nb_subdomains);
         nb_subdomains = 1;
@@ -2545,21 +2568,24 @@ void ELL_OPENMP<T>::generateInputMatricesAndVectorsMulti()
         s.col_id_t  = (int*)   _mm_malloc(sizeof(int)   * tot_nz, 16);
         s.data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * tot_nz, 64);
 
+        //printf("before generate vector\n");
+
         // FIX col_ids'
         generate_vector(s.vec_vt, vec_size, nb_vec);
+        //printf("before generate data\n");
         generate_ell_matrix_data(s.data_t, nz, nb_rows, nb_mat);
 
         //printf("before offsets\n");
+        //printf("imin= %d, imax= %d\n", offsets_multi[i], offsets_multi[i+1]);
         for (int j=offsets_multi[i], k=0; j < offsets_multi[i+1]; j++) {
-            //printf("imin= %d, imax= %d\n", offsets_multi[i], offsets_multi[i+1]);
-            //printf("j= %d\n", j);
             s.col_id_t[k++] = mat.ell_col_id[j];
         }
         //printf("after offsets\n");
 
-        for (int i=0; i < 20; i++) {
-            printf("s.col_id_t[%d] = %d\n", i, s.col_id_t[i]);
-        }
+        //for (int i=262000; i < 262100; i++) {
+            //printf("s.col_id_t[%d] = %d\n", i, s.col_id_t[i]);
+        //}
+        //printf("inside generate...Multi\n"); exit(0);
 
         if (s.vec_vt == 0 || s.result_vt == 0 || s.col_id_t == 0 || s.data_t == 0) {
             printf("1. memory allocation failed\n");
@@ -2615,18 +2641,27 @@ void ELL_OPENMP<T>::bandwidth(int* col_id, int nb_rows, int stencil_size, int ve
     std::vector<int> bw(nb_rows);
     int max_bandwidth = 0;
 
+    printf("col_id, nb rows: %d\n", nb_rows);
     for (int r=0; r < nb_rows; r++) {
         // sort row that is unsorted in Evan code
+         //printf("before sort, size: %d\n", stencil_size);
         std::sort(col_id+r*stencil_size, col_id+(r+1)*stencil_size);
         bw[r] = col_id[(r+1)*stencil_size-1] - col_id[r*stencil_size] + 1;
+        //printf("bw[%d]= %d\n", r, bw[r]);
         max_bandwidth = bw[r] > max_bandwidth ? bw[r] : max_bandwidth;
-        //printf("\n==== bandwidth, row %d: \n", r);
-        //for (int j=0; j < stencil_size; j++) {
-            //printf("%d,", col_id[j+stencil_size*r]);
-        //}
+
+        #if 0
+        if (r > 262000) {
+            printf("\n==== bandwidth, row %d: \n", r);
+            for (int j=0; j < stencil_size; j++) {
+                printf("%d,", col_id[j+stencil_size*r]);
+            }
+        } else { exit(0); }
+        #endif
     }
+    printf("\n");
     printf("max bandwidth: %d\n", max_bandwidth);
-    exit(0);
+    //exit(0);
 }
 //----------------------------------------------------------------------
 }; // namespace
