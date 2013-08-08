@@ -173,6 +173,7 @@ public:
     void freeInputMatricesAndVectors();
     void freeInputMatricesAndVectorsMulti();
     void checkSolutions();
+    void bandwidth(int* col_id, int nb_rows, int stencil_size, int vec_size);
     //void freeInputMatricesAndVectors(float* vec_vt, float* result_vt, int* col_id_t, float* data_t);
     //void generateInputMatricesAndVectors(float* vec_vt, float* result_vt, int* col_id_t, float* data_t);
 
@@ -283,6 +284,7 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
     rd.n3d = REQUIRED<int>("n3d");
     rd.random_seed = REQUIRED<int>("random_seed");
     if (rd.random_seed == 1) setSeed();
+    rd.use_subdomains = REQUIRED<int>("use_subdomains");
 
     printf("sparsity = %s\n", sparsity.c_str());
     if (sparsity == "COMPACT")  stencil_type = COMPACT;
@@ -365,8 +367,13 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
         // need variables mat_multi, vec_v_multi, result_v_multi
         // stencil size is identical for all subdomains
         // all arguments by reference 
+        printf("before loadFromBinaryEllpackFileMulti\n");
         io.loadFromBinaryEllpackFileMulti(nb_subdomains, mat.ell_col_id, nb_rows_multi, 
             nb_vec_elem_multi, offsets_multi, stencil_size, filename);
+        printf("*** after load multi, print col_id\n");
+        for (int i=0; i < 20; i++) {
+            printf("col_id[%d]= %d\n", i, mat.ell_col_id[i]);
+        }
         subdomains.resize(nb_subdomains);
         nb_rows = mat.ell_col_id.size() / stencil_size;
         printf("top, nb_rows= %d\n", nb_rows);
@@ -374,8 +381,6 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
                 printf("nb_rows_multi[%d] = %d\n", i, nb_rows_multi[i]);
                 printf("nb_vec_elem_multi[%d] = %d\n", i, nb_vec_elem_multi[i]);
         }
-        // I would like to use only a single subdomain (for comparison of the same matrix)
-        //nb_subdomains = 1;
 #if 0
     class Subdomain {
     public:
@@ -1723,6 +1728,9 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
     printf("nb_rows_multi = %d\n", nb_rows_multi[0]);
 
     generateInputMatricesAndVectorsMulti();
+    bandwidth(subdomains[0].col_id_t, rd.nb_rows, rd.stencil_size, rd.nb_vecs);
+    bandwidth(subdomains[1].col_id_t, rd.nb_rows, rd.stencil_size, rd.nb_vecs);
+    exit(0);
 
     float gflops;
     float max_gflops = 0.;
@@ -2513,7 +2521,7 @@ void ELL_OPENMP<T>::generateInputMatricesAndVectorsMulti()
     int nb_mat = rd.nb_mats;
     int nb_vec = rd.nb_vecs;
 
-    if (nb_subdomains == -1 || nb_subdomains == 1) {
+    if (rd.use_subdomains == 0) {
         printf("generate: nb_subdomains = %d\n", nb_subdomains);
         nb_subdomains = 1;
         nb_rows_multi[0] = rd.nb_rows;
@@ -2548,6 +2556,10 @@ void ELL_OPENMP<T>::generateInputMatricesAndVectorsMulti()
             s.col_id_t[k++] = mat.ell_col_id[j];
         }
         //printf("after offsets\n");
+
+        for (int i=0; i < 20; i++) {
+            printf("s.col_id_t[%d] = %d\n", i, s.col_id_t[i]);
+        }
 
         if (s.vec_vt == 0 || s.result_vt == 0 || s.col_id_t == 0 || s.data_t == 0) {
             printf("1. memory allocation failed\n");
@@ -2591,8 +2603,32 @@ void ELL_OPENMP<T>::checkSolutions()
     checkAllSerialSolutions(data_t, col_id_t, vec_vt, &one_res[0], rd.stencil_size, rd.nb_mats, rd.nb_vecs, rd.nb_rows);
 }
 //----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::bandwidth(int* col_id, int nb_rows, int stencil_size, int vec_size)
+// compute bandwidth, average bandwidth, rms bandwidth
+// given row r, and stencil element s, col_id[s+stencil_size*r] is the index into the 
+// vector vec of length vec_size
+{
+    // assume col_id are sorted
+    //printf("nb_rows= %d\n", nb_rows);
+    //printf("stencil_size= %d\n", stencil_size);
+    std::vector<int> bw(nb_rows);
+    int max_bandwidth = 0;
 
-
+    for (int r=0; r < nb_rows; r++) {
+        // sort row that is unsorted in Evan code
+        std::sort(col_id+r*stencil_size, col_id+(r+1)*stencil_size);
+        bw[r] = col_id[(r+1)*stencil_size-1] - col_id[r*stencil_size] + 1;
+        max_bandwidth = bw[r] > max_bandwidth ? bw[r] : max_bandwidth;
+        //printf("\n==== bandwidth, row %d: \n", r);
+        //for (int j=0; j < stencil_size; j++) {
+            //printf("%d,", col_id[j+stencil_size*r]);
+        //}
+    }
+    printf("max bandwidth: %d\n", max_bandwidth);
+    exit(0);
+}
+//----------------------------------------------------------------------
 }; // namespace
 
 #endif

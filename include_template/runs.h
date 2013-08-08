@@ -25,7 +25,8 @@ public:
 	int nb_nodes_per_stencil;
 	int nb_nodes; // grid size: square matrices)
 	double kernel_exec_time;
-    
+    int use_subdomains;
+
     int nb_rows;
     int nb_mats;
     int nb_vecs;
