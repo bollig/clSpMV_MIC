@@ -206,6 +206,9 @@
 
 /** @endcond */
 
+// GE addition
+//#undef __cplusplus
+
 #ifdef __cplusplus
 extern "C" {
 #endif

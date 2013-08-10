@@ -21,9 +21,14 @@
 #include "timestamp.hpp"
 #include "rbffd_io.h"
 #include "runs.h"
+//#include "rcm.h"
+#include "burkardt_rcm.hpp"
+
+void genrcmi(const int n, const int flags,
+            const int *xadj, const int *adj,
+            int *perm, signed char *mask, int *deg);
 
 
-// load 8 double precision floats converted from block (which presumably can be float or double.)
 #include <immintrin.h>
 #define _mm512_loadnr_pd(block) _mm512_extload_pd(block, _MM_UPCONV_PD_NONE, _MM_BROADCAST64_NONE, _MM_HINT_NT)
 #define _mm512_loadnr_ps(block) _mm512_extload_ps(block, _MM_UPCONV_PD_NONE, _MM_BROADCAST64_NONE, _MM_HINT_NT)
@@ -50,6 +55,11 @@ public:
     //USE(devVec);
     //USE(devRes);
     //USE(devTexVec);
+
+    // used for multidomain case
+    std::vector<int> Qbeg;
+    std::vector<int> Qend;
+    std::vector<int> beg_row; // in col_id (for each subdomain)
 
 	USE(ntimes);
 	USE(filename);
@@ -109,6 +119,8 @@ public:
         float* result_vt;
         int* col_id_t;
         float* data_t;
+        std::vector<int> Qbeg;
+        std::vector<int> Qend;
     };
     std::vector<Subdomain> subdomains;
     int nb_subdomains; 
@@ -174,6 +186,11 @@ public:
     void freeInputMatricesAndVectorsMulti();
     void checkSolutions();
     void bandwidth(int* col_id, int nb_rows, int stencil_size, int vec_size);
+    void bandwidthQ(Subdomain& s, int nb_rows, int stencil_size, int vec_size);
+    void permInverse3(int n, int* perm, int* perm_inv);
+    int adj_bandwidth(int node_num, int adj_num, int* adj_row, int* adj);
+    int adj_perm_bandwidth(int node_num, int adj_num, int* adj_row, int* adj, int* perm, int* perm_inv);
+    int i4_max (int i1, int i2);
     //void freeInputMatricesAndVectors(float* vec_vt, float* result_vt, int* col_id_t, float* data_t);
     //void generateInputMatricesAndVectors(float* vec_vt, float* result_vt, int* col_id_t, float* data_t);
 
@@ -386,19 +403,46 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
         // all arguments by reference 
         printf("before loadFromBinaryEllpackFileMulti\n");
         io.loadFromBinaryEllpackFileMulti(nb_subdomains, mat.ell_col_id, nb_rows_multi, 
-            nb_vec_elem_multi, offsets_multi, stencil_size, filename);
+            nb_vec_elem_multi, offsets_multi, Qbeg, Qend, stencil_size, filename);
         printf("*** after load multi, print col_id\n");
-        for (int i=0; i < 20; i++) {
-            printf("col_id[%d]= %d\n", i, mat.ell_col_id[i]);
-        }
+        printf("sizeof Qbeg, Qend: %d, %d\n", Qbeg.size(), Qend.size());
+        //for (int i=0; i < 20; i++) {
+            //printf("col_id[%d]= %d\n", i, mat.ell_col_id[i]);
+            //printf("Qbeg/Qend= %d, %d\n", Qbeg[i], Qend[i]);
+            // Qbeg[i] and Qend[i] are equal!!! NOT POSSIBLE (refernece error somewere?)
+        //}
+        //exit(0);
         rd.use_subdomains = 1; // IGNORE INPUT FROM TEST.CONF
         subdomains.resize(nb_subdomains);
         nb_rows = mat.ell_col_id.size() / stencil_size;
         printf("top, nb_rows= %d\n", nb_rows);
+        beg_row.resize(nb_subdomains+1);
+        beg_row[0] = 0;
+        for (int i=0; i < nb_subdomains; i++) {
+            beg_row[i+1] += nb_rows_multi[i];
+        }
+        for (int n=0; n < nb_subdomains; n++) {
+            Subdomain& s = subdomains[n];
+            s.Qbeg.resize(nb_rows_multi[n]);
+            s.Qend.resize(nb_rows_multi[n]);
+            for (int i=0; i < nb_rows_multi[n]; i++) {
+                s.Qbeg[i] = Qbeg[beg_row[n]+i];
+                s.Qend[i] = Qend[beg_row[n]+i];
+            }
+        }
         for (int i=0; i < nb_subdomains; i++) {
                 printf("nb_rows_multi[%d] = %d\n", i, nb_rows_multi[i]);
                 printf("nb_vec_elem_multi[%d] = %d\n", i, nb_vec_elem_multi[i]);
         }
+
+
+
+#if 0
+void GENRCM(const INT n, const int flags,
+            const INT *xadj, const INT *adj,
+            INT *perm, signed char *mask, INT *deg)
+#endif
+
 #if 0
     class Subdomain {
     public:
@@ -1751,7 +1795,62 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
 
     generateInputMatricesAndVectorsMulti();
     bandwidth(subdomains[0].col_id_t, nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
+    bandwidthQ(subdomains[0], nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
     //bandwidth(subdomains[1].col_id_t, rd.nb_rows, rd.stencil_size, rd.nb_vecs);
+#if 0
+    {
+        printf("====== CutHill McGee ======\n");
+        int nb_vert = nb_rows_multi[0] * rd.stencil_size;
+        int nb_vert_1 = nb_vec_elem_multi[0] * rd.stencil_size;
+        printf("nb_vert= %d, nb_vert_1= %d\n", nb_vert, nb_vert_1);
+        int flags = 0;
+        std::vector<int> xadj(nb_rows_multi[0]+1); 
+        for (int i=0; i < (nb_rows_multi[0]+1); i++) {
+            xadj[i] = i*rd.stencil_size;
+        }
+        int* adj = subdomains[0].col_id_t;
+        std::vector<int> perm(nb_vert_1);
+        std::vector<int> perm_inv(nb_vert_1);
+        std::vector<int> degree(nb_vert_1);
+        signed char* mask = new signed char [nb_vert_1];
+        std::fill(mask, mask+nb_vert_1, 0);
+        //genrcmi(nb_vert, flags, &xadj[0], adj, &perm[0], mask, &degree[0]);
+        //genrcmi(nb_vert, flags, &xadj[0], adj, &perm[0], mask, &degree[0]);
+        //permInverse3(nb_vert, &perm[0], &perm_inv[0]);
+        int adj_num = 1;
+        //int bw = adj_bandwidth(nb_rows_multi[0], adj_num, &xadj[0], adj);
+        //int adj_bw = adj_perm_bandwidth(nb_rows_multi[0], adj_num, &xadj[0], adj, 
+            //&perm[0], &perm_inv[0]);
+        //printf("adj_bandwidth= %d\n", bw);
+        //printf("adj_perm_bandwidth= %d\n", adj_bw);
+        //printf("after genrcmi\n");
+
+        printf("USING BURKARDT ROUTINES\n");
+        // Apparently I must add "1" to all elements of adj to work with Burkardt code, which has
+        // its origins in Matlab and C++. Inefficient. 
+        for (int i=0; i < nb_vert; i++) {
+            adj[i] += 1;   // subtract 1 when finished. 
+        }
+        for (int i=0; i <= nb_rows_multi[0]; i++) { // not sure this is needed
+            xadj[i] += 1;
+        }
+        bur::genrcm(nb_vec_elem_multi[0], nb_vert, &xadj[0], adj, &perm[0]);
+//    void genrcm ( int node_num, int adj_num, int adj_row[], int adj[], int perm[] )
+//    Input, int NODE_NUM, the number of nodes.
+//    Input, int ADJ_NUM, the number of adjacency entries.
+        //bur::genrcm(nb_rows_multi[0], nb_vert, &xadj[0], adj, &perm[0]);
+    //genrcmi(const int n , const int flags,
+                           //const int *xadj, const int *adj,
+                           //int *perm,
+                           //signed char *mask, int *deg);
+        printf("after bur::genrcm\n");
+        bur::perm_inverse3 ( nb_vec_elem_multi[0], &perm[0], &perm_inv[0] );
+        int bur_bw = bur::adj_perm_bandwidth ( nb_vec_elem_multi[0], nb_vert, &xadj[0], adj, &perm[0], &perm_inv[0] );
+        printf("bur_bw= %d\n", bur_bw);
+        delete [] mask;
+        exit(0);
+    }
+#endif
 
     float gflops;
     float max_gflops = 0.;
@@ -1759,6 +1858,7 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
     float min_elapsed = 0.; 
     //int nb_rows = rd.nb_rows;
     int nz = rd.stencil_size;
+    printf("*** nb_subdomains: %d\n", nb_subdomains);
 
     // Must now work on alignmentf vectors. 
     // Produces the correct serial result
@@ -1776,7 +1876,6 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
     const int scale = 4;
     const int nz = rd.stencil_size;
     const Subdomain& dom = subdomains[s];
-
 
     __m512 v1_old = _mm512_setzero_ps();
     __m512 v2_old = _mm512_setzero_ps();
@@ -2630,6 +2729,33 @@ void ELL_OPENMP<T>::checkSolutions()
 }
 //----------------------------------------------------------------------
 template <typename T>
+void ELL_OPENMP<T>::bandwidthQ(Subdomain& s, int nb_rows, int stencil_size, int vec_size)
+// compute bandwidth, average bandwidth, rms bandwidth
+// Only consider Q matrix
+// given row r, and stencil element s, col_id[s+stencil_size*r] is the index into the 
+// vector vec of length vec_size
+{
+    // stencil ordering is assumed to be sorted by this time
+    std::vector<int> bw(nb_rows);
+    int* col_id = s.col_id_t;
+    std::vector<int>& Qbeg = s.Qbeg;
+    std::vector<int>& Qend = s.Qend;
+    int max_bandwidth = 0;
+
+
+    printf("col_id, nb rows: %d\n", nb_rows);
+    for (int r=0; r < nb_rows; r++) {
+        //if (r < (nb_rows-1) && Qbeg[r+1] != Qend[r]) printf("bandwidthQ:: beg/end= %d, %d\n", Qbeg[r], Qend[r]);
+        //std::sort(col_id+r*stencil_size, col_id+(r+1)*stencil_size);
+        bw[r] = col_id[Qend[r]-1] - col_id[Qbeg[r]];
+        max_bandwidth = bw[r] > max_bandwidth ? bw[r] : max_bandwidth;
+    }
+    printf("\n");
+    printf("max bandwidthQ: %d\n", max_bandwidth);
+}
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+template <typename T>
 void ELL_OPENMP<T>::bandwidth(int* col_id, int nb_rows, int stencil_size, int vec_size)
 // compute bandwidth, average bandwidth, rms bandwidth
 // given row r, and stencil element s, col_id[s+stencil_size*r] is the index into the 
@@ -2663,6 +2789,238 @@ void ELL_OPENMP<T>::bandwidth(int* col_id, int nb_rows, int stencil_size, int ve
     printf("max bandwidth: %d\n", max_bandwidth);
     //exit(0);
 }
+//----------------------------------------------------------------------
+//****************************************************************************80
+template <typename T>
+void ELL_OPENMP<T>::permInverse3(int n, int* perm, int* perm_inv )
+
+//****************************************************************************80
+//
+//  Purpose:
+//
+//    PERM_INVERSE3 produces the inverse of a given permutation.
+//
+//  Licensing:
+//
+//    This code is distributed under the GNU LGPL license.
+//
+//  Modified:
+//
+//    05 January 2007
+//
+//  Author:
+//
+//    John Burkardt
+//
+//  Parameters:
+//
+//    Input, int N, the number of items permuted.
+//
+//    Input, int PERM[N], a permutation.
+//
+//    Output, int PERM_INV[N], the inverse permutation.
+//
+{
+  int i;
+
+  for ( i = 0; i < n; i++ )
+  {
+    perm_inv[perm[i]-1] = i + 1;
+  }
+
+  return;
+}
+//----------------------------------------------------------------------
+template <typename T>
+int ELL_OPENMP<T>::adj_bandwidth(int node_num, int adj_num, int* adj_row, int* adj)
+
+//****************************************************************************80
+//
+//  Purpose:
+//
+//    ADJ_BANDWIDTH computes the bandwidth of an adjacency matrix.
+//
+//  Discussion:
+//
+//    Thanks to Man Yuan, of Southeast University, China, for pointing out
+//    an inconsistency in the indexing of ADJ_ROW, 06 June 2011.
+//
+//  Licensing:
+//
+//    This code is distributed under the GNU LGPL license.
+//
+//  Modified:
+//
+//    06 June 2011
+//
+//  Author:
+//
+//    John Burkardt
+//
+//  Reference:
+//
+//    Alan George, Joseph Liu,
+//    Computer Solution of Large Sparse Positive Definite Systems,
+//    Prentice Hall, 1981.
+//
+//  Parameters:
+//
+//    Input, int NODE_NUM, the number of nodes.
+//
+//    Input, int ADJ_NUM, the number of adjacency entries.
+//
+//    Input, int ADJ_ROW[NODE_NUM+1].  Information about row I is stored
+//    in entries ADJ_ROW(I) through ADJ_ROW(I+1)-1 of ADJ.
+//
+//    Input, int ADJ[ADJ_NUM], the adjacency structure.
+//    For each row, it contains the column indices of the nonzero entries.
+//
+//    Output, int ADJ_BANDWIDTH, the bandwidth of the adjacency
+//    matrix.
+//
+{
+  int band_hi;
+  int band_lo;
+  int col;
+  int i;
+  int j;
+  int value;
+
+  band_lo = 0;
+  band_hi = 0;
+
+  for ( i = 0; i < node_num; i++ )
+  {
+    for ( j = adj_row[i]; j <= adj_row[i+1]-1; j++ )
+    {
+      col = adj[j-1] - 1;
+      band_lo = i4_max ( band_lo, i - col );
+      band_hi = i4_max ( band_hi, col - i );
+    }
+  }
+
+  value = band_lo + 1 + band_hi;
+
+  return value;
+}
+//----------------------------------------------------------------------
+template <typename T>
+int ELL_OPENMP<T>::adj_perm_bandwidth(int node_num, int adj_num, int* adj_row, int* adj,
+  int* perm, int* perm_inv)
+
+//****************************************************************************80
+//
+//  Purpose:
+//
+//    ADJ_PERM_BANDWIDTH computes the bandwidth of a permuted adjacency matrix.
+//
+//  Discussion:
+//
+//    The matrix is defined by the adjacency information and a permutation.
+//
+//    The routine also computes the bandwidth and the size of the envelope.
+//
+//  Licensing:
+//
+//    This code is distributed under the GNU LGPL license.
+//
+//  Modified:
+//
+//    05 January 2007
+//
+//  Author:
+//
+//    John Burkardt
+//
+//  Reference:
+//
+//    Alan George, Joseph Liu,
+//    Computer Solution of Large Sparse Positive Definite Systems,
+//    Prentice Hall, 1981.
+//
+//  Parameters:
+//
+//    Input, int NODE_NUM, the number of nodes.
+//
+//    Input, int ADJ_NUM, the number of adjacency entries.
+//
+//    Input, int ADJ_ROW[NODE_NUM+1].  Information about row I is stored
+//    in entries ADJ_ROW(I) through ADJ_ROW(I+1)-1 of ADJ.
+//
+//    Input, int ADJ[ADJ_NUM], the adjacency structure.
+//    For each row, it contains the column indices of the nonzero entries.
+//
+//    Input, int PERM[NODE_NUM], PERM_INV(NODE_NUM), the permutation
+//    and inverse permutation.
+//
+//    Output, int ADJ_PERM_BANDWIDTH, the bandwidth of the permuted
+//    adjacency matrix.
+//
+{
+  int band_hi;
+  int band_lo;
+  int bandwidth;
+  int col;
+  int i;
+  int j;
+
+  band_lo = 0;
+  band_hi = 0;
+
+  for ( i = 0; i < node_num; i++ )
+  {
+    for ( j = adj_row[perm[i]-1]; j <= adj_row[perm[i]]-1; j++ )
+    {
+      col = perm_inv[adj[j-1]-1];
+      band_lo = i4_max ( band_lo, i - col );
+      band_hi = i4_max ( band_hi, col - i );
+    }
+  }
+
+  bandwidth = band_lo + 1 + band_hi;
+
+  return bandwidth;
+}
+//----------------------------------------------------------------------
+template <typename T>
+int ELL_OPENMP<T>::i4_max ( int i1, int i2 )
+
+//****************************************************************************80
+//
+//  Purpose:
+//
+//    I4_MAX returns the maximum of two I4's.
+//
+//  Licensing:
+//
+//    This code is distributed under the GNU LGPL license.
+//
+//  Modified:
+//
+//    13 October 1998
+//
+//  Author:
+//
+//    John Burkardt
+//
+//  Parameters:
+//
+//    Input, int I1, I2, are two integers to be compared.
+//
+//    Output, int I4_MAX, the larger of I1 and I2.
+//
+{
+  if ( i2 < i1 )
+  {
+    return i1;
+  }
+  else
+  {
+    return i2;
+  }
+
+}
+//----------------------------------------------------------------------
 //----------------------------------------------------------------------
 }; // namespace
 

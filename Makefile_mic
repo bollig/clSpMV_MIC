@@ -32,7 +32,7 @@ DEFINES = -DCL_DEVICE_TYPE_DEF=CL_DEVICE_TYPE_ACCELERATOR
 # Add source files here
 # C/C++ source files (compiled with gcc / c++)
 #COMMONFILES		:= util.cpp fileio.cpp oclcommon.cpp
-COMMONFILES		:= util.cpp projectsettings.cpp timer_eb.cpp runs.cpp mmio.cpp
+COMMONFILES		:= util.cpp projectsettings.cpp timer_eb.cpp runs.cpp mmio.cpp rcm.cpp burkardt_rcm.cpp
 OPENMPFILES := spmv_ell_openmp.cpp
 #SINGLEFILES		:= mem_bandwidth.cpp spmv_csr_scalar.cpp spmv_csr_vector.cpp spmv_bdia.cpp spmv_dia.cpp spmv_ell.cpp spmv_coo.cpp spmv_bell.cpp spmv_bcsr.cpp spmv_sell.cpp spmv_sbell.cpp spmv_all.cpp
 SINGLEFILES		:=  spmv_all.cpp 
@@ -101,7 +101,8 @@ LIB_ARCH        := $(OSARCH)
 
 
 # Compiler-specific flags
-CXXFLAGS  := $(CXXWARN_FLAGS) 
+# NDEBUG: suppress asserts in rcm.cpp
+CXXFLAGS  := $(CXXWARN_FLAGS)  -NDEBUG
 CFLAGS    := $(CWARN_FLAGS) 
 
 # Common flags

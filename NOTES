@@ -299,3 +299,12 @@ Aug. 5, 2013
 Create a new omp.cpp program, for reading multi-domains. The current program is getting too long. 
 Make this program independent of spmv_ell_openmp.cpp.  Call this program spmv_ell_multi_open.cpp . 
 ----------------------------------------------------------------------
+Aug. 9, 2013
+Not clear that RCM is required if doing subdomains because of raster order (unless I only do the RCM 
+on the center array Q\M). I could also do RCM on B and on R since they are square matrices. 
+
+But first: create new adj_row matrices: for stencil lines in Q\B, I need the index one past the last index of the Q\B row. 
+Below the Q\B row, I need the first index of the B matrix and the first index of the R matrix. 
+So last_QmB[QmB.size()], first_B(B.size()) and first_R(R.size()). 
+CHECK: is B.size() == R.size()
+----------------------------------------------------------------------

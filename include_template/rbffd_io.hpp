@@ -103,6 +103,7 @@ template <typename T>
 int RBFFD_IO<T>::loadFromBinaryEllpackFileMulti(int& nb_subdomains, 
                 std::vector<int>& col_id, std::vector<int>& nb_rows_multi, 
                 std::vector<int>& nb_vec_elem_multi, std::vector<int>& offsets, 
+                std::vector<int>& Qbeg, std::vector<int>& Qend, 
                 int& stencil_size, std::string& filename)
 {
     // the file contains multiple subdomains
@@ -115,8 +116,9 @@ int RBFFD_IO<T>::loadFromBinaryEllpackFileMulti(int& nb_subdomains,
     getline(&line, &nbchars, fd);
     sscanf(line, "%d", &nb_subdomains);
 
-    offsets.resize(nb_subdomains);
+    offsets.resize(nb_subdomains+1);
     offsets[0] = 0;
+    int max_rows = 0;
 
     for (int i=0; i < nb_subdomains; i++) {
         getline(&line, &nbchars, fd);
@@ -125,6 +127,7 @@ int RBFFD_IO<T>::loadFromBinaryEllpackFileMulti(int& nb_subdomains,
         nb_rows_multi.push_back(nb_rows);
         nb_vec_elem_multi.push_back(nb_vec);
         offsets[i+1] = offsets[i] + nb_rows*stencil_size;
+        max_rows += nb_rows;
     }
 
     col_id.resize(offsets[nb_subdomains]);
@@ -134,6 +137,21 @@ int RBFFD_IO<T>::loadFromBinaryEllpackFileMulti(int& nb_subdomains,
         printf("loadFromBinaryEllpackFileMulti: nb elements read is incorrect\n");
         exit(0);
     }
+
+    printf("MAX NB ROWS (all subdomains combined): %d\n", max_rows);
+    Qbeg.resize(max_rows);
+    Qend.resize(max_rows);
+    int nbb = fread(&Qbeg[0], sizeof(int), max_rows, fd);
+    int nbe = fread(&Qend[0], sizeof(int), max_rows, fd);
+    for (int i=0; i < 10; i++) {
+        printf("io.rd; Qbeg,Qend= %d, %d\n", Qbeg[i], Qend[i]);
+    }
+    if (nbb != max_rows || nbe != max_rows) {
+        printf("loadFromBinaryEllpackFileMulti: Qbeg or Qend read error\n");
+        exit(0);
+    }
+
+    fclose(fd);
 }
 //--------------------------------------------------------------------
 template <typename T>

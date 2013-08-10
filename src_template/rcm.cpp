@@ -162,7 +162,9 @@
 #define RCM__DRIVER 1
 
 
-#define SELF "rcm.c"
+
+#define SELF "rcm.cpp"
+#include <stdio.h>
 
 
 #define RCM_FORTRAN_INDICES 1
@@ -420,6 +422,7 @@ void GENRCM(const INT n, const int flags,
     INT num = 0;
     int xflags = flags;
     int base = (flags & RCM_FORTRAN_INDICES) ? 1 : 0;
+    //printf("after base\n");
 
     if (!(xflags & RCM_USE_MASK)) {
         for (i = 0; i < n; ++i) {
@@ -428,7 +431,9 @@ void GENRCM(const INT n, const int flags,
         xflags &= (~RCM_USE_MASK);
     }
     DEGREE(n, xflags, xadj, adj, mask, deg);
+    //printf("after degree\n");
 
+    //printf("n= %d\n", n);
     for (i = 0; i < n; ++i) {
         if (mask[i]) {
             continue;
@@ -443,17 +448,19 @@ void GENRCM(const INT n, const int flags,
 	FNROOT(&root, xflags, xadj, adj, deg,
                &ccsize,
                mask, perm+num);
+    //printf("after fnroot\n");
 	RCM(root, xflags,
             xadj, adj, deg, mask, perm+num, &ccsize);
+    //printf("after RCM\n");
 
         num += ccsize;
         CHECK( num <= n );
-	if (num >= n) {
+	    if (num >= n) {
+            //printf("before break\n");
             break;
         }
-
     }
-
+    printf("before end of program\n");
 }
 
 

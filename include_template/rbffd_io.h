@@ -48,6 +48,7 @@ public:
         int loadFromBinaryEllpackFileMulti(int& nb_subdomains, 
                 std::vector<int>& col_id, std::vector<int>& nb_rows_multi, 
                 std::vector<int>& nb_vec_elem_multi, std::vector<int>& offsets, 
+                std::vector<int>& Qbeg, std::vector<int>& Qend, 
                 int& stencil_size, std::string& filename);
 
 		int loadFromBinaryMMFile(std::vector<int>& rows, std::vector<int>& cols, 
