@@ -234,7 +234,7 @@ int main(int, char **)
 {
   srand(42);
   std::cout << "-- Generating matrix --" << std::endl;
-  std::size_t dof_per_dim = 96;   //number of grid points per coordinate direction
+  std::size_t dof_per_dim = 50;   //number of grid points per coordinate direction
   std::size_t n = dof_per_dim * dof_per_dim * dof_per_dim; //total number of unknowns
   std::vector< std::map<int, double> > matrix = gen_3d_mesh_matrix(dof_per_dim, dof_per_dim, dof_per_dim, false);  //If last parameter is 'true', a tetrahedral grid instead of a hexahedral grid is used.
   
@@ -256,6 +256,7 @@ int main(int, char **)
   // Reorder using Cuthill-McKee algorithm
   //
   std::cout << "-- Cuthill-McKee algorithm --" << std::endl;
+  printf("matrix2 size: %d\n", matrix2.size());
   r = viennacl::reorder(matrix2, viennacl::cuthill_mckee_tag());
   std::cout << " * Reordered bandwidth: " << calc_reordered_bw(matrix2, r) << std::endl;
   
