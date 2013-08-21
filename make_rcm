@@ -6,7 +6,7 @@ all: main.o vcl_bandwidth_reduction.o
 	icpc main.o vcl_bandwidth_reduction.o -O2
 
 main.o: main.cpp include_template/vcl_bandwidth_reduction.h
-	icpc -c main.cpp  ${INC} -O2
+	icpc -c main.cpp  ${INC} -O2 -DNDEBUG
 
 vcl_bandwidth_reduction.o: src_template/vcl_bandwidth_reduction.cpp
-	icpc -c src_template/vcl_bandwidth_reduction.cpp ${INC}  -O2
+	icpc -c src_template/vcl_bandwidth_reduction.cpp ${INC}  -O2 -DNDEBUG

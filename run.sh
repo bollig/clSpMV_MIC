@@ -39,8 +39,8 @@ F=ell_subdomain_64x_64y_64z.bmtx
 F=ell_subdomain_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
 F=ell_subdomain_x_weights_direct__no_hv_stsize_32_3d_96x_96y_96z.bmtx
 F=ell_subdomain_x_weights_direct__no_hv_stsize_32_3d_128x_128y_128z.bmtx
-F=ell_ell_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
 F=ell_subdomain_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
+F=ell_ell_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
 
 
 export F=$F
@@ -57,10 +57,10 @@ export OMP_SCHEDULE=dynamic,128  # 27 Gflop/random (and scatter). 22Gflop with c
 export OMP_SCHEDULE=static,64  # no influence 2.5 Gf
 export OMP_SCHEDULE=dynamic,64  # 27 Gflop/random (and scatter). 22Gflop with copact
 
-export KMP_AFFINITY=compact  # 22 GF
 export KMP_AFFINITY=granularity=fine,scatter
 export KMP_AFFINITY=verbose,compact  # 22 GF
 export KMP_AFFINITY=scatter  # 25 GF
+export KMP_AFFINITY=compact  # 22 GF
 
 #export KMP_AFFINITY=verbose,proclist=[3,2,1,0]
 

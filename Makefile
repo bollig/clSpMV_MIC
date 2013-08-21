@@ -60,7 +60,7 @@ LINK       := icpc  -openmp
 
 
 # Includes
-INCLUDES  += $(INCDIR) -I${OCLCOMMONDIR}/include
+INCLUDES  += $(INCDIR) -I${OCLCOMMONDIR}/include -I/usr/boost-1.45/include
 
 ifeq "$(strip $(HP_64))" ""
 	MACHINE := 32

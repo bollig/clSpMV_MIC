@@ -24,6 +24,9 @@
 //#include "rcm.h"
 #include "burkardt_rcm.hpp"
 
+#include "reorder.h"
+#include "vcl_bandwidth_reduction.h"
+
 void genrcmi(const int n, const int flags,
             const int *xadj, const int *adj,
             int *perm, signed char *mask, int *deg);
@@ -86,7 +89,7 @@ public:
     std::string sparsity;
     int diag_sep;
     int inner_bandwidth;
-    enum stencilType {COMPACT=0, RANDOM, RANDOMWITHDIAG, RANDOMDIAGS};
+    enum stencilType {COMPACT=0, RANDOM, RANDOMWITHDIAG, RANDOMDIAGS, SUPERCOMPACT, NONE};
     enum nonzeroStats {UNIFORM=0, NORMAL};
     stencilType stencil_type;
 
@@ -193,6 +196,7 @@ public:
     int i4_max (int i1, int i2);
     //void freeInputMatricesAndVectors(float* vec_vt, float* result_vt, int* col_id_t, float* data_t);
     //void generateInputMatricesAndVectors(float* vec_vt, float* result_vt, int* col_id_t, float* data_t);
+    void cuthillMcKee(std::vector<int>& col_id, int nb_rows, int stencil_size);
 
 protected:
 	virtual void method_0(int nb=0);
@@ -258,7 +262,7 @@ void ELL_OPENMP<T>::run()
     }
 #endif
 
-    if (rd.use_subdomains == 0) {
+    if (rd.use_subdomains == 0 || nb_subdomains == 1) {
         //method_8a(4);
         method_8a_multi(4); // temporary? 
     } else {
@@ -309,7 +313,9 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
     rd.use_subdomains = REQUIRED<int>("use_subdomains");
 
     printf("sparsity = %s\n", sparsity.c_str());
-    if (sparsity == "COMPACT")  stencil_type = COMPACT;
+    if (sparsity == "NONE")  stencil_type = NONE;
+    else if (sparsity == "COMPACT")  stencil_type = COMPACT;
+    else if (sparsity == "SUPERCOMPACT") stencil_type = SUPERCOMPACT;
     else if (sparsity == "RANDOM") stencil_type = RANDOM;
     else if (sparsity == "RANDOM_WITH_DIAG") stencil_type = RANDOMWITHDIAG;
     else if (sparsity == "RANDOM_DIAGS") stencil_type = RANDOMDIAGS;
@@ -397,6 +403,8 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
         offsets_multi.resize(2);
         offsets_multi[0] = 0;
         offsets_multi[1] = nb_rows_multi[0]*stencil_size;
+        //printf("cuthill from ELL input format\n");
+        //cuthillMcKer(mat.ell_col_id, nb_rows,stencil_size);
     } else if (in_format == "ELL_MULTI") {
         // need variables mat_multi, vec_v_multi, result_v_multi
         // stencil size is identical for all subdomains
@@ -1881,10 +1889,14 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
     __m512 v2_old = _mm512_setzero_ps();
     __m512 v3_old = _mm512_setzero_ps();
     __m512i i3_old = _mm512_setzero_epi32();
+    __m512  v = _mm512_setzero_ps(); // TEMPORARY
    const __m512i offsets = _mm512_set4_epi32(3,2,1,0);  // original
    const __m512i four = _mm512_set4_epi32(4,4,4,4); 
     //printf("after subdomain\n");
 
+//#define GATHER
+//#undef GATHER
+//#define PERMUTE
 
 #if 1
 #pragma omp for 
@@ -1898,27 +1910,41 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
                 __m512i v3_oldi = read_aaaa(&dom.col_id_t[0]+n+nz*r);
                 v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets);
                 //printf("after v3_oldi\n");
-                __m512  v     = _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale); // scale = 4 bytes (floats)
+#ifdef GATHER
+                v     = _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale); // scale = 4 bytes (floats)
+#else
+                v = _mm512_load_ps(dom.vec_vt);
+#endif
+
+#ifndef PERMUTE 
+                v3_old = v;
+#endif
+//#endif
                 //printf("after v\n");
 
+#ifdef PERMUTE
                 v3_old = permute(v, _MM_PERM_AAAA);
+#endif
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-                //printf("after accu\n");
 
-#if 1
+#ifdef PERMUTE
                 v3_old = permute(v, _MM_PERM_BBBB);
+#endif
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_BBBB);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
+#ifdef PERMUTE
                 v3_old = permute(v, _MM_PERM_CCCC);
+#endif
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_CCCC);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
 
+#ifdef PERMUTE
                 v3_old = permute(v, _MM_PERM_DDDD);
+#endif
                 v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_DDDD);
                 accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-#endif
             }
             _mm512_storenrngo_ps(dom.result_vt+nb_mat*nb_vec*r, accu);  
         } 
@@ -2330,6 +2356,7 @@ void ELL_OPENMP<T>::generate_col_id_multi(int* col_id, int nbz, int nb_rows)
 template <typename T>
 void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
 {
+    printf("======= Reconstruct col_id matrix for special effects =====\n");
     //assert(col_id.size() == nbz*nb_rows);
     int left;
     int right;
@@ -2338,8 +2365,22 @@ void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
     int sz2 = nbz >> 1;
 
     switch (stencil_type) {
+    case NONE:
+        break;
+
+    case SUPERCOMPACT:
+        printf("SUPERCOMPACT\n");
+        // the first 32 columns of col_id are 1 to nbz-1 (for each row)
+        // retrieving "x" is much more efficient
+        for (int i=0; i < nb_rows; i++) {
+            for (int j=0; j < nbz; j++) {
+                col_id[j+i*nbz] = j;
+            }
+        }
+        break;
+
     case COMPACT:
-        printf("COMPACT CASE\n");
+        printf("COMPACT\n");
 
         for (int i=0; i < nb_rows; i++) {
             if (i < nbz) {
@@ -2641,7 +2682,7 @@ void ELL_OPENMP<T>::generateInputMatricesAndVectorsMulti()
     int nb_mat = rd.nb_mats;
     int nb_vec = rd.nb_vecs;
 
-    printf("inside generate Miulti\n");
+    printf("inside generate Multi\n");
 
     if (rd.use_subdomains == 0) {
         printf("generate: nb_subdomains = %d\n", nb_subdomains);
@@ -2669,16 +2710,18 @@ void ELL_OPENMP<T>::generateInputMatricesAndVectorsMulti()
 
         //printf("before generate vector\n");
 
+        for (int j=offsets_multi[i], k=0; j < offsets_multi[i+1]; j++) {
+            s.col_id_t[k++] = mat.ell_col_id[j];
+        }
+
         // FIX col_ids'
         generate_vector(s.vec_vt, vec_size, nb_vec);
+        generate_col_id(s.col_id_t, nz, nb_rows);
         //printf("before generate data\n");
         generate_ell_matrix_data(s.data_t, nz, nb_rows, nb_mat);
 
         //printf("before offsets\n");
         //printf("imin= %d, imax= %d\n", offsets_multi[i], offsets_multi[i+1]);
-        for (int j=offsets_multi[i], k=0; j < offsets_multi[i+1]; j++) {
-            s.col_id_t[k++] = mat.ell_col_id[j];
-        }
         //printf("after offsets\n");
 
         //for (int i=262000; i < 262100; i++) {
@@ -2740,6 +2783,7 @@ void ELL_OPENMP<T>::bandwidthQ(Subdomain& s, int nb_rows, int stencil_size, int 
     int* col_id = s.col_id_t;
     std::vector<int>& Qbeg = s.Qbeg;
     std::vector<int>& Qend = s.Qend;
+    if (Qbeg.size() == 0 || Qend.size() == 0) return;
     int max_bandwidth = 0;
 
 
@@ -2902,6 +2946,29 @@ int ELL_OPENMP<T>::adj_bandwidth(int node_num, int adj_num, int* adj_row, int* a
   value = band_lo + 1 + band_hi;
 
   return value;
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::cuthillMcKee(std::vector<int>& col_id, int nb_rows, int stencil_size)
+{
+    std::vector<int> row_ptr;
+    std::vector<int> new_row_ptr;
+    std::vector<int> new_col_ind;
+
+    row_ptr.push_back(0);
+    for (int i=0; i < nb_rows; i++) {
+        row_ptr.push_back(stencil_size);
+    }
+
+    printf("Bandwidth reduction using ViennaCL\n");
+    new_col_ind.resize(0);
+    new_row_ptr.resize(0);
+    vcl::ConvertMatrix d(nb_rows, col_id, row_ptr, new_col_ind, new_row_ptr);
+    int bw = d.calcOrigBandwidth();
+    printf("initial bw (VCL): %d\n", bw);
+    d.reduceBandwidthRCM();
+    //d.reorderMatrix(); // done in reduceBandwidthwithRCM
+    exit(0);
 }
 //----------------------------------------------------------------------
 template <typename T>

@@ -52,15 +52,18 @@ CXX        := g++ -g
 CC         := gcc
 LINK       := g++ -g
 
+OPT        := -O0
 MMIC       :=  
 MMIC       := -mmic
-CXX        := icpc  -openmp $(MMIC)  -diag-enable openmp  -vec-report3 -O2
-CC         := icc
-LINK       := icpc  -openmp $(MMIC)  -O2
+CXX        := icpc  -openmp $(MMIC)  -diag-enable openmp  -vec-report3 ${OPT}
+CC         := icc ${OPT}
+LINK       := icpc  -openmp $(MMIC)  ${OPT}
 
 
 # Includes
-INCLUDES  += $(INCDIR) -I${OCLCOMMONDIR}/include
+CWD=/mnt/global/LCSE/gerlebacher/src/clSpMV_MIC
+INC=-I$(CWD)/ViennaCL-1.4.2 -Iinclude_template 
+INCLUDES  += $(INCDIR) -I${OCLCOMMONDIR}/include  -I/usr/boost-1.45/include $(INC)
 
 ifeq "$(strip $(HP_64))" ""
 	MACHINE := 32
@@ -100,15 +103,20 @@ LIB_ARCH        := $(OSARCH)
 
 
 # Compiler-specific flags
-# NDEBUG: suppress asserts in rcm.cpp
-CXXFLAGS  := $(CXXWARN_FLAGS)  -NDEBUG
-CFLAGS    := $(CWARN_FLAGS) 
+# NDEBUG: suppress asserts in rcm.cpp and speeds up boost
+# method_8a_multi
+PERMUTE := 
+PERMUTE := -DPERMUTE
+GATHER := -DGATHER
+GATHER := 
+CXXFLAGS  := $(CXXWARN_FLAGS)  -NDEBUG 
+CFLAGS    := $(CWARN_FLAGS)  -NDEBUG 
 
 # Common flags
 COMMONFLAGS += $(INCLUDES) -DUNIX
 
 # Define Flags
-DEFINEFLAGS += ${DEFINES} 
+DEFINEFLAGS += ${DEFINES} ${PERMUTE} ${GATHER}
 
 # Debug/release configuration
 ifeq ($(dbg),1)
@@ -201,7 +209,8 @@ bench: $(COMMONOBJS) $(BENCHOBJS)
 	#$(VERBOSE)$(LINK) -o $(TARGETDIR)/bench_overhead $(OBJDIR)/bench_overhead.cpp.o $(COMMONOBJS) $(LIB)
 
 openmp: $(COMMONOBJS) $(OPENMPOBJS)
-	$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_openmp -std=c++0x -O2 $(COMMONOBJS) $(OPENMPOBJS) $(LIB)
+	#$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_openmp -std=c++0x -O2 $(COMMONOBJS) $(OPENMPOBJS) $(LIB)
+	$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_openmp -std=c++0x $(COMMONOBJS) $(OPENMPOBJS) $(LIB)
 
 cocktail: $(COMMONOBJS) $(COCKTAILOBJS)
 	#$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_cocktail $(COMMONOBJS) $(COCKTAILOBJS) $(LIB)
