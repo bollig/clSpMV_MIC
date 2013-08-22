@@ -228,6 +228,7 @@ void ELL_OPENMP<T>::run()
     int save_nb_threads = omp_get_num_threads();
     //for (int i=0; i < 13; i++) {
     for (int i=12; i < 13; i++) {
+        //num_threads[i] = 1;// TEMPORARY
         omp_set_num_threads(num_threads[i]);
         printf("rd/wr, nb threads: %d\n", num_threads[i]);
 	    method_rd_wr(4); // correct results
@@ -1420,17 +1421,58 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
     // make array large enough
     //nb_rows = 128*128*128*64; // too large? 134 Mrows
     nb_rows = 128*128*128*16; // too large? 134 Mrows
+    //nb_rows = 128;
     //nb_rows = 128*128*128; // too large? 134 Mrows
     printf("nb_rows= %d\n", nb_rows);
     vec_vt = (float*) _mm_malloc(sizeof(float)*nb_rows, 64);
     result_vt = (float*) _mm_malloc(sizeof(float)*nb_rows, 64);
-    printf("vec_vt= %ld\n", (long) vec_vt);
+    printf("*vec_vt= %ld\n", (long) vec_vt);
+    col_id_t = (int*) _mm_malloc(sizeof(int)*nb_rows, 64);
+    printf("col_id_t= %d\n", col_id_t);
+    printf("after col_id_t allocated\n");
+
+//#define COLCOMPACT
+#define COLREVERSE
+//#define COLRANDOM
+
+#ifdef COLCOMPACT
+    for (int i=0; i < nb_rows; i++) {
+        col_id_t[i] = i;
+    }
+    printf("after col_id definition\n");
+#endif
+#ifdef COLREVERSE
+    for (int i=0; i < nb_rows; i++) {
+        col_id_t[i] = nb_rows-i-1;
+    }
+#endif
+#ifdef COLRANDOM
+    // Cache line is 16 floats, so this is a worst case. 
+    for (int i=0; i < nb_rows; i+=16) {
+        col_id_t[i]   = (i+16*0);
+        col_id_t[i+1] = (i+16*1) % nb_rows;
+        col_id_t[i+2] = (i+16*2) % nb_rows;
+        col_id_t[i+3] = (i+16*3) % nb_rows;
+        col_id_t[i+4] = (i+16*4) % nb_rows;
+        col_id_t[i+5] = (i+16*5) % nb_rows;
+        col_id_t[i+6] = (i+16*6) % nb_rows;
+        col_id_t[i+7] = (i+16*7) % nb_rows;
+        col_id_t[i+8] = (i+16*8) % nb_rows;
+        col_id_t[i+9] = (i+16*9) % nb_rows;
+        col_id_t[i+10] = (i+16*10) % nb_rows;
+        col_id_t[i+11] = (i+16*11) % nb_rows;
+        col_id_t[i+12] = (i+16*12) % nb_rows;
+        col_id_t[i+13] = (i+16*13) % nb_rows;
+        col_id_t[i+14] = (i+16*14) % nb_rows;
+        col_id_t[i+15] = (i+16*15) % nb_rows;
+    }
+#endif
  
 //#define BANDLOAD
 //#define BANDCPP
 //#define BANDUNPACK
 #define BANDGATHER
- 
+
     // Time pure loads
     for (int it=0; it < 10; it++) {
         tm["spmv"]->start();
@@ -1442,11 +1484,11 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
 #pragma omp for
 //-------------------------------------------------
 //#pragma noprefetch
-       for (int r=0; r  < nb_rows; r += 16) {
+       for (int i=0; i  < nb_rows; i += 16) {
        	    //_mm_prefetch ((const char*) vec_vt+r+2048, _MM_HINT_T1); // slows down
-            const __m512 v1_old = _mm512_load_ps(vec_vt + r);
+            const __m512 v1_old = _mm512_load_ps(vec_vt + i);
             //_mm512_store_ps(result_vt + r, v1_old);
-            _mm512_storenrngo_ps(result_vt+r, v1_old);
+            _mm512_storenrngo_ps(result_vt+i, v1_old);
             //_mm512_store_ps(result_vt + r, _mm512_load_ps(vec_vt+r));
         }
 #endif  // BANDLOAD
@@ -1457,13 +1499,10 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
         for (int r=0; r < nb_rows; r+=16) {
             // retrieve 4 elements per read_aaaa, expand to 16 elements via masking
             v3_old = read_aaaa(vec_vt+r);
-            //v3_old = read_aaaa(vec_vt+r+4);
-            //v3_old = read_aaaa(vec_vt+r+8);
-            //v3_old = read_aaaa(vec_vt+r+12);
             // use addition to ensure that dead code is not eliminated
-            //v3_old = _mm512_add_ps(read_aaaa(vec_vt+r+4), v3_old);
-            //v3_old = _mm512_add_ps(read_aaaa(vec_vt+r+8), v3_old);
-            //v3_old = _mm512_add_ps(read_aaaa(vec_vt+r+12), v3_old);
+            v3_old = _mm512_add_ps(read_aaaa(vec_vt+r+4), v3_old);
+            v3_old = _mm512_add_ps(read_aaaa(vec_vt+r+8), v3_old);
+            v3_old = _mm512_add_ps(read_aaaa(vec_vt+r+12), v3_old);
             _mm512_storenrngo_ps(result_vt+r, v3_old);
        }
 #endif  // BANDUNPACK
@@ -1483,33 +1522,46 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
 #endif // BANDCPP
 //----------------------------------------------------------------------
 #ifdef BANDGATHER
+       {
 const __m512i offsets = _mm512_set4_epi32(3,2,1,0);  // original
-const __m512i four = _mm512_set4_epi32(4,4,4,4); 
+//const __m512i four = _mm512_set4_epi32(4,4,4,4); 
+const __m512i four = _mm512_set4_epi32(1,1,1,1); // only one vector 
 __m512i v3_oldi;
-__m512  v;
+__m512  v = _mm512_setzero_ps();
 const int scale = 4;
 
 // There will be differences depending on the matrix type. Create specialized col_id_t matrix for this
 // experiment. 
 #pragma omp for
-        for (int r=0; r < nb_rows; r+=16) { 
-             v3_oldi = read_aaaa(&dom.col_id_t[0] + r);    // ERROR: dom not known
+        for (int i=0; i < nb_rows; i+=16) {
+             v3_oldi = read_aaaa(&col_id_t[0] + i);    // ERROR: dom not known
+             //if (i < 100) print_epi32(v3_oldi, "erad_aaaa v3_oldi");
              v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets); // offsets?
-             v     = _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale); // scale = 4 bytes (floats)
+             //v = _mm512_castsi512_ps(v3_oldi); // temporary
 
-             v3_oldi = read_aaaa(&dom.col_id_t[0] + r + 4);
-             v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets); // offsets?
-             v     = _mm512_add_ps(v, _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale) ); // scale = 4 bytes (floats)
+             //  Error in next line ERROR ERROR ERROR
+             //if (i < 100) print_epi32(v3_oldi, "v3_oldi");
+             v     = _mm512_i32gather_ps(v3_oldi, vec_vt, scale); // scale = 4 bytes (floats)
 
-             v3_oldi = read_aaaa(&dom.col_id_t[0] + r + 8);
+             //printf("3\n");
+             v3_oldi = read_aaaa(&col_id_t[0] + i + 4);
              v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets); // offsets?
-             v     = _mm512_add_ps(v, _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale) ); // scale = 4 bytes (floats)
+             v     = _mm512_add_ps(v, _mm512_i32gather_ps(v3_oldi, vec_vt, scale) ); // scale = 4 bytes (floats)
 
-             v3_oldi = read_aaaa(&dom.col_id_t[0] + r + 12);
+#if 1
+             v3_oldi = read_aaaa(&col_id_t[0] + i + 8);
              v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets); // offsets?
-             v     = _mm512_add_ps(v, _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale) ); // scale = 4 bytes (floats)
-            _mm512_storenrngo_ps(result_vt+r, v);
+             v     = _mm512_add_ps(v, _mm512_i32gather_ps(v3_oldi, vec_vt, scale) ); // scale = 4 bytes (floats)
+
+             v3_oldi = read_aaaa(&col_id_t[0] + i + 12);
+             v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets); // offsets?
+             v     = _mm512_add_ps(v, _mm512_i32gather_ps(v3_oldi, vec_vt, scale) ); // scale = 4 bytes (floats)
+#endif
+            _mm512_storenrngo_ps(result_vt+i, v); 
+            // 138Gflops without the gathers
         }
+       }
+       //printf("nb_rows= %d\n", nb_rows); // temporary
 #endif // BANDGATHER
 //----------------------------------------------------------------------
 
