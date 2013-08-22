@@ -52,7 +52,7 @@ CXX        := g++ -g
 CC         := gcc
 LINK       := g++ -g
 
-OPT        := -O0
+OPT        := -O2
 MMIC       :=  
 MMIC       := -mmic
 CXX        := icpc  -openmp $(MMIC)  -diag-enable openmp  -vec-report3 ${OPT}
@@ -106,11 +106,11 @@ LIB_ARCH        := $(OSARCH)
 # NDEBUG: suppress asserts in rcm.cpp and speeds up boost
 # method_8a_multi
 PERMUTE := 
+GATHER := 
 PERMUTE := -DPERMUTE
 GATHER := -DGATHER
-GATHER := 
-CXXFLAGS  := $(CXXWARN_FLAGS)  -NDEBUG 
-CFLAGS    := $(CWARN_FLAGS)  -NDEBUG 
+CXXFLAGS  := $(CXXWARN_FLAGS)  -DNDEBUG 
+CFLAGS    := $(CWARN_FLAGS)  -DNDEBUG 
 
 # Common flags
 COMMONFLAGS += $(INCLUDES) -DUNIX

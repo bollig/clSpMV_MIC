@@ -222,17 +222,18 @@ void ELL_OPENMP<T>::run()
 	//method_5(4); // correct results
 	//method_6(4);
 
-#if 0
+#if 1
     rd.nb_rows = rd.n3d*rd.n3d*rd.n3d;
+    printf("rd.nb_rows: %d\n", rd.nb_rows);
     int save_nb_threads = omp_get_num_threads();
     //for (int i=0; i < 13; i++) {
-    for (int i=1; i < 0; i++) {
+    for (int i=12; i < 13; i++) {
         omp_set_num_threads(num_threads[i]);
         printf("rd/wr, nb threads: %d\n", num_threads[i]);
 	    method_rd_wr(4); // correct results
     }
-	printf("\n============== METHOD RD/WR LOCAL THREAD ===================\n");
-    for (int i=0; i < 13; i++) {
+    //for (int i=0; i < 13; i++) {
+    for (int i=12; i < 13; i++) {
         omp_set_num_threads(num_threads[i]);
         method_rd_wr_local_thread(4);
     }
@@ -1293,6 +1294,7 @@ void ELL_OPENMP<T>::method_6(int nbit)
 template <typename T>
 void ELL_OPENMP<T>::method_rd_wr_local_thread(int nbit)
 {
+	printf("\n============== METHOD RD/WR LOCAL THREAD ===================\n");
     double tot_bw = 0.;
     int nb_threads = omp_get_max_threads();
     std::vector<double> tim(nb_threads);
@@ -1404,7 +1406,6 @@ void ELL_OPENMP<T>::method_rd_wr_local_thread(int nbit)
 template <typename T>
 void ELL_OPENMP<T>::method_rd_wr(int nbit)
 {
-#if 1
 	printf("============== METHOD RD/WR ===================\n");
     printf("Implement streaming\n");
 
@@ -1425,33 +1426,94 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
     result_vt = (float*) _mm_malloc(sizeof(float)*nb_rows, 64);
     printf("vec_vt= %ld\n", (long) vec_vt);
  
-#if 1
+//#define BANDLOAD
+//#define BANDCPP
+//#define BANDUNPACK
+#define BANDGATHER
+ 
     // Time pure loads
     for (int it=0; it < 10; it++) {
         tm["spmv"]->start();
 #pragma omp parallel
 {
+
+
+#ifdef BANDLOAD
 #pragma omp for
-#if 1
+//-------------------------------------------------
 //#pragma noprefetch
        for (int r=0; r  < nb_rows; r += 16) {
-       	    //_mm_prefetch ((const char*) vec_vt+r+2048, _MM_HINT_T1);
+       	    //_mm_prefetch ((const char*) vec_vt+r+2048, _MM_HINT_T1); // slows down
             const __m512 v1_old = _mm512_load_ps(vec_vt + r);
             //_mm512_store_ps(result_vt + r, v1_old);
             _mm512_storenrngo_ps(result_vt+r, v1_old);
             //_mm512_store_ps(result_vt + r, _mm512_load_ps(vec_vt+r));
         }
-#else
+#endif  // BANDLOAD
+//-------------------------------------------------
+#ifdef BANDUNPACK
+       __m512 v3_old;
+#pragma omp for
+        for (int r=0; r < nb_rows; r+=16) {
+            // retrieve 4 elements per read_aaaa, expand to 16 elements via masking
+            v3_old = read_aaaa(vec_vt+r);
+            //v3_old = read_aaaa(vec_vt+r+4);
+            //v3_old = read_aaaa(vec_vt+r+8);
+            //v3_old = read_aaaa(vec_vt+r+12);
+            // use addition to ensure that dead code is not eliminated
+            //v3_old = _mm512_add_ps(read_aaaa(vec_vt+r+4), v3_old);
+            //v3_old = _mm512_add_ps(read_aaaa(vec_vt+r+8), v3_old);
+            //v3_old = _mm512_add_ps(read_aaaa(vec_vt+r+12), v3_old);
+            _mm512_storenrngo_ps(result_vt+r, v3_old);
+       }
+#endif  // BANDUNPACK
+//-------------------------------------------------
+#ifdef BANDCPP
 //simd no effect on timing
 //#pragma omp simd
 //#pragma noprefetch
 // 133 Mbytes with prefetch
 //  95 Mbytes with noprefetch
+//  150 Gbytes/sec
+#pragma omp for
        for (int r=0; r  < nb_rows; r++) {
+#pragma SIMD
             result_vt[r] = vec_vt[r];
         }
-#endif
-}
+#endif // BANDCPP
+//----------------------------------------------------------------------
+#ifdef BANDGATHER
+const __m512i offsets = _mm512_set4_epi32(3,2,1,0);  // original
+const __m512i four = _mm512_set4_epi32(4,4,4,4); 
+__m512i v3_oldi;
+__m512  v;
+const int scale = 4;
+
+// There will be differences depending on the matrix type. Create specialized col_id_t matrix for this
+// experiment. 
+#pragma omp for
+        for (int r=0; r < nb_rows; r+=16) { 
+             v3_oldi = read_aaaa(&dom.col_id_t[0] + r);    // ERROR: dom not known
+             v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets); // offsets?
+             v     = _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale); // scale = 4 bytes (floats)
+
+             v3_oldi = read_aaaa(&dom.col_id_t[0] + r + 4);
+             v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets); // offsets?
+             v     = _mm512_add_ps(v, _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale) ); // scale = 4 bytes (floats)
+
+             v3_oldi = read_aaaa(&dom.col_id_t[0] + r + 8);
+             v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets); // offsets?
+             v     = _mm512_add_ps(v, _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale) ); // scale = 4 bytes (floats)
+
+             v3_oldi = read_aaaa(&dom.col_id_t[0] + r + 12);
+             v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets); // offsets?
+             v     = _mm512_add_ps(v, _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale) ); // scale = 4 bytes (floats)
+            _mm512_storenrngo_ps(result_vt+r, v);
+        }
+#endif // BANDGATHER
+//----------------------------------------------------------------------
+
+} // OMP parallel
        tm["spmv"]->end();
        elapsed = tm["spmv"]->getTime();
        float gbytes = nb_rows*sizeof(float) * 2 * 1.e-9;
@@ -1466,8 +1528,6 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
             nb_rows*sizeof(float)*1.e-6);
     printf("16 at a time\n");
     printf("r/w, max bandwidth= %f (gbytes/sec), time: %f (ms)\n", max_bandwidth, min_elapsed);
-#endif
-//---------------------------
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -1593,8 +1653,7 @@ void ELL_OPENMP<T>::method_7(int nbit)
         max_gflops = gflops;
         min_elapsed = elapsed;
     }
-   }
-#endif
+}
     printf("Max gflops: %f, time: %f (ms)\n", max_gflops, elapsed);
 
     //checkSolutions();
@@ -1804,62 +1863,7 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
     generateInputMatricesAndVectorsMulti();
     bandwidth(subdomains[0].col_id_t, nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
     bandwidthQ(subdomains[0], nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
-    //bandwidth(subdomains[1].col_id_t, rd.nb_rows, rd.stencil_size, rd.nb_vecs);
-#if 0
-    {
-        printf("====== CutHill McGee ======\n");
-        int nb_vert = nb_rows_multi[0] * rd.stencil_size;
-        int nb_vert_1 = nb_vec_elem_multi[0] * rd.stencil_size;
-        printf("nb_vert= %d, nb_vert_1= %d\n", nb_vert, nb_vert_1);
-        int flags = 0;
-        std::vector<int> xadj(nb_rows_multi[0]+1); 
-        for (int i=0; i < (nb_rows_multi[0]+1); i++) {
-            xadj[i] = i*rd.stencil_size;
-        }
-        int* adj = subdomains[0].col_id_t;
-        std::vector<int> perm(nb_vert_1);
-        std::vector<int> perm_inv(nb_vert_1);
-        std::vector<int> degree(nb_vert_1);
-        signed char* mask = new signed char [nb_vert_1];
-        std::fill(mask, mask+nb_vert_1, 0);
-        //genrcmi(nb_vert, flags, &xadj[0], adj, &perm[0], mask, &degree[0]);
-        //genrcmi(nb_vert, flags, &xadj[0], adj, &perm[0], mask, &degree[0]);
-        //permInverse3(nb_vert, &perm[0], &perm_inv[0]);
-        int adj_num = 1;
-        //int bw = adj_bandwidth(nb_rows_multi[0], adj_num, &xadj[0], adj);
-        //int adj_bw = adj_perm_bandwidth(nb_rows_multi[0], adj_num, &xadj[0], adj, 
-            //&perm[0], &perm_inv[0]);
-        //printf("adj_bandwidth= %d\n", bw);
-        //printf("adj_perm_bandwidth= %d\n", adj_bw);
-        //printf("after genrcmi\n");
-
-        printf("USING BURKARDT ROUTINES\n");
-        // Apparently I must add "1" to all elements of adj to work with Burkardt code, which has
-        // its origins in Matlab and C++. Inefficient. 
-        for (int i=0; i < nb_vert; i++) {
-            adj[i] += 1;   // subtract 1 when finished. 
-        }
-        for (int i=0; i <= nb_rows_multi[0]; i++) { // not sure this is needed
-            xadj[i] += 1;
-        }
-        bur::genrcm(nb_vec_elem_multi[0], nb_vert, &xadj[0], adj, &perm[0]);
-//    void genrcm ( int node_num, int adj_num, int adj_row[], int adj[], int perm[] )
-//    Input, int NODE_NUM, the number of nodes.
-//    Input, int ADJ_NUM, the number of adjacency entries.
-        //bur::genrcm(nb_rows_multi[0], nb_vert, &xadj[0], adj, &perm[0]);
-    //genrcmi(const int n , const int flags,
-                           //const int *xadj, const int *adj,
-                           //int *perm,
-                           //signed char *mask, int *deg);
-        printf("after bur::genrcm\n");
-        bur::perm_inverse3 ( nb_vec_elem_multi[0], &perm[0], &perm_inv[0] );
-        int bur_bw = bur::adj_perm_bandwidth ( nb_vec_elem_multi[0], nb_vert, &xadj[0], adj, &perm[0], &perm_inv[0] );
-        printf("bur_bw= %d\n", bur_bw);
-        delete [] mask;
-        exit(0);
-    }
-#endif
-
+ 
     float gflops;
     float max_gflops = 0.;
     float elapsed = 0.; 
@@ -2242,7 +2246,7 @@ __m512 ELL_OPENMP<T>::read_aaaa(float* a)
     // read in 4 floats (a,b,c,d) and create the 
     // 16-float vector dddd,cccc,bbbb,aaaa
 
-    int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
+    const int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
     __mmask16 mask_lo = _mm512_int2mask(int_mask_lo);
     __m512 v1_old;
     v1_old = _mm512_setzero_ps();
