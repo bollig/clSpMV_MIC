@@ -1432,8 +1432,8 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
     printf("after col_id_t allocated\n");
 
 //#define COLCOMPACT
-#define COLREVERSE
-//#define COLRANDOM
+//#define COLREVERSE
+#define COLRANDOM
 
 #ifdef COLCOMPACT
     for (int i=0; i < nb_rows; i++) {
@@ -1468,10 +1468,13 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
     }
 #endif
  
-//#define BANDLOAD
+//#define BANDRDWR
+#define BANDRD
+#define BANDWR
 //#define BANDCPP
+//#define BANDCPPGATHER
 //#define BANDUNPACK
-#define BANDGATHER
+//#define BANDGATHER
 
     // Time pure loads
     for (int it=0; it < 10; it++) {
@@ -1480,10 +1483,32 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
 {
 
 
-#ifdef BANDLOAD
-#pragma omp for
 //-------------------------------------------------
+#ifdef BANDRD
+__m512 sum = _mm512_setzero_ps();
+
+#pragma omp for
+       for (int i=0; i  < nb_rows; i += 16) {
+            sum = _mm512_add_ps(_mm512_load_ps(vec_vt+i), sum);
+            //_mm512_storenrngo_ps(result_vt+i, sum);
+        }
+        _mm512_storenrngo_ps(result_vt, sum);
+#endif  // BANDRD
+//-------------------------------------------------
+#ifdef BANDWR
+__m512 sumwr = _mm512_setzero_ps();
+
+#pragma omp for
+       for (int i=0; i  < nb_rows; i += 16) {
+            //sum = _mm512_add_ps(_mm512_load_ps(vec_vt+i), sum);
+            _mm512_storenrngo_ps(result_vt+i, sumwr);
+        }
+#endif  // BANDWR
+//-------------------------------------------------
+#ifdef BANDRDWR
+#pragma omp for
 //#pragma noprefetch
+        // only nb_rows*sizeof(float) bytes transferred
        for (int i=0; i  < nb_rows; i += 16) {
        	    //_mm_prefetch ((const char*) vec_vt+r+2048, _MM_HINT_T1); // slows down
             const __m512 v1_old = _mm512_load_ps(vec_vt + i);
@@ -1491,7 +1516,7 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
             _mm512_storenrngo_ps(result_vt+i, v1_old);
             //_mm512_store_ps(result_vt + r, _mm512_load_ps(vec_vt+r));
         }
-#endif  // BANDLOAD
+#endif  // BANDRDWR
 //-------------------------------------------------
 #ifdef BANDUNPACK
        __m512 v3_old;
@@ -1508,18 +1533,20 @@ void ELL_OPENMP<T>::method_rd_wr(int nbit)
 #endif  // BANDUNPACK
 //-------------------------------------------------
 #ifdef BANDCPP
-//simd no effect on timing
-//#pragma omp simd
-//#pragma noprefetch
-// 133 Mbytes with prefetch
-//  95 Mbytes with noprefetch
-//  150 Gbytes/sec
 #pragma omp for
        for (int r=0; r  < nb_rows; r++) {
 #pragma SIMD
             result_vt[r] = vec_vt[r];
         }
 #endif // BANDCPP
+//----------------------------------------------------------------------
+#ifdef BANDCPPGATHER
+#pragma omp for
+       for (int r=0; r  < nb_rows; r++) {
+#pragma SIMD
+            result_vt[r] = vec_vt[col_id_t[r]];
+        }
+#endif // BANDCPPGATHER
 //----------------------------------------------------------------------
 #ifdef BANDGATHER
        {
