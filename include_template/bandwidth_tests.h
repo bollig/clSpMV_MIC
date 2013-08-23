@@ -12,6 +12,9 @@ namespace spmv {
 
 class MemoryBandwidth
 {
+private:
+    ProjectSettings* pj;
+
 public:
     float gflops;
     float max_gflops = 0.;
@@ -24,6 +27,7 @@ public:
     std::string experiment_s;
     int nb_iter;
     EB::TimerList tm; // timers
+
 
     float* vec_vt;
     float* result_vt;
