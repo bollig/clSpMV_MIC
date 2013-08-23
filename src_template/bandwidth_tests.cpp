@@ -12,9 +12,19 @@ MemoryBandwidth::MemoryBandwidth(int nb_rows)
     min_elapsed = 0.; 
     this->nb_rows = nb_rows;
 
+    int offset = 3; // ignore first offset measurements
+    tm["spmv"] = new EB::Timer("memory benchmarks", offset);
+
     ProjectSettings pj("test.conf");
     experiment_s  = REQUIRED<std::string>("experiment");
     col_id_type_s = REQUIRED<std::string>("col_id_type");
+}
+//----------------------------------------------------------------------
+void MemoryBandwidth::free()
+{
+    _mm_free(vec_vt);
+    _mm_free(result_vt);
+    _mm_free(col_id_t);
 }
 //----------------------------------------------------------------------
 void MemoryBandwidth::initialize()
@@ -24,7 +34,7 @@ void MemoryBandwidth::initialize()
     col_id_t = (int*) _mm_malloc(sizeof(int)*nb_rows, 64);
     nb_iter = 10;
 
-    if (co_id_type_s == "compact") {
+    if (col_id_type_s == "compact") {
         for (int i=0; i < nb_rows; i++) {
             col_id_t[i] = i;
         }
@@ -70,8 +80,8 @@ void MemoryBandwidth::run()
         else if (experiment_s == "read_write") benchReadWrite();
         else if (experiment_s == "gather") benchGather();
         else if (experiment_s == "unpack") benchUnpack();
-        else if (experiment_s == "read_cpp") benchReadCpp();
-        else if (experiment_s == "write_cpp") benchWriteCpp();
+        //else if (experiment_s == "read_cpp") benchReadCpp();
+        //else if (experiment_s == "write_cpp") benchWriteCpp();
         else if (experiment_s == "read_write_cpp") benchReadWriteCpp();
         else if (experiment_s == "gather_cpp") benchGatherCpp();
   }
@@ -126,25 +136,25 @@ void MemoryBandwidth::benchReadWrite()
     }
 }
 //----------------------------------------------------------------------
-void MemoryBandwidth::benchCpp()
+void MemoryBandwidth::benchReadWriteCpp()
 {
 #pragma omp for
-       for (int r=0; r  < nb_rows; r++) {
 #pragma SIMD
+       for (int r=0; r  < nb_rows; r++) {
             result_vt[r] = vec_vt[r];
         }
 }
 //----------------------------------------------------------------------
-void MemoryBandwidth::benchCppGather()
+void MemoryBandwidth::benchGatherCpp()
 {
 #pragma omp for
-       for (int r=0; r  < nb_rows; r++) {
 #pragma SIMD
+       for (int r=0; r  < nb_rows; r++) {
             result_vt[r] = vec_vt[col_id_t[r]];
         }
 }
 //----------------------------------------------------------------------
-void MemoryBandwidth::benchCppUnpack()
+void MemoryBandwidth::benchUnpack()
 {
    __m512 v3_old;
 #pragma omp for
@@ -199,13 +209,8 @@ void MemoryBandwidth::benchGather()
 
 
 
-__m512 MemoryBandwidth::tensor_product(float* a, float* b)
-{
-        __m512 va = read_aaaa(a);
-        __m512 vb = read_abcd(b);
-        return _mm512_mul_ps(va, vb);
-}
 //----------------------------------------------------------------------
+#if 0
 __m512 MemoryBandwidth::permute(__m512 v1, _MM_PERM_ENUM perm)
 //  Read 4 floats and copy them to four other lanes
 //  trick: __m512i _mm512_castps_si512(__m512 IN)
@@ -219,6 +224,7 @@ __m512 MemoryBandwidth::permute(__m512 v1, _MM_PERM_ENUM perm)
     v1 = _mm512_castsi512_ps(vi);
     return v1;
 }
+#endif
 //----------------------------------------------------------------------
 __m512i MemoryBandwidth::read_aaaa(int* a)
 {
@@ -254,11 +260,15 @@ __m512 MemoryBandwidth::read_aaaa(float* a)
 }
 //----------------------------------------------------------------------
 
+}; // end namespace
+
 int main()
 {
     int nb_rows = 128*128*128*16;
-    MemoryBandwidth mem(nb_rows);
+    spmv::MemoryBandwidth mem(nb_rows);
     mem.initialize();
     mem.run();
     mem.free();
+    return(0);
 }
+

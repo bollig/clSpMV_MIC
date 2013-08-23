@@ -33,6 +33,9 @@ DEFINES = -DCL_DEVICE_TYPE_DEF=CL_DEVICE_TYPE_ACCELERATOR
 #COMMONFILES		:= util.cpp fileio.cpp oclcommon.cpp
 COMMONFILES		:= util.cpp projectsettings.cpp timer_eb.cpp runs.cpp mmio.cpp rcm.cpp burkardt_rcm.cpp 
 OPENMPFILES := spmv_ell_openmp.cpp
+MEMORYFILES := bandwidth_tests.cpp
+MEM_COMMONFILES := projectsettings.cpp timer_eb.cpp
+
 #SINGLEFILES		:= mem_bandwidth.cpp spmv_csr_scalar.cpp spmv_csr_vector.cpp spmv_bdia.cpp spmv_dia.cpp spmv_ell.cpp spmv_coo.cpp spmv_bell.cpp spmv_bcsr.cpp spmv_sell.cpp spmv_sbell.cpp spmv_all.cpp
 SINGLEFILES		:=  spmv_all.cpp 
 #BENCHFILES    		:= bench_bdia.cpp bench_dia.cpp bench_bell.cpp bench_sbell.cpp bench_bcsr.cpp bench_sell.cpp bench_ell.cpp bench_csr.cpp bench_coo.cpp bench_overhead.cpp
@@ -63,7 +66,9 @@ LINK       := icpc  -openmp $(MMIC)  ${OPT}
 # Includes
 CWD=/mnt/global/LCSE/gerlebacher/src/clSpMV_MIC
 INC=-I$(CWD)/ViennaCL-1.4.2 -Iinclude_template 
+#INC_MEM=-Iinclude_template 
 INCLUDES  += $(INCDIR) -I${OCLCOMMONDIR}/include  -I/usr/boost-1.45/include $(INC)
+#INCLUDES_MEM  += $(INCDIR) -I${OCLCOMMONDIR}/include  $(INC_MEM)
 
 ifeq "$(strip $(HP_64))" ""
 	MACHINE := 32
@@ -167,7 +172,10 @@ CFLAGS    += $(COMMONFLAGS) $(DEFINEFLAGS)
 ################################################################################
 OBJDIR := $(ROOTOBJDIR)/$(BINSUBDIR)
 COMMONOBJS +=  $(patsubst %.cpp,$(OBJDIR)/%.cpp.o,$(notdir $(COMMONFILES)))
+MEM_COMMONOBJS +=  $(patsubst %.cpp,$(OBJDIR)/%.cpp.o,$(notdir $(MEM_COMMONFILES)))
 OPENMPOBJS +=  $(patsubst %.cpp,$(OBJDIR)/%.cpp.o,$(notdir $(OPENMPFILES)))
+MEMORYOBJS +=  $(patsubst %.cpp,$(OBJDIR)/%.cpp.o,$(notdir $(MEMORYFILES)))
+C_MEMORYOBJS +=  $(patsubst %.cpp,$(OBJDIR)/%.cpp.o,$(notdir $(C_MEMORYFILES)))
 SINGLEOBJS +=  $(patsubst %.cpp,$(OBJDIR)/%.cpp.o,$(notdir $(SINGLEFILES)))
 BENCHOBJS +=  $(patsubst %.cpp,$(OBJDIR)/%.cpp.o,$(notdir $(BENCHFILES)))
 COCKTAILOBJS +=  $(patsubst %.cpp,$(OBJDIR)/%.cpp.o,$(notdir $(COCKTAILFILES)))
@@ -211,6 +219,12 @@ bench: $(COMMONOBJS) $(BENCHOBJS)
 openmp: $(COMMONOBJS) $(OPENMPOBJS)
 	#$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_openmp -std=c++0x -O2 $(COMMONOBJS) $(OPENMPOBJS) $(LIB)
 	$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_openmp -std=c++0x $(COMMONOBJS) $(OPENMPOBJS) $(LIB)
+
+memorytests: $(MEM_COMMONOBJS) $(MEMORYOBJS)
+	echo "gordon"
+	echo "$(MEMORYOBJS)"
+	echo "$(MEM_COMMONOBJS)"
+	$(VERBOSE)$(LINK) -o $(TARGETDIR)/memory_tests -std=c++0x $(MEM_COMMONOBJS) $(MEMORYOBJS) $(LIB)
 
 cocktail: $(COMMONOBJS) $(COCKTAILOBJS)
 	#$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_cocktail $(COMMONOBJS) $(COCKTAILOBJS) $(LIB)
