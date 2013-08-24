@@ -27,6 +27,7 @@ public:
     std::string experiment_s;
     int nb_iter;
     EB::TimerList tm; // timers
+    int nb_bytes_per_row;
 
 
     float* vec_vt;
@@ -34,7 +35,7 @@ public:
     int* col_id_t;
 
 public:
-    MemoryBandwidth(int nb_rows);
+    MemoryBandwidth();
     //~MemoryBandwidth(int nb_rows);
     void initialize();
     void free();
