@@ -1,5 +1,7 @@
 #include "bandwidth_tests.h"
 #include "timer_eb.h"
+#include <vector>
+#include <algorithm>
 
 namespace spmv {
 
@@ -88,6 +90,8 @@ void MemoryBandwidth::initialize()
 //----------------------------------------------------------------------
 void MemoryBandwidth::run()
 {
+    //benchReadWriteCppAlone(); exit(0); // TEMPORARY
+        
     printf("*** run: nb_rows= %d\n", nb_rows);
 
     //omp_set_num_threads(num_threads[i]);
@@ -95,17 +99,22 @@ void MemoryBandwidth::run()
     max_bandwidth = 0.; 
     min_elapsed = 0.; 
     nb_bytes_per_row = 0;
+    bw.resize(0);
 
     for (int i=0; i < nb_iter; i++) {
         tm["spmv"]->start();
+        //benchReadWriteCpp();
+#if 1
         if (experiment_s == "write") benchWrite();
         else if (experiment_s == "read") benchRead();
         else if (experiment_s == "read_write") benchReadWrite();
         else if (experiment_s == "gather") benchGather();
         else if (experiment_s == "unpack") benchUnpack();
         else if (experiment_s == "read_write_cpp") benchReadWriteCpp();
+        else if (experiment_s == "read_write_cpp_alone") { benchReadWriteCppAlone(); exit(0); }
         else if (experiment_s == "gather_cpp") benchGatherCpp();
         else { printf("experiment not implemented\n"); exit(0); }
+#endif
         tm["spmv"]->end();
         if (i < 3) continue;
 
@@ -115,14 +124,15 @@ void MemoryBandwidth::run()
         elapsed = tm["spmv"]->getTime();
         float gbytes = nb_rows * nb_bytes_per_row * 1.e-9;
         float bandwidth = gbytes / (elapsed*1.e-3);
+        bw.push_back(bandwidth);
 
-        if (bandwidth > max_bandwidth) {
-            max_bandwidth = bandwidth;
-            min_elapsed = elapsed;
-        }
     }  // for loop
 
-    printf("r/w, max bandwidth= %f (gbytes/sec), time: %f (ms)\n", max_bandwidth, min_elapsed);
+    std::sort(bw.begin(), bw.end());
+    int sz = bw.size();
+    //for (int i=0; i < 7; i++) { printf("bw[%d] = %f\n", i, bw[i]); }
+    // 2nd highest bandwidth (in case highest one is an outlier)
+    printf("r/w, max bandwidth= %f (gbytes/sec)%f\n", bw[sz-2]);
 }
 //----------------------------------------------------------------------
 void MemoryBandwidth::benchRead()
@@ -180,6 +190,46 @@ void MemoryBandwidth::benchReadWrite()
 }  // omp parallel
 }
 //----------------------------------------------------------------------
+void MemoryBandwidth::benchReadWriteCppAlone()
+{
+    bw.resize(0);
+    printf("-- benchReadWriteCppAlone() --\n");
+    //int nr = 128*128*128*4;
+    //int nb_rows = nr;
+    int nr = nb_rows;
+    //printf("(benchReadWriteCppAlone, nb_rows= %d\n", nb_rows);
+    int nb_bytes_per_row = 8;
+    _mm_free(vec_vt);
+    _mm_free(result_vt);
+    vec_vt = (float*) _mm_malloc(sizeof(float)*nb_rows, 64);
+    result_vt = (float*) _mm_malloc(sizeof(float)*nb_rows, 64);
+
+    for (int i=0; i < 10; i++) {
+        tm["spmv"]->start();
+    
+#pragma omp parallel firstprivate(nr)
+{
+#pragma omp for 
+   for (int r=0; r < nr; r++) {
+        result_vt[r] = vec_vt[r];
+   }
+} // omp parallel
+        tm["spmv"]->end();
+        if (i < 3) continue;
+        float elapsed = tm["spmv"]->getTime();
+        //printf("elapsed= %f\n", elapsed);
+        float gbytes = nr * nb_bytes_per_row * 1.e-9;
+        float bandwidth = gbytes / (elapsed*1.e-3);
+        bw.push_back(bandwidth);
+    }
+    int sz = bw.size();
+    std::sort(bw.begin(), bw.end());
+    // print 2nd maximum bandwidth
+    printf("r/w alone, max bandwidth= %f (gbytes/sec)\n", bw[sz-2]);
+    _mm_free(vec_vt);
+    _mm_free(result_vt);
+}
+//----------------------------------------------------------------------
 void MemoryBandwidth::benchReadWriteCpp()
 {
     printf("== benchReadWriteCpp ==\n");
@@ -188,21 +238,10 @@ void MemoryBandwidth::benchReadWriteCpp()
 
 #pragma omp parallel
 {
-    int nr = nb_rows;
-    printf("nr= %d\n", nr);
-
-#if 0
-#pragma omp for
-   for (int r=0; r < nr; r+=16) {
-#pragma simd
-   for (int j=0; j < 16; j++) {
-        result_vt[r+j] = vec_vt[r+j];
-   } }
-#endif
+    const int nr = nb_rows;
 
 #if 1
 #pragma omp for
-#pragma simd
    for (int r=0; r < nr; r++) {
         result_vt[r] = vec_vt[r];
    }
@@ -231,7 +270,7 @@ void MemoryBandwidth::benchUnpack()
     printf("== benchUnpack ==\n");
     nb_bytes_per_row = 8;
 
-#pragma omp_parallel
+#pragma omp parallel
 {
     int nr = nb_rows;
    __m512 v3_old;
@@ -253,7 +292,7 @@ void MemoryBandwidth::benchGather()
     printf("== benchGather ==\n");
     nb_bytes_per_row = 12;
 
-#pragma omp_parallel
+#pragma omp parallel
 {
     int nr = nb_rows;
     const __m512i offsets = _mm512_set4_epi32(3,2,1,0);  // original

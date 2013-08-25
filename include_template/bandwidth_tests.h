@@ -3,6 +3,7 @@
 
 #include <omp.h>
 #include <string>
+#include <vector>
 #include "timer_eb.h"
 #include "projectsettings.h"
 #include <immintrin.h>
@@ -28,6 +29,7 @@ public:
     int nb_iter;
     EB::TimerList tm; // timers
     int nb_bytes_per_row;
+    std::vector<float> bw;
 
 
     float* vec_vt;
@@ -47,6 +49,7 @@ public:
     void benchGatherCpp();
     void benchUnpack();
     void benchReadWriteCpp();
+    void benchReadWriteCppAlone();
 
 private:
     __m512  permute(__m512 v1, _MM_PERM_ENUM perm);

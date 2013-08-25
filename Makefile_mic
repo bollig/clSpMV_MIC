@@ -55,10 +55,10 @@ CXX        := g++ -g
 CC         := gcc
 LINK       := g++ -g
 
-OPT        := -O2
+OPT        := -O3 -openmp-report2 -LNO:simd=2 -LNO:simd_verbose=ON
 MMIC       :=  
 MMIC       := -mmic
-CXX        := icpc  -openmp $(MMIC)  -diag-enable openmp  -vec-report3 ${OPT}
+CXX        := icpc  -openmp $(MMIC)  -diag-enable openmp  ${OPT}
 CC         := icc ${OPT}
 LINK       := icpc  -openmp $(MMIC)  ${OPT}
 

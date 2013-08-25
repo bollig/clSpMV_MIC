@@ -171,6 +171,7 @@ $(OBJDIR)/%.c.o : $(SRCDIR)/%.c $(C_DEPS)
 	$(VERBOSE)$(CXX) $(CFLAGS) -o $@ -c $<
 
 $(OBJDIR)/%.cpp.o : $(SRCDIR)/%.cpp $(C_DEPS)
+	#$(VERBOSE)$(CXX) $(CXXFLAGS) -S  -fsource-asm
 	$(VERBOSE)$(CXX) $(CXXFLAGS) -o $@ -c $<
 
 all: makedirectories single bench cocktail
