@@ -55,7 +55,9 @@ CXX        := g++ -g
 CC         := gcc
 LINK       := g++ -g
 
-OPT        := -O3 -openmp-report2 -LNO:simd=2 -LNO:simd_verbose=ON
+OPT        := -O3 -openmp-report2 -LNO:simd_verbose=ON 
+#-funroll-loops 
+#-opt-prefetch=4 -opt-threads_per_core=4
 MMIC       :=  
 MMIC       := -mmic
 CXX        := icpc  -openmp $(MMIC)  -diag-enable openmp  ${OPT}
@@ -253,3 +255,6 @@ clobber : clean
 ###   
 ###   -ipo-S    generate a multi-file assembly file (ipo_out.S) 
 ###   
+
+tar:
+	tar cvf mem_bandwidth.tar */band*test*  test.conf Mak*mic mem*py

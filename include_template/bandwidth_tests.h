@@ -7,6 +7,7 @@
 #include "timer_eb.h"
 #include "projectsettings.h"
 #include <immintrin.h>
+#include <malloc.h>
 
 
 namespace spmv {
@@ -29,7 +30,6 @@ public:
     int nb_iter;
     EB::TimerList tm; // timers
     int nb_bytes_per_row;
-    std::vector<float> bw;
 
 
     float* vec_vt;
