@@ -26,7 +26,6 @@ MemoryBandwidth::MemoryBandwidth()
 
 	if (use_script) {
     	pj->ParseFile("bench.conf");
-        printf("parsed bench.conf\n");
 	}
 
     //pj = new ProjectSettings("/mnt/global/LCSE/gerlebacher/mic/test.conf");
@@ -107,9 +106,11 @@ void MemoryBandwidth::run()
         //benchReadWriteCpp();
 #if 1
         if (experiment_s == "write") benchWrite();
+        else if (experiment_s == "write_cpp") benchWriteCpp();
         else if (experiment_s == "read_write_cpp") benchReadWriteCpp();
         else if (experiment_s == "read_write_cpp_alone") { benchReadWriteCppAlone();} // exit(0); }
         else if (experiment_s == "read") benchRead();
+        else if (experiment_s == "read_cpp") benchReadCpp();
         else if (experiment_s == "read_write") benchReadWrite();
         else if (experiment_s == "gather") benchGather();
         else if (experiment_s == "unpack") benchUnpack();
@@ -134,12 +135,58 @@ void MemoryBandwidth::run()
     //for (int i=0; i < 7; i++) { printf("bw[%d] = %f\n", i, bw[i]); }
     // 2nd highest bandwidth (in case highest one is an outlier)
     //printf("r/w, max bandwidth= %f (gbytes/sec)\n", bw[sz-1]);
-    printf("r/w, max bandwidth= %f (gbytes/sec)\n", bw[sz-2]);
+    printf("rows: %d (x 128^3), max bandwidth= %f (gbytes/sec)\n", nb_rows/(128*128*128), bw[sz-2]);
+    printf("nb_rows: %d,mx_bw: %f\n", nb_rows/(128*128*128), bw[sz-2]);
+}
+//----------------------------------------------------------------------
+void MemoryBandwidth::benchWriteCpp()
+{
+    //printf("== benchReadCpp ==\n");
+    nb_bytes_per_row = 4;
+    __assume_aligned(result_vt, 64);
+    __assume_aligned(vec_vt, 64);
+
+    tm["spmv"]->start();
+#pragma omp parallel
+{
+    float sum = 5.;
+    const int nr = nb_rows;
+#pragma ivdep
+#pragma omp for
+   for (int i=0; i < nr; i++) {
+        result_vt[i] = sum;
+    }
+} // omp parallel
+     tm["spmv"]->end();
+}
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+void MemoryBandwidth::benchReadCpp()
+{
+    //printf("== benchReadCpp ==\n");
+    nb_bytes_per_row = 4;
+    __assume_aligned(result_vt, 64);
+    __assume_aligned(vec_vt, 64);
+
+    tm["spmv"]->start();
+#pragma omp parallel
+{
+    float sum;
+    const int nr = nb_rows;
+#pragma ivdep
+#pragma omp for
+   for (int i=0; i < nr; i++) {
+        sum += vec_vt[i];
+        //_mm512_storenrngo_ps(result_vt+i, sum);
+    }
+   result_vt[0] = sum;
+} // omp parallel
+     tm["spmv"]->end();
 }
 //----------------------------------------------------------------------
 void MemoryBandwidth::benchRead()
 {
-    printf("== benchRead ==\n");
+    //printf("== benchRead ==\n");
     nb_bytes_per_row = 4;
 
     tm["spmv"]->start();
@@ -204,6 +251,8 @@ void MemoryBandwidth::benchReadWriteCppAlone()
     //bw.resize(0);
     nb_bytes_per_row = 8;
     int nr = nb_rows;
+    __assume_aligned(result_vt, 64);
+    __assume_aligned(vec_vt, 64);
     //printf("-- benchReadWriteCppAlone() --\n");
 
     //for (int i=0; i < 10; i++) {
@@ -211,6 +260,7 @@ void MemoryBandwidth::benchReadWriteCppAlone()
     tm["spmv"]->start();
 #pragma omp parallel firstprivate(nr)
 {
+#pragma ivdep
 #pragma omp for 
    for (int r=0; r < nr; r++) {
         result_vt[r] = vec_vt[r];
@@ -238,10 +288,13 @@ void MemoryBandwidth::benchReadWriteCpp()
     //printf("== benchReadWriteCpp ==\n");
     nb_bytes_per_row = 8;
     const int nr = nb_rows;
+    __assume_aligned(result_vt, 64);
+    __assume_aligned(vec_vt, 64);
 
     tm["spmv"]->start();
 #pragma omp parallel firstprivate(nr)
 {
+#pragma ivdep
 #pragma omp for
    for (int r=0; r < nr; r++) {
         //float a = vec_vt[r];
@@ -262,15 +315,17 @@ void MemoryBandwidth::benchReadWriteCpp()
 //----------------------------------------------------------------------
 void MemoryBandwidth::benchGatherCpp()
 {
-    printf("== benchGatherCpp ==\n");
+    //printf("== benchGatherCpp ==\n");
     nb_bytes_per_row = 12;
+    __assume_aligned(result_vt, 64);
+    __assume_aligned(vec_vt, 64);
 
     tm["spmv"]->start();
 #pragma omp parallel
 {
     int nr = nb_rows;
+#pragma ivdep
 #pragma omp for
-#pragma simd
        for (int r=0; r < nr; r++) {
             result_vt[r] = vec_vt[col_id_t[r]];
         }
@@ -280,7 +335,7 @@ void MemoryBandwidth::benchGatherCpp()
 //----------------------------------------------------------------------
 void MemoryBandwidth::benchUnpack()
 {
-    printf("== benchUnpack ==\n");
+    //printf("== benchUnpack ==\n");
     nb_bytes_per_row = 8;
 
     tm["spmv"]->start();
@@ -304,7 +359,7 @@ void MemoryBandwidth::benchUnpack()
 //----------------------------------------------------------------------
 void MemoryBandwidth::benchGather()
 {
-    printf("== benchGather ==\n");
+    //printf("== benchGather ==\n");
     nb_bytes_per_row = 12;
 
     tm["spmv"]->start();
@@ -341,6 +396,7 @@ void MemoryBandwidth::benchGather()
          v     = _mm512_add_ps(v, _mm512_i32gather_ps(v3_oldi, vec_vt, scale) ); // scale = 4 bytes (floats)
 #endif
         _mm512_storenrngo_ps(result_vt+i, v); 
+        //_mm512_store_ps(result_vt+i, v); 
         // 138Gflops without the gathers
     }
 } // omp parallel
@@ -404,14 +460,36 @@ __m512 MemoryBandwidth::read_aaaa(float* a)
 
 }; // end namespace
 
-int main()
+int varyRows()
 {
+    //int nbr[] = {1,2,4,8,16,32,64};
+    //int nbr[] = {1,2,4,8,16,32,64};
+    std::vector<int> nb_rows(7); 
+    nb_rows.resize(0);
+    int count=0;
+    for (int i=2; i < 66; i+=2) {
+        nb_rows.push_back(i);  
+        count++;
+    }
+    //std::copy(nbr, nbr+count, nb_rows.begin());
     spmv::MemoryBandwidth mem;
-    printf("before init\n");
-    mem.initialize();
-    printf("after init\n");
-    mem.run();
-    mem.free();
+    int mult = 128*128*128;
+
+    for (int i=0; i < nb_rows.size(); i++) {
+        printf("--------------------------------\n");
+        printf("i= %d, rows: %d\n" , i), nb_rows[i];
+        mem.setNbRows(mult*nb_rows[i]);
+        mem.initialize();
+        mem.run();
+        mem.free();
+    }
     return(0);
 }
 
+//----------------------------------------------------------------------
+int main()
+{
+    // different tests
+    varyRows();
+    return(0);
+}

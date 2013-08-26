@@ -39,11 +39,14 @@ public:
 public:
     MemoryBandwidth();
     //~MemoryBandwidth(int nb_rows);
+    void setNbRows(int nb_rows_) { this->nb_rows = nb_rows_; }
     void initialize();
     void free();
     void run();
     void benchRead();
+    void benchReadCpp();
     void benchWrite();
+    void benchWriteCpp();
     void benchReadWrite();
     void benchGather();
     void benchGatherCpp();

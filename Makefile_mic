@@ -55,7 +55,8 @@ CXX        := g++ -g
 CC         := gcc
 LINK       := g++ -g
 
-OPT        := -O3 -openmp-report2 -LNO:simd_verbose=ON 
+# -restrict: allow use of RESTRICT keyword to disambibuate pointers. 
+OPT        := -O3 -openmp-report2 -LNO:simd_verbose=ON  
 #-funroll-loops 
 #-opt-prefetch=4 -opt-threads_per_core=4
 MMIC       :=  
