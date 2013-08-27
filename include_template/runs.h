@@ -34,12 +34,17 @@ public:
     stencilType sparsity; // **
     int diag_sep;
     int inner_bandwidth;
-    int sort_col_indices = 1;
+    int sort_col_indices;
+    int random_seed;
     int nonzero_stats;  // random, Gaussian, etc.
     int n3d; // average size of 3d grid. nb_rows = n3d^3
-    int random_seed = 0;
 
 public:
+    RunData()
+    {
+        sort_col_indices = 1;
+        random_seed = 0;
+    }
 	void print();
 };
 #endif

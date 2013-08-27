@@ -2307,6 +2307,7 @@ __m512i ELL_OPENMP<T>::read_aaaa(int* a)
     // read in 4 ints (a,b,c,d) and create the 
     // 16-float vector dddd,cccc,bbbb,aaaa  (a is least significant)
 
+#if 0
     int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
     //int int_mask_lo = (1 << 0) + (1 << 1) + (1 << 2) + (1 << 3);
     __mmask16 mask_lo = _mm512_int2mask(int_mask_lo);
@@ -2315,6 +2316,7 @@ __m512i ELL_OPENMP<T>::read_aaaa(int* a)
     v1_old = _mm512_mask_loadunpacklo_epi32(v1_old, mask_lo, a);
     v1_old = _mm512_mask_loadunpackhi_epi32(v1_old, mask_lo, a);
     v1_old = _mm512_swizzle_epi32(v1_old, _MM_SWIZ_REG_AAAA);
+#endif
     return v1_old;
 }
 //----------------------------------------------------------------------
@@ -2324,7 +2326,7 @@ __m512 ELL_OPENMP<T>::read_aaaa(float* a)
     // only works with floats
     // read in 4 floats (a,b,c,d) and create the 
     // 16-float vector dddd,cccc,bbbb,aaaa
-
+#if 0
     const int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
     __mmask16 mask_lo = _mm512_int2mask(int_mask_lo);
     __m512 v1_old;
@@ -2332,6 +2334,7 @@ __m512 ELL_OPENMP<T>::read_aaaa(float* a)
     v1_old = _mm512_mask_loadunpacklo_ps(v1_old, mask_lo, a);
     v1_old = _mm512_mask_loadunpackhi_ps(v1_old, mask_lo, a);
     v1_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
+#endif
     return v1_old;
 }
 //----------------------------------------------------------------------
@@ -2388,9 +2391,10 @@ __m512 ELL_OPENMP<T>::read_abcd(float* a)
 {
     // read in 4 floats (a,b,c,d) and create the 
     // 16-float vector dcba,dcba,dcba,dcba
-
+#if 0
     __m512 v1_old = _mm512_extload_ps(a, _MM_UPCONV_PS_NONE, _MM_BROADCAST_4X16, _MM_HINT_NONE);
     return v1_old;
+#endif
 }
 //----------------------------------------------------------------------
 template <typename T>

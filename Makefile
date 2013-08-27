@@ -33,8 +33,10 @@ DEFINES = -DCL_DEVICE_TYPE_DEF=CL_DEVICE_TYPE_ACCELERATOR
 # Add source files here
 # C/C++ source files (compiled with gcc / c++)
 #COMMONFILES		:= util.cpp fileio.cpp oclcommon.cpp
-COMMONFILES		:= util.cpp oclcommon.cpp cl_base_class.cpp projectsettings.cpp timer_eb.cpp runs.cpp mmio.cpp
-OPENMPFILES := spmv_ell_openmp.cpp
+#COMMONFILES		:= util.cpp oclcommon.cpp cl_base_class.cpp projectsettings.cpp timer_eb.cpp runs.cpp mmio.cpp
+COMMONFILES		:= util.cpp projectsettings.cpp timer_eb.cpp runs.cpp mmio.cpp rcm.cpp burkardt_rcm.cpp 
+#OPENMPFILES := spmv_ell_openmp.cpp
+OPENMPFILES := spmv_ell_openmp_host.cpp
 #SINGLEFILES		:= mem_bandwidth.cpp spmv_csr_scalar.cpp spmv_csr_vector.cpp spmv_bdia.cpp spmv_dia.cpp spmv_ell.cpp spmv_coo.cpp spmv_bell.cpp spmv_bcsr.cpp spmv_sell.cpp spmv_sbell.cpp spmv_all.cpp
 SINGLEFILES		:=  spmv_all.cpp 
 #BENCHFILES    		:= bench_bdia.cpp bench_dia.cpp bench_bell.cpp bench_sbell.cpp bench_bcsr.cpp bench_sell.cpp bench_ell.cpp bench_csr.cpp bench_coo.cpp bench_overhead.cpp
@@ -44,13 +46,15 @@ COCKTAILFILES    	:=
 ################################################################################
 
 
+OPT        := -O3 -openmp-report2 -LNO:simd_verbose=ON  
 # detect if 32 bit or 64 bit system
 HP_64 =	$(shell uname -m | grep 64)
 OSARCH= $(shell uname -m)
 
 
 # Compilers
-CXX        := g++ -g
+#CXX        := g++ -g
+CXX        := icpc  -openmp  -diag-enable openmp  ${OPT}
 CC         := gcc
 LINK       := g++ -g
 
@@ -60,7 +64,8 @@ LINK       := icpc  -openmp
 
 
 # Includes
-INCLUDES  += $(INCDIR) -I${OCLCOMMONDIR}/include -I/usr/boost-1.45/include
+INC=-I$(PWD)/ViennaCL-1.4.2 -Iinclude_template 
+INCLUDES  += $(INCDIR) -I${OCLCOMMONDIR}/include -I/usr/boost-1.45/include ${INC}
 
 ifeq "$(strip $(HP_64))" ""
 	MACHINE := 32
@@ -126,7 +131,8 @@ endif
 # Libs
 LIB       := ${USRLIBDIR} -L${OPENCL_ROOT}/lib64/ -L${OCLLIBDIR}
 #LIB += -lintelocl -lcl_logger -ltask_executor -ltbb_preview -lOpenCL ${OPENGLLIB} ${LIB} 
-LIB += -lintelocl -lcl_logger -ltask_executor -ltbb_preview -lOpenCL ${OPENGLLIB} ${LIB} 
+#LIB += -lintelocl -lcl_logger -ltask_executor -ltbb_preview -lOpenCL ${OPENGLLIB} ${LIB} 
+LIB += -ltbb_preview -lOpenCL ${OPENGLLIB} ${LIB} 
 
 
 # Lib/exe configuration
@@ -199,7 +205,7 @@ bench: $(COMMONOBJS) $(BENCHOBJS)
 	#$(VERBOSE)$(LINK) -o $(TARGETDIR)/bench_overhead $(OBJDIR)/bench_overhead.cpp.o $(COMMONOBJS) $(LIB)
 
 openmp: $(COMMONOBJS) $(OPENMPOBJS)
-	$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_openmp -std=c++0x -O2 $(COMMONOBJS) $(OPENMPOBJS) $(LIB)
+	$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_openmp_host -std=c++0x -O2 $(COMMONOBJS) $(OPENMPOBJS) $(LIB)
 
 cocktail: $(COMMONOBJS) $(COCKTAILOBJS)
 	#$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_cocktail $(COMMONOBJS) $(COCKTAILOBJS) $(LIB)
