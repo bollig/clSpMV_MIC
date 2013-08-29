@@ -33,7 +33,8 @@ void genrcmi(const int n, const int flags,
 
 
 // for ic
-//#include <immintrin.h>
+#include <immintrin.h>
+//#include <xmmintrin.h>
 #define _mm512_loadnr_pd(block) _mm512_extload_pd(block, _MM_UPCONV_PD_NONE, _MM_BROADCAST64_NONE, _MM_HINT_NT)
 #define _mm512_loadnr_ps(block) _mm512_extload_ps(block, _MM_UPCONV_PD_NONE, _MM_BROADCAST64_NONE, _MM_HINT_NT)
 
@@ -171,10 +172,17 @@ public:
     //inline __m512i read_aaaa(int* a);
     //inline __m512 read_abcd(float* a);
     //inline __m512 tensor_product(float* a, float* b);
+    //inline __m256 read_aaaa_shift(float* a);
+    //inline __m256 read_aaaa(float* a);
+    inline __m256 read_abcd(float* a);
+    inline void read_aaaa(float* a, __m256& v1, __m256& v2);
+    inline void read_aaaa(int* col, float* vec, __m256& v1, __m256& v2);
+    void read_abcd(float* a, __m256& word1, __m256& word2);
+    void read_abcd(const int col_id, float* a, __m256& word1);
     void print_f(float* res, const std::string msg="");
     void print_i(int* res, const std::string msg="");
-    //void print_ps(const __m512 v1, const std::string msg="");
-    //void print_epi32(const __m512i v1, const std::string msg="");
+    void print_ps(const __m256 v1, const std::string msg="");
+    void print_epi32(const __m256i v1, const std::string msg="");
     void generate_ell_matrix_by_row(std::vector<int>& col_id, std::vector<T>& data, int nb_elem);
     void generate_ell_matrix_data(T* data, int nbz, int nb_rows, int nb_mat);
     //void generate_ell_matrix_data(std::vector<T> data, int nbz, int nb_rows, int nb_mat);
@@ -213,6 +221,7 @@ template <typename T>
 void ELL_OPENMP_HOST<T>::run()
 {
     int num_threads[] = {1,2,4,8,16,32,64,96,128,160,192,224,244};
+    omp_set_num_threads(1);
 
     int count = 0;
     int max_nb_runs = 1;
@@ -595,79 +604,95 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
       for (int s=0; s < nb_subdomains; s++) {
         //printf("iter %d, subdom %d\n", it, s);
 // Should all 4 subdomains be contained in a single omp parallel pragma?
+
+#if 0
+    for (int i=0; i < 8; i++) {
+        subdomains[0].vec_vt[i] = 100 + i;
+    }
+    for (int i=0; i < 4; i++) {
+        printf("col_id_t[%d] = %d\n", i, subdomains[0].col_id_t[i]);
+    }
+    __m256 w1, w2;
+    read_abcd(subdomains[0].vec_vt, w1, w2);
+    printf("====== read_aaaa \n");
+    read_aaaa(subdomains[0].vec_vt, w1, w2);
+    print_ps(w1, "read_aaaa, w1");
+    print_ps(w2, "read_aaaa, w2");
+    printf("====== read_aaaa \n");
+    read_aaaa(subdomains[0].col_id_t, subdomains[0].vec_vt, w1, w2);
+    print_ps(w1, "read_aaaa, w1 offset=0");
+    print_ps(w2, "read_aaaa, w2");
+    read_aaaa(subdomains[0].col_id_t+4, subdomains[0].vec_vt, w1, w2);
+    print_ps(w1, "read_aaaa, w1 offset=1");
+    print_ps(w2, "read_aaaa, w2");
+
+    //===============================================
+    printf("====== read_abcd using col_id\n");
+    read_abcd(subdomains[0].col_id_t[0], subdomains[0].vec_vt, w1);
+    read_abcd(subdomains[0].col_id_t[1], subdomains[0].vec_vt, w1);
+    read_abcd(subdomains[0].col_id_t[2], subdomains[0].vec_vt, w1);
+    //printf("after read_abcd\n");
+    //--------------------------------------
+    //read_aaaa(subdomains[0].col_id_t+2, subdomains[0].vec_vt, w1, w2);
+    //print_ps(w1, "read_aaaa, w1 offset=2");
+    //print_ps(w2, "read_aaaa, w2");
+    //print_ps(rrr, "rrr register: ");
+    //(0,54.000000), (1,-23.230000), (2,122.120003), (3,-67.230003), (4,0.187054), (5,0.490117), (6,0.069274), (7,0.153250), 
+    exit(0);
+
+    printf("before omp parallel\n");
+#endif
+
 #pragma omp parallel firstprivate(nz)
 {
     const int nb_rows = nb_rows_multi[s];
-    const int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
+    const int int_mask_lo = (2 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
     const int nb_mat = 4;
     const int nb_vec = 4;
-    const int scale = 4;
     const int nz = rd.stencil_size;
     const Subdomain& dom = subdomains[s];
 
-#if 0
-    __m512 v1_old = _mm512_setzero_ps();
-    __m512 v2_old = _mm512_setzero_ps();
-    __m512 v3_old = _mm512_setzero_ps();
-    __m512i i3_old = _mm512_setzero_epi32();
-    __m512  v = _mm512_setzero_ps(); // TEMPORARY
-   const __m512i offsets = _mm512_set4_epi32(3,2,1,0);  // original
-   const __m512i four = _mm512_set4_epi32(4,4,4,4); 
-    //printf("after subdomain\n");
+    //printf("after const\n");
+    __m256 mul1;
+    __m256 mul2;
+    __m256 v1_old;
+    __m256 v2_old;
+    __m256 w1_old;
+    //printf("after 256\n");
 
+    for (int r=0; r < nb_rows; r++) {
+        if (r%100 == 0) printf("r= %d, nz= %d\n", r, nz);
+        __m256 accu1 = _mm256_setzero_ps();
+        __m256 accu2 = _mm256_setzero_ps();
 
-#if 1
-#pragma omp for 
-        for (int r=0; r < nb_rows; r++) {
-            __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
+        for (int n=0; n < nz; n += 4) {
+            printf("n= %d\n", n);
+            int offset = nb_mat*(n+r*nz);
+            // read  8 floats, use only 4
+            read_aaaa(dom.data_t+offset, v1_old, v2_old);
+            //printf("after 1st aaaa\n");
+            read_abcd(nb_mat*dom.col_id_t[offset], dom.vec_vt, w1_old);
+            exit(0); // seg fault between here and first line of read_bacd
+            //printf("after 1st abcd\n");
+            mul1 = _mm256_mul_ps(v1_old, w1_old);
+            mul2 = _mm256_mul_ps(v2_old, w1_old);
+            accu1 = _mm256_add_ps(accu1, mul1);
+            accu2 = _mm256_add_ps(accu2, mul2);
+            read_abcd(nb_mat*dom.col_id_t[offset]+4, dom.vec_vt, w1_old);
+            //printf("after 2nd abcd\n");
+            mul1 = _mm256_mul_ps(v1_old, w1_old);
+            mul2 = _mm256_mul_ps(v2_old, w1_old);
+            accu1 = _mm256_add_ps(accu1, mul1);
+            accu2 = _mm256_add_ps(accu2, mul2);
+        }
+        printf("before store\n");
+        _mm256_store_ps(dom.result_vt+nb_mat*nb_vec*r, accu1);
+        _mm256_store_ps(dom.result_vt+nb_mat*nb_vec*r+8, accu2);
+        //if (r > 10000) break;
+    }
 
-#pragma simd
-            for (int n=0; n < nz; n+=4) {  // nz is multiple of 32 (for now)
-                v1_old = _mm512_load_ps(dom.data_t + nb_mat*(n + r*nz)); // load 16 at a time
-
-                __m512i v3_oldi = read_aaaa(&dom.col_id_t[0]+n+nz*r);
-                v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets);
-                //printf("after v3_oldi\n");
-#ifdef GATHER
-                v     = _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale); // scale = 4 bytes (floats)
-#else
-                v = _mm512_load_ps(dom.vec_vt);
-#endif
-
-#ifndef PERMUTE 
-                v3_old = v;
-#endif
-                //printf("after v\n");
-
-#ifdef PERMUTE
-                v3_old = permute(v, _MM_PERM_AAAA);
-#endif
-                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
-                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-
-#ifdef PERMUTE
-                v3_old = permute(v, _MM_PERM_BBBB);
-#endif
-                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_BBBB);
-                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-
-#ifdef PERMUTE
-                v3_old = permute(v, _MM_PERM_CCCC);
-#endif
-                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_CCCC);
-                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-
-#ifdef PERMUTE
-                v3_old = permute(v, _MM_PERM_DDDD);
-#endif
-                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_DDDD);
-                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-            }
-            _mm512_storenrngo_ps(dom.result_vt+nb_mat*nb_vec*r, accu);  
-        } 
-#endif
-#endif
 } // omp parallel
+    printf("exit omp parallel\n");
      }
         tm["spmv"]->end();  // time for each matrix/vector multiply
         elapsed = tm["spmv"]->getTime();
@@ -951,6 +976,104 @@ __m512 ELL_OPENMP_HOST<T>::read_aaaa(float* a)
 #endif
 //----------------------------------------------------------------------
 template <typename T>
+__m256 ELL_OPENMP_HOST<T>::read_abcd(float* a)
+{
+    // read 8 floats a,b,c,d,  e,f,g,h (I cannot read 4 floats at a time)
+    // So I would call this routine twice, once to get e,f,g,h twice, and once
+    // to get a,b,c,d twice. The second time, the load will be free since the data will 
+    // be in cache. The new routine will have a 2nd argument (shift or no shift). 
+    //
+    __m256 v;
+    __m256 vv;
+    __m128 v128;
+
+    v = _mm256_load_ps(a);
+    v128 = _mm256_extractf128_ps(v, 1);
+    vv = _mm256_insertf128_ps(v, v128, 0);
+//    print_ps(vv, "insertf128_ps");     // e,f,g,h,   e,f,g,h
+
+    v128 = _mm256_extractf128_ps(v, 0);
+    vv = _mm256_insertf128_ps(v, v128, 1);  // a,b,c,d,  a,b,c,d
+    //print_ps(vv, "insertf128_ps");
+
+    return(v);
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP_HOST<T>::read_abcd(float* a, __m256& word1, __m256& word2)
+{
+    // read 8 floats a,b,c,d,  e,f,g,h (I cannot read 4 floats at a time)
+    // So I would call this routine twice, once to get e,f,g,h twice, and once
+    // to get a,b,c,d twice. The second time, the load will be free since the data will 
+    // be in cache. The new routine will have a 2nd argument (shift or no shift). 
+    //
+    __m256 v;
+    __m128 v128;
+
+    v = _mm256_load_ps(a);
+    v128 = _mm256_extractf128_ps(v, 0);
+    word2 = _mm256_insertf128_ps(v, v128, 1);  // a,b,c,d,  a,b,c,d
+    //print_ps(word2, "insertf128_ps");
+
+    v128 = _mm256_extractf128_ps(v, 1);
+    word1 = _mm256_insertf128_ps(v, v128, 0);
+    //print_ps(word1, "insertf128_ps");     // e,f,g,h,   e,f,g,h
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP_HOST<T>::read_abcd(const int col_id, float* a, __m256& word1)
+{
+    // reads 4 vectors from float array, pointed to by first argument
+    printf("read_abcd\n");
+    exit(0);
+    __m256 v;
+    __m128 v128;
+    v = _mm256_loadu_ps(a+(col_id));
+    v128 = _mm256_extractf128_ps(v, 0);
+    word1 = _mm256_insertf128_ps(v, v128, 1);  // a,b,c,d,  a,b,c,d
+//    print_ps(word1, "insertf128_ps");
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP_HOST<T>::read_aaaa(float* a, __m256& v1, __m256& v2)
+{
+    // a : unaligned pointer to memory
+    // in v1: aaaa bbbb
+    // in v2: cccc dddd
+    __m256 v;
+    __m256 w, w1;
+    __m128 v128;
+
+    // read 8 floats, but only use first four
+    //v = _mm256_load_ps(a+4);
+    v = _mm256_loadu_ps(a);  // unpack version, no alignment requirements
+    // whatever happens on the first four floats will happen on the 2nd four floats
+
+    w = _mm256_permute_ps(v, 0xff); 
+    w1 = _mm256_permute_ps(v, 0xaa);
+
+    v128 = _mm256_extractf128_ps(w, 0);
+    v2 = _mm256_insertf128_ps(w1, v128, 1);
+
+    w = _mm256_permute_ps(v, 0x55);
+    w1 = _mm256_permute_ps(v, 0x0);
+
+    v128 = _mm256_extractf128_ps(w, 0);
+    v1 = _mm256_insertf128_ps(w1, v128, 1);
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP_HOST<T>::read_aaaa(int* col, float* vec, __m256& v1, __m256& v2)
+{
+    int i = *col;
+    read_aaaa(vec+i, v1, v2);
+}
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+template <typename T>
 void ELL_OPENMP_HOST<T>::print_f(float* res, const std::string msg)
 {
     printf("--- %s ---\n", msg.c_str());
@@ -970,34 +1093,31 @@ void ELL_OPENMP_HOST<T>::print_i(int* res, const std::string msg)
     printf("\n\n");
 }
 //----------------------------------------------------------------------
-#if 0
+#if 1
 template <typename T>
-void ELL_OPENMP_HOST<T>::print_ps(const __m512 v1, const std::string msg)
+void ELL_OPENMP_HOST<T>::print_ps(const __m256 v1, const std::string msg)
 {
     //return;
-    float* res = (float*) _mm_malloc(32*sizeof(float), 64);
-    _mm512_store_ps(res, v1);
+    float* res = (float*) _mm_malloc(16*sizeof(float), 32);
+    _mm256_store_ps(res, v1);
     printf("--- %s ---\n", msg.c_str());
     for (int i=0; i < 8; i++) { printf("(%d,%f), ", i, res[i]); }
-    printf("\n");
-    for (int i=8; i < 16; i++) { printf("(%d,%f), ", i, res[i]); }
+    //printf("\n");
+    //for (int i=8; i < 16; i++) { printf("(%d,%f), ", i, res[i]); }
     printf("\n\n");
     _mm_free(res);
 }
 #endif
 //----------------------------------------------------------------------
-#if 0
+#if 1
 template <typename T>
-void ELL_OPENMP_HOST<T>::print_epi32(const __m512i v1, const std::string msg)
+void ELL_OPENMP_HOST<T>::print_epi32(const __m256i v1, const std::string msg)
 {
-    //return;
-    int* res = (int*) _mm_malloc(32*sizeof(int), 64);
-    _mm512_store_epi32(res, v1);
+    int* res = (int*) _mm_malloc(8*sizeof(int), 32);
+    _mm256_store_si256((__m256i*) res, v1);
     printf("\n--- %s ---\n", msg.c_str());
     for (int i=0; i < 8; i++) { printf("(%d,%d), ", i, res[i]); }
     printf("\n");
-    for (int i=8; i < 16; i++) { printf("(%d,%d), ", i, res[i]); }
-    printf("\n\n");
     _mm_free(res);
 }
 #endif
@@ -1358,10 +1478,10 @@ void ELL_OPENMP_HOST<T>::generateInputMatricesAndVectors()
    //   new_nonzero_stats)
 
 //----------------------------------------------------------------
-    vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_rows, 64);
-    result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * nb_rows, 64);
+    vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_rows, 32);
+    result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * nb_rows, 32);
     col_id_t  = (int*)   _mm_malloc(sizeof(int)   * tot_nz, 16);
-    data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * tot_nz, 64);
+    data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * tot_nz, 32);
 
 #if 0
     printf("nb_vec= %d\n", nb_vec);
@@ -1408,10 +1528,10 @@ void ELL_OPENMP_HOST<T>::generateInputMatricesAndVectorsMulti()
 
         Subdomain& s = subdomains[i];
 
-        s.vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * vec_size, 64);
-        s.result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * nb_rows, 64);
+        s.vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * vec_size, 32);
+        s.result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * nb_rows, 32);
         s.col_id_t  = (int*)   _mm_malloc(sizeof(int)   * tot_nz, 16);
-        s.data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * tot_nz, 64);
+        s.data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * tot_nz, 32);
 
         //printf("before generate vector\n");
 
