@@ -167,18 +167,11 @@ public:
 //#endif
     void method_8a_multi(int nb=0);
 
-    //inline __m512 permute(__m512 v1, _MM_PERM_ENUM perm);
-    //inline __m512 read_aaaa(float* a);
-    //inline __m512i read_aaaa(int* a);
-    //inline __m512 read_abcd(float* a);
-    //inline __m512 tensor_product(float* a, float* b);
-    //inline __m256 read_aaaa_shift(float* a);
-    //inline __m256 read_aaaa(float* a);
     inline __m256 read_abcd(float* a);
     inline void read_aaaa(float* a, __m256& v1, __m256& v2);
     inline void read_aaaa(int* col, float* vec, __m256& v1, __m256& v2);
     void read_abcd(float* a, __m256& word1, __m256& word2);
-    void read_abcd(const int col_id, float* a, __m256& word1);
+    void read_abcd(int col_id, float* a, __m256& word1);
     void print_f(float* res, const std::string msg="");
     void print_i(int* res, const std::string msg="");
     void print_ps(const __m256 v1, const std::string msg="");
@@ -495,87 +488,6 @@ void ELL_OPENMP_HOST<T>::method_7a(int nbit)
 template <typename T>
 void ELL_OPENMP_HOST<T>::method_8a(int nbit)
 {
-#if 0
-	printf("============== METHOD 8a ===================\n");
-
-    //generateInputMatricesAndVectors();
-    generateInputMatricesAndVectorsMulti();
-    // I created a dummy subdomain that is the entire domain
-    //printf("subdomains[0].col_id_t[262000] = %d\n", subdomains[0].col_id_t[262000]); exit(0);
-    bandwidth(subdomains[0].col_id_t, rd.nb_rows, rd.stencil_size, rd.nb_rows);
-
-    float gflops;
-    float max_gflops = 0.;
-    float elapsed = 0.; 
-    float min_elapsed = 0.; 
-    int nb_rows = rd.nb_rows;
-    int nz = rd.stencil_size;
-
-    // Must now work on alignmentf vectors. 
-    // Produces the correct serial result
-    for (int it=0; it < 10; it++) {
-        tm["spmv"]->start();
-#pragma omp parallel firstprivate(nb_rows, nz)
-{
-    const int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
-    const int nb_mat = 4;
-    const int nb_vec = 4;
-    const int scale = 4;
-    const int nz = rd.stencil_size;
-
-    __m512 v1_old = _mm512_setzero_ps();
-    __m512 v2_old = _mm512_setzero_ps();
-    __m512 v3_old = _mm512_setzero_ps();
-    __m512i i3_old = _mm512_setzero_epi32();
-   const __m512i offsets = _mm512_set4_epi32(3,2,1,0);  // original
-   const __m512i four = _mm512_set4_epi32(4,4,4,4); 
-
-
-#pragma omp for 
-        for (int r=0; r < nb_rows; r++) {
-            __m512 accu = _mm512_setzero_ps(); // 16 floats for 16 matrices
-
-#pragma simd
-            for (int n=0; n < nz; n+=4) {  // nz is multiple of 32 (for now)
-                v1_old = _mm512_load_ps(data_t + nb_mat*(n + r*nz)); // load 16 at a time
-
-                __m512i v3_oldi = read_aaaa(&col_id_t[0]+n+nz*r);
-                v3_oldi = _mm512_fmadd_epi32(v3_oldi, four, offsets);
-                __m512  v     = _mm512_i32gather_ps(v3_oldi, vec_vt, scale); // scale = 4 bytes (floats)
-
-                v3_old = permute(v, _MM_PERM_AAAA);
-                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
-                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-
-                v3_old = permute(v, _MM_PERM_BBBB);
-                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_BBBB);
-                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-
-                v3_old = permute(v, _MM_PERM_CCCC);
-                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_CCCC);
-                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-
-                v3_old = permute(v, _MM_PERM_DDDD);
-                v2_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_DDDD);
-                accu = _mm512_fmadd_ps(v3_old, v2_old, accu);
-            }
-            _mm512_storenrngo_ps(result_vt+nb_mat*nb_vec*r, accu);
-        } 
-}
-        tm["spmv"]->end();  // time for each matrix/vector multiply
-        elapsed = tm["spmv"]->getTime();
-        gflops = rd.nb_mats * rd.nb_vecs * 2.*rd.stencil_size*rd.nb_rows*1e-9 / (1e-3*elapsed); // assumes count of 1
-        printf("gflops= %f\n", gflops);
-        if (gflops > max_gflops) {
-            max_gflops = gflops;
-            min_elapsed = elapsed;
-        }
-   }
-
-   printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
-   //checkSolutions();
-   freeInputMatricesAndVectors();
-#endif
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -605,48 +517,10 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
         //printf("iter %d, subdom %d\n", it, s);
 // Should all 4 subdomains be contained in a single omp parallel pragma?
 
-#if 0
-    for (int i=0; i < 8; i++) {
-        subdomains[0].vec_vt[i] = 100 + i;
-    }
-    for (int i=0; i < 4; i++) {
-        printf("col_id_t[%d] = %d\n", i, subdomains[0].col_id_t[i]);
-    }
-    __m256 w1, w2;
-    read_abcd(subdomains[0].vec_vt, w1, w2);
-    printf("====== read_aaaa \n");
-    read_aaaa(subdomains[0].vec_vt, w1, w2);
-    print_ps(w1, "read_aaaa, w1");
-    print_ps(w2, "read_aaaa, w2");
-    printf("====== read_aaaa \n");
-    read_aaaa(subdomains[0].col_id_t, subdomains[0].vec_vt, w1, w2);
-    print_ps(w1, "read_aaaa, w1 offset=0");
-    print_ps(w2, "read_aaaa, w2");
-    read_aaaa(subdomains[0].col_id_t+4, subdomains[0].vec_vt, w1, w2);
-    print_ps(w1, "read_aaaa, w1 offset=1");
-    print_ps(w2, "read_aaaa, w2");
-
-    //===============================================
-    printf("====== read_abcd using col_id\n");
-    read_abcd(subdomains[0].col_id_t[0], subdomains[0].vec_vt, w1);
-    read_abcd(subdomains[0].col_id_t[1], subdomains[0].vec_vt, w1);
-    read_abcd(subdomains[0].col_id_t[2], subdomains[0].vec_vt, w1);
-    //printf("after read_abcd\n");
-    //--------------------------------------
-    //read_aaaa(subdomains[0].col_id_t+2, subdomains[0].vec_vt, w1, w2);
-    //print_ps(w1, "read_aaaa, w1 offset=2");
-    //print_ps(w2, "read_aaaa, w2");
-    //print_ps(rrr, "rrr register: ");
-    //(0,54.000000), (1,-23.230000), (2,122.120003), (3,-67.230003), (4,0.187054), (5,0.490117), (6,0.069274), (7,0.153250), 
-    exit(0);
-
-    printf("before omp parallel\n");
-#endif
 
 #pragma omp parallel firstprivate(nz)
 {
     const int nb_rows = nb_rows_multi[s];
-    const int int_mask_lo = (2 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
     const int nb_mat = 4;
     const int nb_vec = 4;
     const int nz = rd.stencil_size;
@@ -661,31 +535,34 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
     //printf("after 256\n");
 
     for (int r=0; r < nb_rows; r++) {
-        if (r%100 == 0) printf("r= %d, nz= %d\n", r, nz);
+        //if (r%100 == 0) printf("r= %d, nz= %d\n", r, nz);
         __m256 accu1 = _mm256_setzero_ps();
         __m256 accu2 = _mm256_setzero_ps();
 
-        for (int n=0; n < nz; n += 4) {
-            printf("n= %d\n", n);
-            int offset = nb_mat*(n+r*nz);
-            // read  8 floats, use only 4
-            read_aaaa(dom.data_t+offset, v1_old, v2_old);
+        for (int n=0; n < nz; n++) {  // more loop elements
+            int offset = n+r*nz;
+            //printf("n= %d, offset= %d\n", n, offset);
+            // read  8 floats, use only 
+            read_aaaa(dom.data_t+nb_mat*offset, v1_old, v2_old); // generates the error in read_abcd? 
             //printf("after 1st aaaa\n");
-            read_abcd(nb_mat*dom.col_id_t[offset], dom.vec_vt, w1_old);
-            exit(0); // seg fault between here and first line of read_bacd
+            //printf("arg= %d\n", nb_mat*dom.col_id_t[offset]);
+            read_abcd(nb_vec*dom.col_id_t[offset], dom.vec_vt, w1_old);
             //printf("after 1st abcd\n");
             mul1 = _mm256_mul_ps(v1_old, w1_old);
             mul2 = _mm256_mul_ps(v2_old, w1_old);
             accu1 = _mm256_add_ps(accu1, mul1);
             accu2 = _mm256_add_ps(accu2, mul2);
-            read_abcd(nb_mat*dom.col_id_t[offset]+4, dom.vec_vt, w1_old);
+
+#if 0
+            read_abcd(nb_vec*dom.col_id_t[offset+1]+ dom.vec_vt, w1_old);
             //printf("after 2nd abcd\n");
             mul1 = _mm256_mul_ps(v1_old, w1_old);
             mul2 = _mm256_mul_ps(v2_old, w1_old);
             accu1 = _mm256_add_ps(accu1, mul1);
             accu2 = _mm256_add_ps(accu2, mul2);
+#endif
         }
-        printf("before store\n");
+        //printf("before store\n");
         _mm256_store_ps(dom.result_vt+nb_mat*nb_vec*r, accu1);
         _mm256_store_ps(dom.result_vt+nb_mat*nb_vec*r+8, accu2);
         //if (r > 10000) break;
@@ -899,81 +776,7 @@ void ELL_OPENMP_HOST<T>::fill_random(ell_matrix<int, T>& mat, std::vector<T>& v)
             mat.ell_data[i] = getRandf(); // problem is with random matrices
             mat.ell_data[i] = 1.0;  // worked
     }
-
-#if 0
-    for (int i=0; i < 32; i++) {
-    for (int j=0; j < 32; j++) {
-        mat.ell_data[i+32*j] = (float) j; // worked
-        mat.ell_data[i+32*j] = (float) i; // get a zero product. NOT POSSIBLE.
-    }}
-#endif
 }
-//----------------------------------------------------------------------
-#if 0
-template <typename T>
-__m512 ELL_OPENMP_HOST<T>::tensor_product(float* a, float* b)
-{
-        __m512 va = read_aaaa(a);
-        __m512 vb = read_abcd(b);
-        return _mm512_mul_ps(va, vb);
-}
-#endif
-//----------------------------------------------------------------------
-#if 0
-template <typename T>
-__m512 ELL_OPENMP_HOST<T>::permute(__m512 v1, _MM_PERM_ENUM perm)
-//  Read 4 floats and copy them to four other lanes
-//  trick: __m512i _mm512_castps_si512(__m512 IN)
-//  Use _mm512_shuffle_epi32(__m512i v2, _MM_PERM_ENUM permute)
-//  permute =  255  (all lanes the smae
-{
-    __m512i vi = _mm512_castps_si512(v1);
-    //vi = _mm512_shuffle_epi32(vi, _MM_PERM_AAAA);
-    vi = _mm512_permute4f128_epi32(vi, perm);
-    // shuffle is like a swizzle
-    v1 = _mm512_castsi512_ps(vi);
-    return v1;
-}
-#endif
-//----------------------------------------------------------------------
-#if 0
-template <typename T>
-__m512i ELL_OPENMP_HOST<T>::read_aaaa(int* a)
-{
-    // only works with ints
-    // read in 4 ints (a,b,c,d) and create the 
-    // 16-float vector dddd,cccc,bbbb,aaaa  (a is least significant)
-
-    int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
-    //int int_mask_lo = (1 << 0) + (1 << 1) + (1 << 2) + (1 << 3);
-    __mmask16 mask_lo = _mm512_int2mask(int_mask_lo);
-    __m512i v1_old;
-    v1_old = _mm512_setzero_epi32();
-    v1_old = _mm512_mask_loadunpacklo_epi32(v1_old, mask_lo, a);
-    v1_old = _mm512_mask_loadunpackhi_epi32(v1_old, mask_lo, a);
-    v1_old = _mm512_swizzle_epi32(v1_old, _MM_SWIZ_REG_AAAA);
-    return v1_old;
-}
-#endif
-//----------------------------------------------------------------------
-#if 0
-template <typename T>
-__m512 ELL_OPENMP_HOST<T>::read_aaaa(float* a)
-{
-    // only works with floats
-    // read in 4 floats (a,b,c,d) and create the 
-    // 16-float vector dddd,cccc,bbbb,aaaa
-
-    const int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
-    __mmask16 mask_lo = _mm512_int2mask(int_mask_lo);
-    __m512 v1_old;
-    v1_old = _mm512_setzero_ps();
-    v1_old = _mm512_mask_loadunpacklo_ps(v1_old, mask_lo, a);
-    v1_old = _mm512_mask_loadunpackhi_ps(v1_old, mask_lo, a);
-    v1_old = _mm512_swizzle_ps(v1_old, _MM_SWIZ_REG_AAAA);
-    return v1_old;
-}
-#endif
 //----------------------------------------------------------------------
 template <typename T>
 __m256 ELL_OPENMP_HOST<T>::read_abcd(float* a)
@@ -1021,14 +824,13 @@ void ELL_OPENMP_HOST<T>::read_abcd(float* a, __m256& word1, __m256& word2)
 }
 //----------------------------------------------------------------------
 template <typename T>
-void ELL_OPENMP_HOST<T>::read_abcd(const int col_id, float* a, __m256& word1)
+void ELL_OPENMP_HOST<T>::read_abcd(int col_id, float* a, __m256& word1)
 {
     // reads 4 vectors from float array, pointed to by first argument
-    printf("read_abcd\n");
-    exit(0);
+    //printf("read_abcd\n");
     __m256 v;
     __m128 v128;
-    v = _mm256_loadu_ps(a+(col_id));
+    v = _mm256_loadu_ps(a+col_id);
     v128 = _mm256_extractf128_ps(v, 0);
     word1 = _mm256_insertf128_ps(v, v128, 1);  // a,b,c,d,  a,b,c,d
 //    print_ps(word1, "insertf128_ps");
@@ -1044,6 +846,7 @@ void ELL_OPENMP_HOST<T>::read_aaaa(float* a, __m256& v1, __m256& v2)
     __m256 w, w1;
     __m128 v128;
 
+
     // read 8 floats, but only use first four
     //v = _mm256_load_ps(a+4);
     v = _mm256_loadu_ps(a);  // unpack version, no alignment requirements
@@ -1052,14 +855,25 @@ void ELL_OPENMP_HOST<T>::read_aaaa(float* a, __m256& v1, __m256& v2)
     w = _mm256_permute_ps(v, 0xff); 
     w1 = _mm256_permute_ps(v, 0xaa);
 
-    v128 = _mm256_extractf128_ps(w, 0);
-    v2 = _mm256_insertf128_ps(w1, v128, 1);
 
+    //print_ps(w, "w");
+    //print_ps(w1, "w1");
+    //_mm256_setzero_ps(v128); // no seg
+    v128 = _mm256_extractf128_ps(w, 0); // seg (what is in v128?)
+    v2 = _mm256_insertf128_ps(w1, v128, 1);
+    //exit(0); // seg fault <<<<<<<<<<<<<<<<<<**********************<<<<<<<<<<<<<<<<<
+    //print_ps(v2, "v2");
+
+    //return; // seg
     w = _mm256_permute_ps(v, 0x55);
+    //return; // seg
     w1 = _mm256_permute_ps(v, 0x0);
 
+    //return; // seg
     v128 = _mm256_extractf128_ps(w, 0);
     v1 = _mm256_insertf128_ps(w1, v128, 1);
+
+    return;
 }
 //----------------------------------------------------------------------
 template <typename T>
