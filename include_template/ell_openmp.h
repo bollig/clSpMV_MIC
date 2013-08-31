@@ -24,7 +24,7 @@
 //#include "rcm.h"
 #include "burkardt_rcm.hpp"
 
-#include "reorder.h"
+//#include "reorder.h"
 #include "vcl_bandwidth_reduction.h"
 
 void genrcmi(const int n, const int flags,

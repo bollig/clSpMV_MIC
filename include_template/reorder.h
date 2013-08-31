@@ -10,10 +10,8 @@
 #include <boost/graph/bandwidth.hpp>
 #include <boost/numeric/ublas/vector_sparse.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
-
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/vector_sparse.hpp>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
+
 
 namespace bollig {
 
