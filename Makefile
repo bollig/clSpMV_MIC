@@ -120,8 +120,8 @@ ifeq ($(dbg),1)
 	BINSUBDIR   := debug
 	LIBSUFFIX   := D
 else 
-	#COMMONFLAGS += -O3 
-	COMMONFLAGS += -O0 
+	COMMONFLAGS += -O3 
+	//COMMONFLAGS += -O0  -falign-functions -align
 	BINSUBDIR   := release
 	LIBSUFFIX   :=
 	CXXFLAGS    += -fno-strict-aliasing
@@ -224,4 +224,4 @@ clobber : clean
 	$(VERBOSE)rm -rf $(ROOTOBJDIR)
 	$(VERBOSE)find $(TARGETDIR) | egrep "ptx" | xargs rm -f
 	$(VERBOSE)find $(TARGETDIR) | egrep "txt" | xargs rm -f
-	2(VERBOSE)rm -f $(TARGETDIR)/samples.list
+	$(VERBOSE)rm -f $(TARGETDIR)/samples.list

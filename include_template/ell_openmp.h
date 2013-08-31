@@ -2307,7 +2307,7 @@ __m512i ELL_OPENMP<T>::read_aaaa(int* a)
     // read in 4 ints (a,b,c,d) and create the 
     // 16-float vector dddd,cccc,bbbb,aaaa  (a is least significant)
 
-#if 0
+#if 1
     int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
     //int int_mask_lo = (1 << 0) + (1 << 1) + (1 << 2) + (1 << 3);
     __mmask16 mask_lo = _mm512_int2mask(int_mask_lo);
@@ -2326,7 +2326,7 @@ __m512 ELL_OPENMP<T>::read_aaaa(float* a)
     // only works with floats
     // read in 4 floats (a,b,c,d) and create the 
     // 16-float vector dddd,cccc,bbbb,aaaa
-#if 0
+#if 1
     const int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
     __mmask16 mask_lo = _mm512_int2mask(int_mask_lo);
     __m512 v1_old;

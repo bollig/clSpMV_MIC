@@ -146,7 +146,6 @@ public:
     void spmv_serial_row(ell_matrix<int, T>& mat, std::vector<T>& v, std::vector<T>& result);
     void spmv_serial_row(ell_matrix<int, T>& mat, std::vector<T>& data, std::vector<T>& v, std::vector<T>& result);
     void spmv_serial_row(int* col_id, T* data, T* v, T* res, int nbz, int nb_rows) ;
-    void fill_random(ell_matrix<int, T>& mat, std::vector<T>& v);
     T l2norm(std::vector<T>& v);
     T l2norm(T*, int n);
 
@@ -166,6 +165,7 @@ public:
 	void method_8a(int nb=0); // 4 matrices, 4 vectors
 //#endif
     void method_8a_multi(int nb=0);
+    void method_8a_multi_novec(int nb=0);
 
     inline __m256 read_abcd(float* a);
     inline void read_aaaa(float* a, __m256& v1, __m256& v2);
@@ -180,7 +180,6 @@ public:
     void generate_ell_matrix_data(T* data, int nbz, int nb_rows, int nb_mat);
     //void generate_ell_matrix_data(std::vector<T> data, int nbz, int nb_rows, int nb_mat);
     void generate_col_id(int* col_id, int nbz, int nb_rows);
-    void generate_col_id_multi(int* col_id, int nbz, int nb_rows);
     void generate_vector(T* vec, int nb_rows, int nb_vec);
     //void generate_vector(std::vector<T>& vec, int nb_rows, int nb_vec);
     //void retrieve_vector(std::vector<T>& vec, std::vector<T>& retrieved, int vec_id, int nb_vec);
@@ -214,11 +213,13 @@ template <typename T>
 void ELL_OPENMP_HOST<T>::run()
 {
     int num_threads[] = {1,2,4,8,16,32,64,96,128,160,192,224,244};
-    omp_set_num_threads(1);
+    //omp_set_num_threads(244);
 
     int count = 0;
     int max_nb_runs = 1;
 
+    //method_8a_multi_novec(4);
+    //exit(0);
     if (rd.use_subdomains == 0 || nb_subdomains == 1) {
         //method_8a(4);
         method_8a_multi(4); // temporary? 
@@ -336,17 +337,27 @@ ELL_OPENMP_HOST<T>::ELL_OPENMP_HOST(std::string filename, int ntimes) :
         vec_v.resize(cmat.matinfo.width);
         result_v.resize(cmat.matinfo.height);
     } else if (in_format == "ELL") {
+        printf("format == ELL ************\n");
         nb_rows_multi.resize(1);
         nb_vec_elem_multi.resize(1);
         rd.use_subdomains = 0;
+        rd.stencil_size = 32; // for testing in case file cannot be read
+        stencil_size = rd.stencil_size;
         subdomains.resize(1);
         nb_subdomains = 1;
-        //mat.col_id.resize(nb_rows*stencil_size); // perhaps allocate inside load routine?
-        io.loadFromBinaryEllpackFile(mat.ell_col_id, nb_rows, stencil_size, filename);
+        printf("before load\n");
+        if (io.loadFromBinaryEllpackFile(mat.ell_col_id, nb_rows, stencil_size, filename)) {
+            printf("input binary ellpack file does not exist\n");
+            rd.nb_rows = 64;
+            nb_rows = rd.nb_rows;
+            mat.ell_col_id.resize(nb_rows*stencil_size); // perhaps allocate inside load routine?
+        } 
+        printf("** nb_rows= %d\n", nb_rows);
         vec_v.resize(nb_rows);
         result_v.resize(nb_rows); // might have to change if height aligned is wrong. 
         mat.matinfo.height = nb_rows;
         mat.matinfo.width = nb_rows;
+        printf("stencil_size= %d\n", stencil_size);
         mat.matinfo.nnz = nb_rows * stencil_size;
         // if divisible by 32, else next largest multiple of 32. MUST IMPLEMENT GE. 
         mat.ell_height_aligned = nb_rows;
@@ -371,6 +382,7 @@ ELL_OPENMP_HOST<T>::ELL_OPENMP_HOST(std::string filename, int ntimes) :
             nb_vec_elem_multi, offsets_multi, Qbeg, Qend, stencil_size, filename);
         printf("*** after load multi, print col_id\n");
         printf("sizeof Qbeg, Qend: %d, %d\n", Qbeg.size(), Qend.size());
+        printf("** nb_rows= %d\n", nb_rows);
         //for (int i=0; i < 20; i++) {
             //printf("col_id[%d]= %d\n", i, mat.ell_col_id[i]);
             //printf("Qbeg/Qend= %d, %d\n", Qbeg[i], Qend[i]);
@@ -491,6 +503,105 @@ void ELL_OPENMP_HOST<T>::method_8a(int nbit)
 }
 //----------------------------------------------------------------------
 template <typename T>
+void ELL_OPENMP_HOST<T>::method_8a_multi_novec(int nbit)
+{
+	printf("============== METHOD 8a Multi NoVec, %d domain  ===================\n", nb_subdomains);
+    printf("nb subdomains= %d\n", nb_subdomains);
+    printf("nb_rows_multi = %d\n", nb_rows_multi[0]);
+
+    generateInputMatricesAndVectorsMulti();
+    //bandwidth(subdomains[0].col_id_t, nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
+    //bandwidthQ(subdomains[0], nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
+        //for (int i=0; i < (rd.nb_vecs*rd.nb_mats*rd.nb_rows); i++) {
+            //printf("sub res[%d]= %f\n", i, subdomains[0].result_vt[i]);
+        //}
+        //exit(0);
+        
+   //checkSolutions();
+   //exit(0);
+ 
+    float gflops;
+    float max_gflops = 0.;
+    float elapsed = 0.; 
+    float min_elapsed = 0.; 
+    //int nb_rows = rd.nb_rows;
+    int nz = rd.stencil_size;
+    printf("*** nb_subdomains: %d\n", nb_subdomains);
+printf("nz= %d\n", nz);
+
+    // Must now work on alignmentf vectors. 
+    // Produces the correct serial result
+    for (int it=0; it < 1; it++) {
+        tm["spmv"]->start();
+        for (int s=0; s < nb_subdomains; s++) {
+
+        const int nb_rows = nb_rows_multi[s];
+        const int nb_mat = 4;
+        const int nb_vec = 4;
+        const int nz = rd.stencil_size;
+        const Subdomain& dom = subdomains[s];
+        float data[4];
+        float vec[4];
+        float tens[16];
+
+        // SOMETHING WRONG with dom.data_t since when = 1, solution is correct, when = rando, 
+        // solution is not correct. DO NOT KNOW WHY. 
+
+            for (int r=0; r < nb_rows; r++) {
+                for (int k=0; k < 16; k++) {
+                    tens[k] = 0.0;  // use better method, such as memset()
+                }
+                for (int n=0; n < nz; n++) {  // more loop elements
+                    int offset = n+r*nz;
+                    int col = dom.col_id_t[offset];
+                    vec[0] = dom.vec_vt[nb_vec*col];
+                    vec[1] = dom.vec_vt[nb_vec*col+1];
+                    vec[2] = dom.vec_vt[nb_vec*col+2];
+                    vec[3] = dom.vec_vt[nb_vec*col+3];
+                    data[0] = dom.data_t[nb_mat*offset];   // ERROR SOMEWHERE
+                    data[1] = dom.data_t[nb_mat*offset+1];
+                    data[2] = dom.data_t[nb_mat*offset+2];
+                    data[3] = dom.data_t[nb_mat*offset+3];
+                    for (int km=0; km < nb_mat; km++) {
+                    for (int kv=0; kv < nb_vec; kv++) {
+                        tens[km+nb_mat*kv] += vec[kv] * data[km];
+                    }}
+                }
+                for (int km=0; km < nb_mat; km++) {
+                for (int kv=0; kv < nb_vec; kv++) {
+                    //dom.result_vt[16*r+km+nb_mat*kv] = tens[km+nb_mat*kv];
+                    dom.result_vt[16*r+kv+nb_mat*km] = tens[km+nb_mat*kv];
+                }}
+            }
+        } // subdomains
+        tm["spmv"]->end();  // time for each matrix/vector multiply
+        if (it < 3) continue;
+        elapsed = tm["spmv"]->getTime();
+        // nb_rows is wrong. 
+        //printf("%d, %d, %d, %d\n", rd.nb_mats, rd.nb_vecs, rd.stencil_size, rd.nb_rows);
+        gflops = rd.nb_mats * rd.nb_vecs * 2.*rd.stencil_size*rd.nb_rows*1e-9 / (1e-3*elapsed); // assumes count of 1
+        printf("%f gflops, %f (ms)\n", gflops, elapsed);
+        if (gflops > max_gflops) {
+            max_gflops = gflops;
+            min_elapsed = elapsed;
+        }
+   }
+
+   printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
+   printf("before checkSolutions\n");
+    // necessary to check solutiosn
+    result_vt = subdomains[0].result_vt;
+    data_t = subdomains[0].data_t;
+    col_id_t = subdomains[0].col_id_t;
+    vec_vt = subdomains[0].vec_vt;
+
+   checkSolutions();
+   printf("after checkSolutions\n");
+   freeInputMatricesAndVectorsMulti();
+   printf("after free matrices\n");
+}
+//----------------------------------------------------------------------
+template <typename T>
 void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
 {
 	printf("============== METHOD 8a Multi, %d domain  ===================\n", nb_subdomains);
@@ -500,6 +611,7 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
     generateInputMatricesAndVectorsMulti();
     bandwidth(subdomains[0].col_id_t, nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
     bandwidthQ(subdomains[0], nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
+    
  
     float gflops;
     float max_gflops = 0.;
@@ -518,6 +630,7 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
 // Should all 4 subdomains be contained in a single omp parallel pragma?
 
 
+
 #pragma omp parallel firstprivate(nz)
 {
     const int nb_rows = nb_rows_multi[s];
@@ -526,16 +639,36 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
     const int nz = rd.stencil_size;
     const Subdomain& dom = subdomains[s];
 
+
+    __m256 v1_old = _mm256_setzero_ps();
+    __m256 v2_old = _mm256_setzero_ps();
+        //if (r%100 == 0) printf("r= %d, nz= %d\n", r, nz);
+#if 0
+{ // works properly
+    //__m256 v1_old;
+    //__m256 v2_old;
+    //__m256 w1_old;
+    //printf("nb_mat= %d\n", nb_mat); // uncomment and there is no error
+    //int nb_mat = 4;  // comment this out and code does not work
+    for (int r=0; r < nb_rows; r++) {
+        for (int n=0; n < 32; n++) {
+            int offset = n+r*32;
+        printf("r= %d, n= %d\n", r, n);
+            read_aaaa(subdomains[0].data_t+nb_mat*offset, v1_old, v2_old); // generates the error in read_abcd? 
+          }
+    }
+    exit(0);
+}
+#endif
     //printf("after const\n");
     __m256 mul1;
     __m256 mul2;
-    __m256 v1_old;
-    __m256 v2_old;
+    //__m256 v2_old;
     __m256 w1_old;
     //printf("after 256\n");
 
+#pragma omp for
     for (int r=0; r < nb_rows; r++) {
-        //if (r%100 == 0) printf("r= %d, nz= %d\n", r, nz);
         __m256 accu1 = _mm256_setzero_ps();
         __m256 accu2 = _mm256_setzero_ps();
 
@@ -543,10 +676,13 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
             int offset = n+r*nz;
             //printf("n= %d, offset= %d\n", n, offset);
             // read  8 floats, use only 
+            // seg if run alone
             read_aaaa(dom.data_t+nb_mat*offset, v1_old, v2_old); // generates the error in read_abcd? 
+            //continue;
             //printf("after 1st aaaa\n");
             //printf("arg= %d\n", nb_mat*dom.col_id_t[offset]);
-            read_abcd(nb_vec*dom.col_id_t[offset], dom.vec_vt, w1_old);
+            read_abcd(nb_vec*dom.col_id_t[offset], dom.vec_vt, w1_old); // seg if run alone
+            //continue;
             //printf("after 1st abcd\n");
             mul1 = _mm256_mul_ps(v1_old, w1_old);
             mul2 = _mm256_mul_ps(v2_old, w1_old);
@@ -572,6 +708,7 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
     printf("exit omp parallel\n");
      }
         tm["spmv"]->end();  // time for each matrix/vector multiply
+        if (it < 3) continue;
         elapsed = tm["spmv"]->getTime();
         // nb_rows is wrong. 
         //printf("%d, %d, %d, %d\n", rd.nb_mats, rd.nb_vecs, rd.stencil_size, rd.nb_rows);
@@ -582,9 +719,19 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
             min_elapsed = elapsed;
         }
    }
+#if 0
+        for (int i=0; i < rd.nb_rows; i++) {
+            printf("sub res[%d]= %f\n", i, subdomains[0].result_vt[16*i]);
+        }
+        exit(0);
+#endif
 
    printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
-   //checkSolutions();
+    result_vt = subdomains[0].result_vt;
+    data_t = subdomains[0].data_t;
+    col_id_t = subdomains[0].col_id_t;
+    vec_vt = subdomains[0].vec_vt;
+   checkSolutions();
    freeInputMatricesAndVectorsMulti();
 }
 //----------------------------------------------------------------------
@@ -595,9 +742,12 @@ void ELL_OPENMP_HOST<T>::checkAllSerialSolutions(T* data_t, int* col_id_t, T* ve
     T* d = (T*) _mm_malloc(sizeof(T)*nb_rows*nz, 16);
     
     for (int mat_id=0; mat_id < nb_mat; mat_id++) {
+        //printf("mat_id= %f\n", mat_id);
         retrieve_data(&data_t[0], d, mat_id, nz, nb_rows, nb_mat);
     for (int vec_id=0; vec_id < nb_vec; vec_id++) {
+        //printf("vec_id= %d, nb_rows= %d\n", vec_id, nb_rows);
         retrieve_vector(vec_vt, v, vec_id, nb_vec, nb_rows); 
+        //printf("after retrieve\n");
         spmv_serial_row(&col_id_t[0], d, v, &one_res[0], nz, nb_rows);
         printf("method_8a, l2norm of serial vec/mat= %d/%d, %f\n", vec_id, mat_id, l2norm(one_res, nb_rows)); // need matrix and vector index
     }}
@@ -762,20 +912,6 @@ T ELL_OPENMP_HOST<T>::l2norm(T* v, int n)
             norm += v[i]*v[i];
     }
     return (T) sqrt(norm);
-}
-//----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP_HOST<T>::fill_random(ell_matrix<int, T>& mat, std::vector<T>& v)
-{
-    for (int i=0; i < v.size(); i++) {
-            v[i] = (T) getRandf();  
-            v[i] = 1.0;   // Did not work
-    }
-
-    for (int i=0; i < mat.ell_col_id.size(); i++) {
-            mat.ell_data[i] = getRandf(); // problem is with random matrices
-            mat.ell_data[i] = 1.0;  // worked
-    }
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -958,7 +1094,9 @@ void ELL_OPENMP_HOST<T>::generate_ell_matrix_by_row(std::vector<int>& col_id, st
 template <typename T>
 void ELL_OPENMP_HOST<T>::generate_ell_matrix_data(T* data, int nbz, int nb_rows, int nb_mat)
 {
-    int n_skip = nb_mat;
+    //int n_skip = nb_mat;  // used for MIC in float mode. 
+#if 0
+    int n_skip = 1;   // I think this must be consistent with n loop
     int nz4 = nbz / n_skip;
     for (int m=0; m < nb_mat; m++) {
         for (int r=0; r < nb_rows; r++) {
@@ -966,7 +1104,17 @@ void ELL_OPENMP_HOST<T>::generate_ell_matrix_data(T* data, int nbz, int nb_rows,
                 int n4 = n / n_skip;
                 for (int in=0; in < n_skip; in++) {
                     data[in+n_skip*(m+nb_mat*(n4+nz4*r))] = getRandf(); // correct norms (if vector = 1)
+                    //data[in+n_skip*(m+nb_mat*(n4+nz4*r))] = 1.;
                 }
+            }
+        }
+    }
+#endif
+
+    for (int r=0; r < nb_rows; r++) {
+        for (int n=0; n < nbz; n++) {
+            for (int m=0; m < nb_mat; m++) {
+                data[m+nb_mat*(n+nbz*r)] = getRandf();
             }
         }
     }
@@ -976,20 +1124,20 @@ template <typename T>
 void ELL_OPENMP_HOST<T>::generate_vector(T* vec, int nb_rows, int nb_vec)
 {
     //assert(vec.size() == nb_rows*nb_vec);
+    printf("enter generate_vector\n");
     int sz = nb_rows*nb_vec;
 
+    printf("sz= %d\n", sz);
+
     for (int i=0; i < sz; i++) {
+        //printf("i= %d\n", i);
         //if (!(i % 10000))  printf("i= %d\n", i);
         // works with matrix random, vector non-random
         vec[i] = (T) getRandf();// incorrect norms 
-        //vec[i] = 1.0; // wrong norms when matrices random, although only 4 different norms
+        //vec[i] = 1.0; // 
     }
 }
 //----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP_HOST<T>::generate_col_id_multi(int* col_id, int nbz, int nb_rows)
-{
-}
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP_HOST<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
@@ -1191,6 +1339,8 @@ void ELL_OPENMP_HOST<T>::retrieve_vector(T* vec, T* retrieved, int vec_id, int n
     // vec is stored with vec_id as the fastest varying index
 
     for (int i=0; i < nb_rows; i++) {
+       // printf("i= %d, arg= %d\n",i, vec_id+nb_vec*i);
+        //printf("i= %d\n");
         retrieved[i] = vec[vec_id + nb_vec*i];
     }
 }
@@ -1201,15 +1351,24 @@ void ELL_OPENMP_HOST<T>::retrieve_data(T* data_in, T* data_out, int mat_id, int 
     assert(nb_mat == 4);
     //assert(data_out.size() == nbz*nb_rows);
 
-    int n_skip = nb_mat;
+    //int n_skip = nb_mat; // for MIC version
+#if 0
+    int n_skip = 1; // for host version
     int nz4 = nbz / n_skip;
     for (int r=0; r < nb_rows; r++) {
         for (int n=0; n < nbz; n += n_skip) {
             int n4 = n / nb_mat;
-            for (int in=0; in < nb_mat; in++) {
+            for (int in=0; in < n_skip; in++) {
                 //data_out[r+nb_rows*(n+in)] = data_in[in+n_skip*(mat_id+nb_mat*(n4+nz4*r))];
                 data_out[n+in + nbz*r] = data_in[in+n_skip*(mat_id+nb_mat*(n4+nz4*r))];
             }
+        }
+    }
+#endif
+
+    for (int r=0; r < nb_rows; r++) {
+        for (int n=0; n < nbz; n++) {
+            data_out[n+nbz*r] = data_in[mat_id+nb_mat*(n+nbz*r)];
         }
     }
 }
@@ -1338,7 +1497,9 @@ void ELL_OPENMP_HOST<T>::generateInputMatricesAndVectorsMulti()
         int vec_size = nb_vec_elem_multi[i];
         printf("nb_rows= %d\n", nb_rows);
         printf("vec_size= %d\n", vec_size);
+        printf("nb_mat= %d\n", nb_mat);
         printf("nb nonzeros per row= %d\n", nz);
+        printf("tot_nz= %d\n", tot_nz);
 
         Subdomain& s = subdomains[i];
 
@@ -1347,31 +1508,30 @@ void ELL_OPENMP_HOST<T>::generateInputMatricesAndVectorsMulti()
         s.col_id_t  = (int*)   _mm_malloc(sizeof(int)   * tot_nz, 16);
         s.data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * tot_nz, 32);
 
-        //printf("before generate vector\n");
+        if (s.vec_vt == 0 || s.result_vt == 0 || s.col_id_t == 0 || s.data_t == 0) {
+            printf("1. memory allocation failed\n");
+            exit(0);
+        }
+
+        for (int i=0; i < (nb_vec*nb_mat*nb_rows); i++) {
+            s.result_vt[i] = 0.0;
+        }
+
+        printf("before col_id_t\n");
+        printf("offsets: %d, %d\n", offsets_multi[0], offsets_multi[1]);
 
         for (int j=offsets_multi[i], k=0; j < offsets_multi[i+1]; j++) {
             s.col_id_t[k++] = mat.ell_col_id[j];
         }
 
         // FIX col_ids'
+        printf("before generate vector\n");
         generate_vector(s.vec_vt, vec_size, nb_vec);
+        printf("before generate col_id\n");
         generate_col_id(s.col_id_t, nz, nb_rows);
-        //printf("before generate data\n");
+        printf("before generate data\n");
         generate_ell_matrix_data(s.data_t, nz, nb_rows, nb_mat);
 
-        //printf("before offsets\n");
-        //printf("imin= %d, imax= %d\n", offsets_multi[i], offsets_multi[i+1]);
-        //printf("after offsets\n");
-
-        //for (int i=262000; i < 262100; i++) {
-            //printf("s.col_id_t[%d] = %d\n", i, s.col_id_t[i]);
-        //}
-        //printf("inside generate...Multi\n"); exit(0);
-
-        if (s.vec_vt == 0 || s.result_vt == 0 || s.col_id_t == 0 || s.data_t == 0) {
-            printf("1. memory allocation failed\n");
-            exit(0);
-        }
     }
 }
 //----------------------------------------------------------------
@@ -1399,10 +1559,22 @@ void ELL_OPENMP_HOST<T>::freeInputMatricesAndVectorsMulti()
 template <typename T>
 void ELL_OPENMP_HOST<T>::checkSolutions()
 {
+#if 0
+    // Correct results for result_vt
+        for (int i=0; i < rd.nb_rows; i++) {
+            printf("sub res[%d]= %f\n", i, subdomains[0].result_vt[16*i]);
+        }
+        exit(0);
+#endif
+
+    printf("check solutions\n");
     std::vector<float> one_res(rd.nb_rows);  // single result
     for (int w=0; w < 16; w++) {
         for (int i=0; i < rd.nb_rows; i++) {
-            one_res[i] = result_vt[16*i+w];
+            one_res[i] = subdomains[0].result_vt[16*i+w];
+            // INCORRECT RESULTS for result_vt. WHY? 
+           // printf("i= %d, w=%d, rows: %d, res= %f\n", i,w,rd.nb_rows, one_res[i]); // only to 1567. Why? 
+            //printf("i= %d, res= %f\n", i,result_vt[16*i]); // only to 1567. Why? 
         }
         printf("method_8a, l2norm[%d]=of omp version: %f\n", w, l2norm(one_res));
     }

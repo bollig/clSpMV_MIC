@@ -79,6 +79,10 @@ int RBFFD_IO<T>::loadFromBinaryEllpackFile(std::vector<int>& col_id,
     //printf("inside loadFromBinaryEllpackFile\n");
     char* line = (char*) malloc(255);
     FILE* fd = fopen(filename.c_str(), "rb");
+    if (fd == 0) {
+        printf("loadFromBinaryEllpackFile, cannot load file \"%s\" \n", filename.c_str());
+        return 1;
+    }
     // comment line
     size_t nbchars = 250;
     getline(&line, &nbchars, fd);
@@ -94,6 +98,8 @@ int RBFFD_IO<T>::loadFromBinaryEllpackFile(std::vector<int>& col_id,
         printf("loadFromBinaryEllpackFile: nb elements read is incorrect\n");
         exit(0);
     }
+
+    return 0; // no error
     //for (int i=0; i < 100; i++) {
         //printf("col_id[%d]= %d\n", i, col_id[i]);
    //}

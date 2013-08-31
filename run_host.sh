@@ -4,15 +4,17 @@ F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtx
 F=compact_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.mtx
 F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 F=random_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
+F=random_x_weights_direct__no_hv_stsize_16_2d_8x_8y_1z.mtxb
+F=ell_ell_x_weights_direct__no_hv_stsize_16_3d_8x_8y_1z.bmtx
 F=ell_ell_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
+
 export F=$F
-export OMP_THREAD=1
-export OMP_SCHEDULE=dynamic,1
+export OMP_THREAD=16
 # 2nd argument must be as low as possible in random case
-export OMP_SCHEDULE=static,16
-export OMP_SCHEDULE=guided,16 
-export KMP_AFFINITY=compact
+export OMP_SCHEDULE=dynamic,64
+export OMP_SCHEDULE=guided,64
 export KMP_AFFINITY=scatter
+export KMP_AFFINITY=compact
 
 #./linux/release/spmv_openmp matrix/compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb 1 5
 #./linux/release/spmv_openmp matrix/$F 1 5
