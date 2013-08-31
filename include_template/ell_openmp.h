@@ -223,7 +223,7 @@ void ELL_OPENMP<T>::run()
 	//method_5(4); // correct results
 	//method_6(4);
 
-#if 1
+#if 0
     rd.nb_rows = rd.n3d*rd.n3d*rd.n3d;
     printf("rd.nb_rows: %d\n", rd.nb_rows);
     int save_nb_threads = omp_get_num_threads();
@@ -271,6 +271,7 @@ void ELL_OPENMP<T>::run()
     } else {
         method_8a_multi(4);
     }
+    method_8a_multi_novec(4);
     exit(0);
 
     if (nb_subdomains > 0) {
