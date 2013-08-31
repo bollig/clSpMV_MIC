@@ -161,6 +161,7 @@ public:
 	//void method_8(int nb=0); // 4 matrices, 4 vectors
 	void method_8a(int nb=0); // 4 matrices, 4 vectors
     void method_8a_multi(int nb=0);
+    void method_8a_multi_novec(int nb=0);
 
     inline __m512 permute(__m512 v1, _MM_PERM_ENUM perm);
     inline __m512 read_aaaa(float* a);
@@ -1931,6 +1932,114 @@ void ELL_OPENMP<T>::method_8a(int nbit)
    //checkSolutions();
    freeInputMatricesAndVectors();
 }
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::method_8a_multi_novec(int nbit)
+{
+	printf("============== METHOD 8a Multi NoVec, %d domain  ===================\n", nb_subdomains);
+    printf("nb subdomains= %d\n", nb_subdomains);
+    printf("nb_rows_multi = %d\n", nb_rows_multi[0]);
+
+    generateInputMatricesAndVectorsMulti();
+    //bandwidth(subdomains[0].col_id_t, nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
+    //bandwidthQ(subdomains[0], nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
+        //for (int i=0; i < (rd.nb_vecs*rd.nb_mats*rd.nb_rows); i++) {
+            //printf("sub res[%d]= %f\n", i, subdomains[0].result_vt[i]);
+        //}
+        //exit(0);
+        
+   //checkSolutions();
+   //exit(0);
+ 
+    float gflops;
+    float max_gflops = 0.;
+    float elapsed = 0.; 
+    float min_elapsed = 0.; 
+    //int nb_rows = rd.nb_rows;
+    int nz = rd.stencil_size;
+    printf("*** nb_subdomains: %d\n", nb_subdomains);
+printf("nz= %d\n", nz);
+
+    // Must now work on alignmentf vectors. 
+    // Produces the correct serial result
+    for (int it=0; it < 10; it++) {
+        tm["spmv"]->start();
+        for (int s=0; s < nb_subdomains; s++) {
+
+#pragma omp parallel firstprivate(nz)
+{
+        const int nb_rows = nb_rows_multi[s];
+        const int nb_mat = 4;
+        const int nb_vec = 4;
+        //const int nz = rd.stencil_size;
+        const Subdomain& dom = subdomains[s];
+        float data[4];
+        float vec[4];
+        float tens[16];
+
+        // SOMETHING WRONG with dom.data_t since when = 1, solution is correct, when = rando, 
+        // solution is not correct. DO NOT KNOW WHY. 
+
+#pragma omp for
+            for (int r=0; r < nb_rows; r++) {
+#pragma simd
+                for (int k=0; k < 16; k++) {
+                    tens[k] = 0.0;  // use better method, such as memset()
+                }
+#pragma simd
+                for (int n=0; n < nz; n++) {  // more loop elements
+                    int offset = n+r*nz;
+                    int col = dom.col_id_t[offset];
+                    vec[0] = dom.vec_vt[nb_vec*col];
+                    vec[1] = dom.vec_vt[nb_vec*col+1];
+                    vec[2] = dom.vec_vt[nb_vec*col+2];
+                    vec[3] = dom.vec_vt[nb_vec*col+3];
+                    data[0] = dom.data_t[nb_mat*offset];   // ERROR SOMEWHERE
+                    data[1] = dom.data_t[nb_mat*offset+1];
+                    data[2] = dom.data_t[nb_mat*offset+2];
+                    data[3] = dom.data_t[nb_mat*offset+3];
+                    for (int km=0; km < nb_mat; km++) {
+                    for (int kv=0; kv < nb_vec; kv++) {
+                        tens[km+nb_mat*kv] += vec[kv] * data[km];
+                    }}
+                }
+#pragma simd
+                for (int km=0; km < nb_mat; km++) {
+                for (int kv=0; kv < nb_vec; kv++) {
+                    //dom.result_vt[16*r+km+nb_mat*kv] = tens[km+nb_mat*kv];
+                    dom.result_vt[16*r+kv+nb_mat*km] = tens[km+nb_mat*kv];
+                }}
+            }
+        } // subdomains
+        tm["spmv"]->end();  // time for each matrix/vector multiply
+        if (it < 3) continue;
+        elapsed = tm["spmv"]->getTime();
+        // nb_rows is wrong. 
+        //printf("%d, %d, %d, %d\n", rd.nb_mats, rd.nb_vecs, rd.stencil_size, rd.nb_rows);
+        gflops = rd.nb_mats * rd.nb_vecs * 2.*rd.stencil_size*rd.nb_rows*1e-9 / (1e-3*elapsed); // assumes count of 1
+        printf("%f gflops, %f (ms)\n", gflops, elapsed);
+        if (gflops > max_gflops) {
+            max_gflops = gflops;
+            min_elapsed = elapsed;
+        }
+}   // omp parallel
+   }
+
+   printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
+   printf("before checkSolutions\n");
+    // necessary to check solutiosn
+    result_vt = subdomains[0].result_vt;
+    data_t = subdomains[0].data_t;
+    col_id_t = subdomains[0].col_id_t;
+    vec_vt = subdomains[0].vec_vt;
+
+   checkSolutions();
+   printf("after checkSolutions\n");
+   freeInputMatricesAndVectorsMulti();
+   printf("after free matrices\n");
+}
+//----------------------------------------------------------------------
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP<T>::method_8a_multi(int nbit)

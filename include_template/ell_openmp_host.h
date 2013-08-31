@@ -218,8 +218,8 @@ void ELL_OPENMP_HOST<T>::run()
     int count = 0;
     int max_nb_runs = 1;
 
-    //method_8a_multi_novec(4);
-    //exit(0);
+    method_8a_multi_novec(4);
+    exit(0);
     if (rd.use_subdomains == 0 || nb_subdomains == 1) {
         //method_8a(4);
         method_8a_multi(4); // temporary? 
@@ -531,14 +531,16 @@ printf("nz= %d\n", nz);
 
     // Must now work on alignmentf vectors. 
     // Produces the correct serial result
-    for (int it=0; it < 1; it++) {
+    for (int it=0; it < 10; it++) {
         tm["spmv"]->start();
         for (int s=0; s < nb_subdomains; s++) {
 
+#pragma omp parallel firstprivate(nz)
+{
         const int nb_rows = nb_rows_multi[s];
         const int nb_mat = 4;
         const int nb_vec = 4;
-        const int nz = rd.stencil_size;
+        //const int nz = rd.stencil_size;
         const Subdomain& dom = subdomains[s];
         float data[4];
         float vec[4];
@@ -547,10 +549,13 @@ printf("nz= %d\n", nz);
         // SOMETHING WRONG with dom.data_t since when = 1, solution is correct, when = rando, 
         // solution is not correct. DO NOT KNOW WHY. 
 
+#pragma omp for
             for (int r=0; r < nb_rows; r++) {
+#pragma simd
                 for (int k=0; k < 16; k++) {
                     tens[k] = 0.0;  // use better method, such as memset()
                 }
+#pragma simd
                 for (int n=0; n < nz; n++) {  // more loop elements
                     int offset = n+r*nz;
                     int col = dom.col_id_t[offset];
@@ -567,6 +572,7 @@ printf("nz= %d\n", nz);
                         tens[km+nb_mat*kv] += vec[kv] * data[km];
                     }}
                 }
+#pragma simd
                 for (int km=0; km < nb_mat; km++) {
                 for (int kv=0; kv < nb_vec; kv++) {
                     //dom.result_vt[16*r+km+nb_mat*kv] = tens[km+nb_mat*kv];
@@ -585,6 +591,7 @@ printf("nz= %d\n", nz);
             max_gflops = gflops;
             min_elapsed = elapsed;
         }
+}   // omp parallel
    }
 
    printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);

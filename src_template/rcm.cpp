@@ -204,6 +204,8 @@
 # else
 #  include <assert.h>
 # endif
+#else
+# define assert(expr)
 #endif
 
 #define ASSERT assert
