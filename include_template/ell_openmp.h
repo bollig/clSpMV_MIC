@@ -271,7 +271,7 @@ void ELL_OPENMP<T>::run()
     } else {
         method_8a_multi(4);
     }
-    method_8a_multi_novec(4);
+    method_8a_multi_novec(4);   // exact solution not correct. 
     exit(0);
 
     if (nb_subdomains > 0) {
@@ -2156,8 +2156,12 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
         }
    }
 
+    result_vt = subdomains[0].result_vt;
+    data_t = subdomains[0].data_t;
+    col_id_t = subdomains[0].col_id_t;
+    vec_vt = subdomains[0].vec_vt;
    printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
-   //checkSolutions();
+   checkSolutions();
    freeInputMatricesAndVectorsMulti();
 }
 //----------------------------------------------------------------------
