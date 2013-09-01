@@ -7,6 +7,8 @@ F=random_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 F=random_x_weights_direct__no_hv_stsize_16_2d_8x_8y_1z.mtxb
 F=ell_ell_x_weights_direct__no_hv_stsize_16_3d_8x_8y_1z.bmtx
 F=ell_ell_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
+F=ell_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
+F=ell_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
 
 export F=$F
 export OMP_THREAD=16

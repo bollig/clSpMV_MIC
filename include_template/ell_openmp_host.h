@@ -150,21 +150,9 @@ public:
     T l2norm(T*, int n);
 
 	virtual void run();
-	void method_3(int nb=0);
-	void method_4(int nb=0);
-	void method_5(int nb=0);
-	void method_6(int nb=0);
-	void method_7(int nb=0); // 4 matrices, 4 vectors (correct results)
-#if 0
-    void method_rd_wr(int nbit);
-#endif
-    // read/write benchmarks. Memory is local to each thread. 
-    void method_rd_wr_local_thread(int nbit);
-	void method_7a(int nb=0); // 4 matrices, 4 vectors, using new matrix generators
-	//void method_8(int nb=0); // 4 matrices, 4 vectors
-	void method_8a(int nb=0); // 4 matrices, 4 vectors
-//#endif
+
     void method_8a_multi(int nb=0);
+    void method_8a_multi_optimal(int nb=0);
     void method_8a_multi_novec(int nb=0);
 
     inline __m256 read_abcd(float* a);
@@ -203,9 +191,6 @@ public:
     void cuthillMcKee(std::vector<int>& col_id, int nb_rows, int stencil_size);
 
 protected:
-	virtual void method_0(int nb=0);
-	virtual void method_1(int nb=0);
-	virtual void method_2(int nb=0);
 };
 
 //----------------------------------------------------------------------
@@ -219,9 +204,10 @@ void ELL_OPENMP_HOST<T>::run()
     int max_nb_runs = 1;
 
     method_8a_multi_novec(4);
+    method_8a_multi(4);
+    method_8a_multi_optimal(4);
     exit(0);
     if (rd.use_subdomains == 0 || nb_subdomains == 1) {
-        //method_8a(4);
         method_8a_multi(4); // temporary? 
     } else {
         method_8a_multi(4);
@@ -231,7 +217,7 @@ void ELL_OPENMP_HOST<T>::run()
     if (nb_subdomains > 0) {
         method_8a_multi(4);
     } else {
-        method_8a(4);
+        method_8a_multi(4);
     }
 
     exit(0);
@@ -446,66 +432,12 @@ void GENRCM(const INT n, const int flags,
     rd.sort_col_indices = sort_col_indices;
 }
 //----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP_HOST<T>::method_0(int nbit)
-{
-}
-//----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP_HOST<T>::method_1(int nb_vectors)
-{
-}
-//----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP_HOST<T>::method_2(int nb_vectors)
-{
-}
-//----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP_HOST<T>::method_3(int nbit)
-{
-}
-//----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP_HOST<T>::method_4(int nbit)
-{
-}
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP_HOST<T>::method_5(int nbit)
-{
-}
-//----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP_HOST<T>::method_6(int nbit)
-{
-}
-//----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP_HOST<T>::method_rd_wr_local_thread(int nbit)
-{
-}
-//----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP_HOST<T>::method_7(int nbit)
-{
-}
-//----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP_HOST<T>::method_7a(int nbit)
-{
-}
-//----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP_HOST<T>::method_8a(int nbit)
-{
-}
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP_HOST<T>::method_8a_multi_novec(int nbit)
 {
 	printf("============== METHOD 8a Multi NoVec, %d domain  ===================\n", nb_subdomains);
+    pnirtf("CHECK RESULTS: NOT SURE IT WORKS in NOVECTOR  (CPP) MODE ======\n");
     printf("nb subdomains= %d\n", nb_subdomains);
     printf("nb_rows_multi = %d\n", nb_rows_multi[0]);
 
@@ -649,30 +581,9 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
 
     __m256 v1_old = _mm256_setzero_ps();
     __m256 v2_old = _mm256_setzero_ps();
-        //if (r%100 == 0) printf("r= %d, nz= %d\n", r, nz);
-#if 0
-{ // works properly
-    //__m256 v1_old;
-    //__m256 v2_old;
-    //__m256 w1_old;
-    //printf("nb_mat= %d\n", nb_mat); // uncomment and there is no error
-    //int nb_mat = 4;  // comment this out and code does not work
-    for (int r=0; r < nb_rows; r++) {
-        for (int n=0; n < 32; n++) {
-            int offset = n+r*32;
-        printf("r= %d, n= %d\n", r, n);
-            read_aaaa(subdomains[0].data_t+nb_mat*offset, v1_old, v2_old); // generates the error in read_abcd? 
-          }
-    }
-    exit(0);
-}
-#endif
-    //printf("after const\n");
     __m256 mul1;
     __m256 mul2;
-    //__m256 v2_old;
     __m256 w1_old;
-    //printf("after 256\n");
 
 #pragma omp for
     for (int r=0; r < nb_rows; r++) {
@@ -681,44 +592,22 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
 
         for (int n=0; n < nz; n++) {  // more loop elements
             int offset = n+r*nz;
-            //printf("n= %d, offset= %d\n", n, offset);
-            // read  8 floats, use only 
-            // seg if run alone
             read_aaaa(dom.data_t+nb_mat*offset, v1_old, v2_old); // generates the error in read_abcd? 
-            //continue;
-            //printf("after 1st aaaa\n");
-            //printf("arg= %d\n", nb_mat*dom.col_id_t[offset]);
             read_abcd(nb_vec*dom.col_id_t[offset], dom.vec_vt, w1_old); // seg if run alone
-            //continue;
-            //printf("after 1st abcd\n");
             mul1 = _mm256_mul_ps(v1_old, w1_old);
             mul2 = _mm256_mul_ps(v2_old, w1_old);
             accu1 = _mm256_add_ps(accu1, mul1);
             accu2 = _mm256_add_ps(accu2, mul2);
-
-#if 0
-            read_abcd(nb_vec*dom.col_id_t[offset+1]+ dom.vec_vt, w1_old);
-            //printf("after 2nd abcd\n");
-            mul1 = _mm256_mul_ps(v1_old, w1_old);
-            mul2 = _mm256_mul_ps(v2_old, w1_old);
-            accu1 = _mm256_add_ps(accu1, mul1);
-            accu2 = _mm256_add_ps(accu2, mul2);
-#endif
         }
-        //printf("before store\n");
         _mm256_store_ps(dom.result_vt+nb_mat*nb_vec*r, accu1);
         _mm256_store_ps(dom.result_vt+nb_mat*nb_vec*r+8, accu2);
-        //if (r > 10000) break;
     }
-
 } // omp parallel
     printf("exit omp parallel\n");
      }
         tm["spmv"]->end();  // time for each matrix/vector multiply
         if (it < 3) continue;
         elapsed = tm["spmv"]->getTime();
-        // nb_rows is wrong. 
-        //printf("%d, %d, %d, %d\n", rd.nb_mats, rd.nb_vecs, rd.stencil_size, rd.nb_rows);
         gflops = rd.nb_mats * rd.nb_vecs * 2.*rd.stencil_size*rd.nb_rows*1e-9 / (1e-3*elapsed); // assumes count of 1
         printf("%f gflops, %f (ms)\n", gflops, elapsed);
         if (gflops > max_gflops) {
@@ -726,12 +615,6 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
             min_elapsed = elapsed;
         }
    }
-#if 0
-        for (int i=0; i < rd.nb_rows; i++) {
-            printf("sub res[%d]= %f\n", i, subdomains[0].result_vt[16*i]);
-        }
-        exit(0);
-#endif
 
    printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
     result_vt = subdomains[0].result_vt;
@@ -741,6 +624,119 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
    checkSolutions();
    freeInputMatricesAndVectorsMulti();
 }
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP_HOST<T>::method_8a_multi_optimal(int nbit)
+{
+	printf("============== METHOD 8a Multi Optimal, %d domain  ===================\n", nb_subdomains);
+    printf("nb subdomains= %d\n", nb_subdomains);
+    printf("nb_rows_multi = %d\n", nb_rows_multi[0]);
+
+    generateInputMatricesAndVectorsMulti();
+    bandwidth(subdomains[0].col_id_t, nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
+    bandwidthQ(subdomains[0], nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
+    
+ 
+    float gflops;
+    float max_gflops = 0.;
+    float elapsed = 0.; 
+    float min_elapsed = 0.; 
+    //int nb_rows = rd.nb_rows;
+    int nz = rd.stencil_size;
+    printf("*** nb_subdomains: %d\n", nb_subdomains);
+
+    // Must now work on alignmentf vectors. 
+    // Produces the correct serial result
+    for (int it=0; it < 10; it++) {
+      tm["spmv"]->start();
+      for (int s=0; s < nb_subdomains; s++) {
+        //printf("iter %d, subdom %d\n", it, s);
+// Should all 4 subdomains be contained in a single omp parallel pragma?
+
+
+
+#pragma omp parallel firstprivate(nz)
+{
+    const int nb_rows = nb_rows_multi[s];
+    const int nb_mat = 4;
+    const int nb_vec = 4;
+    const int nz = rd.stencil_size;
+    const Subdomain& dom = subdomains[s];
+
+
+    __m256 v1_old = _mm256_setzero_ps();
+    __m256 v2_old = _mm256_setzero_ps();
+    __m256 mul1;
+    __m256 mul2;
+    __m256 w1_old;
+
+    __m256 v;
+    __m256 w, w1;
+    __m128 v128;
+
+#pragma omp for
+    for (int r=0; r < nb_rows; r++) {
+        __m256 accu1 = _mm256_setzero_ps();
+        __m256 accu2 = _mm256_setzero_ps();
+
+        // on mic, I read 16 floats at a time. Ideally, I should 8 floats at a time (instad of 4)
+        for (int n=0; n < nz; n++) {  // more loop elements
+            int offset = n+r*nz;
+            //read_aaaa(dom.data_t+nb_mat*offset, v1_old, v2_old); // generates the error in read_abcd? 
+            //
+
+    v = _mm256_loadu_ps(dom.data_t+nb_mat*offset);  // unpack version, no alignment requirements
+    w = _mm256_permute_ps(v, 0xff); 
+    w1 = _mm256_permute_ps(v, 0xaa);
+
+    v128 = _mm256_extractf128_ps(w, 0); 
+    v2_old = _mm256_insertf128_ps(w1, v128, 1);
+
+    w = _mm256_permute_ps(v, 0x55);
+    w1 = _mm256_permute_ps(v, 0x0);
+
+    v128 = _mm256_extractf128_ps(w, 0);
+    v1_old = _mm256_insertf128_ps(w1, v128, 1);
+            //
+            //
+            //read_abcd(nb_vec*dom.col_id_t[offset], dom.vec_vt, w1_old); // seg if run alone
+            //
+    v = _mm256_loadu_ps(dom.vec_vt+nb_vec*dom.col_id_t[offset]);
+    v128 = _mm256_extractf128_ps(v, 0);
+    w1_old = _mm256_insertf128_ps(v, v128, 1);  // a,b,c,d,  a,b,c,d
+            //
+            //
+            mul1 = _mm256_mul_ps(v1_old, w1_old);
+            mul2 = _mm256_mul_ps(v2_old, w1_old);
+            accu1 = _mm256_add_ps(accu1, mul1);
+            accu2 = _mm256_add_ps(accu2, mul2);
+        }
+        _mm256_store_ps(dom.result_vt+nb_mat*nb_vec*r, accu1);
+        _mm256_store_ps(dom.result_vt+nb_mat*nb_vec*r+8, accu2);
+    }
+} // omp parallel
+    printf("exit omp parallel\n");
+     }
+        tm["spmv"]->end();  // time for each matrix/vector multiply
+        if (it < 3) continue;
+        elapsed = tm["spmv"]->getTime();
+        gflops = rd.nb_mats * rd.nb_vecs * 2.*rd.stencil_size*rd.nb_rows*1e-9 / (1e-3*elapsed); // assumes count of 1
+        printf("%f gflops, %f (ms)\n", gflops, elapsed);
+        if (gflops > max_gflops) {
+            max_gflops = gflops;
+            min_elapsed = elapsed;
+        }
+   }
+
+   printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
+    result_vt = subdomains[0].result_vt;
+    data_t = subdomains[0].data_t;
+    col_id_t = subdomains[0].col_id_t;
+    vec_vt = subdomains[0].vec_vt;
+   checkSolutions();
+   freeInputMatricesAndVectorsMulti();
+}
+//----------------------------------------------------------------------
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP_HOST<T>::checkAllSerialSolutions(T* data_t, int* col_id_t, T* vec_vt, T* one_res, int nz, int nb_mat, int nb_vec, int nb_rows)
