@@ -189,6 +189,7 @@ public:
     void freeInputMatricesAndVectors();
     void freeInputMatricesAndVectorsMulti();
     void checkSolutions();
+    void checkSolutionsNoVec();
     void bandwidth(int* col_id, int nb_rows, int stencil_size, int vec_size);
     void bandwidthQ(Subdomain& s, int nb_rows, int stencil_size, int vec_size);
     void permInverse3(int n, int* perm, int* perm_inv);
@@ -198,6 +199,15 @@ public:
     //void freeInputMatricesAndVectors(float* vec_vt, float* result_vt, int* col_id_t, float* data_t);
     //void generateInputMatricesAndVectors(float* vec_vt, float* result_vt, int* col_id_t, float* data_t);
     void cuthillMcKee(std::vector<int>& col_id, int nb_rows, int stencil_size);
+    void cuthillMcKee_new(std::vector<int>& col_id, int nb_rows, int stencil_size);
+
+    // functions meant to treat the case of 4mat/4vec running in straighforward mode, where
+    // data (weights) are ordered 4 matrix el 1, 4 matrix el2, etc.
+    //  In the functions above, the order is more complex for supposedly faster benchmarks. 
+    void generateInputMatricesAndVectorsMultiNoVec();
+    void generate_ell_matrix_data_novec(T* data, int nbz, int nb_rows, int nb_mat);
+    void retrieve_data_novec(T* data_in, T* data_out, int mat_id, int nbz, int nb_rows, int nb_mat);
+    void checkAllSerialSolutionsNoVec(T* data_t, int* col_id_t, T* vec_vt, T* one_res, int nz, int nb_mat, int nb_vec, int nb_rows);
 
 protected:
 	virtual void method_0(int nb=0);
@@ -409,6 +419,7 @@ ELL_OPENMP<T>::ELL_OPENMP(std::string filename, int ntimes) :
         offsets_multi[1] = nb_rows_multi[0]*stencil_size;
         //printf("cuthill from ELL input format\n");
         //cuthillMcKer(mat.ell_col_id, nb_rows,stencil_size);
+        bandwidth(&mat.ell_col_id[0], nb_rows, stencil_size, nb_rows);
     } else if (in_format == "ELL_MULTI") {
         // need variables mat_multi, vec_v_multi, result_v_multi
         // stencil size is identical for all subdomains
@@ -1942,7 +1953,7 @@ void ELL_OPENMP<T>::method_8a_multi_novec(int nbit)
     printf("nb subdomains= %d\n", nb_subdomains);
     printf("nb_rows_multi = %d\n", nb_rows_multi[0]);
 
-    generateInputMatricesAndVectorsMulti();
+    generateInputMatricesAndVectorsMultiNoVec();
     //bandwidth(subdomains[0].col_id_t, nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
     //bandwidthQ(subdomains[0], nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
         //for (int i=0; i < (rd.nb_vecs*rd.nb_mats*rd.nb_rows); i++) {
@@ -1988,7 +1999,9 @@ printf("nz= %d\n", nz);
                 for (int k=0; k < 16; k++) {
                     tens[k] = 0.0;  // use better method, such as memset()
                 }
-#pragma simd
+                //
+//vectorization of this loop generates errors
+//#pragma simd
                 for (int n=0; n < nz; n++) {  // more loop elements
                     int offset = n+r*nz;
                     int col = dom.col_id_t[offset];
@@ -2035,7 +2048,8 @@ printf("nz= %d\n", nz);
     col_id_t = subdomains[0].col_id_t;
     vec_vt = subdomains[0].vec_vt;
 
-   checkSolutions();
+    printf("before solutionsNoVec\n");
+   checkSolutionsNoVec();
    printf("after checkSolutions\n");
    freeInputMatricesAndVectorsMulti();
    printf("after free matrices\n");
@@ -2087,9 +2101,10 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
    const __m512i four = _mm512_set4_epi32(4,4,4,4); 
     //printf("after subdomain\n");
 
-//#define GATHER
+// for correct solution, both GATHER and PERMUTE MUST BE DEFINED
+#define GATHER
+#define PERMUTE
 //#undef GATHER
-//#define PERMUTE
 
 #if 1
 #pragma omp for 
@@ -2145,6 +2160,7 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
 }
      }
         tm["spmv"]->end();  // time for each matrix/vector multiply
+        if (it < 3) continue;
         elapsed = tm["spmv"]->getTime();
         // nb_rows is wrong. 
         //printf("%d, %d, %d, %d\n", rd.nb_mats, rd.nb_vecs, rd.stencil_size, rd.nb_rows);
@@ -2565,6 +2581,10 @@ void ELL_OPENMP<T>::generate_col_id(int* col_id, int nbz, int nb_rows)
     int half_width;
     int sz2 = nbz >> 1;
 
+    //std::vector<int> col_id_v(nb_rows*nbz);
+    //std::copy(col_id, col_id+nb_rows*nbz, col_id_v.begin());
+    //cuthillMcKee_new(col_id_v, nb_rows, nbz);
+
     switch (stencil_type) {
     case NONE:
         break;
@@ -2959,6 +2979,21 @@ void ELL_OPENMP<T>::freeInputMatricesAndVectorsMulti()
 }
 //----------------------------------------------------------------------
 template <typename T>
+void ELL_OPENMP<T>::checkSolutionsNoVec()
+{
+    std::vector<float> one_res(rd.nb_rows);  // single result
+    for (int w=0; w < 16; w++) {
+        for (int i=0; i < rd.nb_rows; i++) {
+            one_res[i] = result_vt[16*i+w];
+        }
+        printf("method_8a, l2norm[%d]=of omp version: %f\n", w, l2norm(one_res));
+    }
+
+    checkAllSerialSolutionsNoVec(data_t, col_id_t, vec_vt, &one_res[0], rd.stencil_size, rd.nb_mats, rd.nb_vecs, rd.nb_rows);
+}
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+template <typename T>
 void ELL_OPENMP<T>::checkSolutions()
 {
     std::vector<float> one_res(rd.nb_rows);  // single result
@@ -2971,6 +3006,100 @@ void ELL_OPENMP<T>::checkSolutions()
 
     checkAllSerialSolutions(data_t, col_id_t, vec_vt, &one_res[0], rd.stencil_size, rd.nb_mats, rd.nb_vecs, rd.nb_rows);
 }
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::generateInputMatricesAndVectorsMultiNoVec()
+{
+    // vectors are aligned. Start using vector _mm_ constructs. 
+    int nb_mat = rd.nb_mats;
+    int nb_vec = rd.nb_vecs;
+
+    if (rd.use_subdomains == 0) {
+        nb_subdomains = 1;
+        nb_rows_multi[0] = rd.nb_rows;
+        nb_vec_elem_multi[0] = rd.nb_rows;
+    }
+
+    for (int i=0; i < nb_subdomains; i++) {
+        int nz = rd.stencil_size;
+        int nb_rows = nb_rows_multi[i];
+        int tot_nz = nz*nb_rows;
+        int vec_size = nb_vec_elem_multi[i];
+
+        Subdomain& s = subdomains[i];
+
+        s.vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * vec_size, 64);
+        s.result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * nb_rows, 64);
+        s.col_id_t  = (int*)   _mm_malloc(sizeof(int)   * tot_nz, 16);
+        s.data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * tot_nz, 64);
+
+        if (s.vec_vt == 0 || s.result_vt == 0 || s.col_id_t == 0 || s.data_t == 0) {
+            printf("1. memory allocation failed\n");
+            exit(0);
+        }
+
+        for (int j=offsets_multi[i], k=0; j < offsets_multi[i+1]; j++) {
+            s.col_id_t[k++] = mat.ell_col_id[j];
+        }
+
+        // UP TO THIS POINT, same for all cases. 
+    printf("nb_rows= %d\n", nb_rows);
+    printf("nb_vec= %d\n", nb_vec);
+    printf("nb_mat= %d\n", nb_mat);
+    printf("nz= %d\n", nz);
+
+        generate_vector(s.vec_vt, vec_size, nb_vec); // special
+        generate_col_id(s.col_id_t, nz, nb_rows);
+        generate_ell_matrix_data_novec(s.data_t, nz, nb_rows, nb_mat); // special
+    }
+}
+//----------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::generate_ell_matrix_data_novec(T* data, int nbz, int nb_rows, int nb_mat)
+{
+    for (int r=0; r < nb_rows; r++) {
+        for (int n=0; n < nbz; n++) {
+            for (int m=0; m < nb_mat; m++) {
+                data[m+nb_mat*(n+nbz*r)] = getRandf();
+                //data[m+nb_mat*(n+nbz*r)] = 1.0;
+            }
+        }
+    }
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::retrieve_data_novec(T* data_in, T* data_out, int mat_id, int nbz, int nb_rows, int nb_mat)
+{
+    assert(nb_mat == 4);
+
+    for (int r=0; r < nb_rows; r++) {
+        for (int n=0; n < nbz; n++) {
+            data_out[n+nbz*r] = data_in[mat_id+nb_mat*(n+nbz*r)];
+        }
+    }
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::checkAllSerialSolutionsNoVec(T* data_t, int* col_id_t, T* vec_vt, T* one_res, int nz, int nb_mat, int nb_vec, int nb_rows)
+{
+    T* v = (T*) _mm_malloc(sizeof(T)*nb_rows, 16);
+    T* d = (T*) _mm_malloc(sizeof(T)*nb_rows*nz, 16);
+    
+    for (int mat_id=0; mat_id < nb_mat; mat_id++) {
+        retrieve_data_novec(&data_t[0], d, mat_id, nz, nb_rows, nb_mat);
+    for (int vec_id=0; vec_id < nb_vec; vec_id++) {
+        retrieve_vector(vec_vt, v, vec_id, nb_vec, nb_rows); 
+        spmv_serial_row(&col_id_t[0], d, v, &one_res[0], nz, nb_rows);
+        printf("method_8a, l2norm of serial vec/mat= %d/%d, %f\n", vec_id, mat_id, l2norm(one_res, nb_rows)); // need matrix and vector index
+    }}
+
+    _mm_free(v);
+    _mm_free(d);
+}
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP<T>::bandwidthQ(Subdomain& s, int nb_rows, int stencil_size, int vec_size)
@@ -3001,7 +3130,8 @@ void ELL_OPENMP<T>::bandwidthQ(Subdomain& s, int nb_rows, int stencil_size, int 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 template <typename T>
-void ELL_OPENMP<T>::bandwidth(int* col_id, int nb_rows, int stencil_size, int vec_size)
+void ELL_OPENMP<T>::bandwidth(int* col_id, int nb_rows, int stencil_size, int vec_size) 
+// vec_size not used. 
 // compute bandwidth, average bandwidth, rms bandwidth
 // given row r, and stencil element s, col_id[s+stencil_size*r] is the index into the 
 // vector vec of length vec_size
@@ -3150,6 +3280,54 @@ int ELL_OPENMP<T>::adj_bandwidth(int node_num, int adj_num, int* adj_row, int* a
 }
 //----------------------------------------------------------------------
 template <typename T>
+void ELL_OPENMP<T>::cuthillMcKee_new(std::vector<int>& col_id, int nb_rows, int stencil_size)
+{
+    std::vector<int> row_ptr;
+    std::vector<int> new_row_ptr;
+    std::vector<int> new_col_ind;
+
+    printf("*******\nBandwidth reduction using ViennaCL\n");
+    printf("nb_rows= %d, stencil_size= %d\n", nb_rows, stencil_size);
+    //printf("col id size: %d\n", col_id.size());
+    row_ptr.push_back(0);
+    for (int i=0; i < nb_rows; i++) {
+        row_ptr.push_back((i+1)*stencil_size);
+    }
+    //printf("col_id.size= %d\n", col_id.size());
+
+    new_col_ind.resize(0);
+    new_row_ptr.resize(0);
+    // last arg: symmetrize adjacency matrix
+    vcl::ConvertMatrix d(nb_rows, col_id, row_ptr, new_col_ind, new_row_ptr, 1);
+    float bw_mean, bw_std;
+    int bw = d.calcOrigBandwidth(bw_mean, bw_std);
+    printf("Unordered bandwidth/mean/std: %d, %f, %f\n", bw, bw_mean, bw_std);
+    d.reduceBandwidthRCM();
+    // matrix2/matrix3 not defined
+    //bw = rvcl.calc_bw(matrix2);
+    //printf("bandwidth of reordered matrix2: %d\n", bw);
+    //bw = rvcl.calc_bw(matrix3);
+    //printf("bandwidth of reordered matrix3: %d\n", bw);
+
+    //printf("before reordderedEllMatrix\n");
+    d.computeReorderedEllMatrix(stencil_size);
+    //printf("start registerDensity\n");
+    //printf("new_col_ind[0]= %d\n", new_col_ind[0]);
+    bw = d.bandwidthEllpack(&new_col_ind[0], nb_rows, stencil_size);
+    d.calcFinalBandwidth(bw_mean, bw_std);
+    printf("bandwidth reordered ellpack matrix: %d\n", bw);
+    // Ideally, sort earlier in the pipeline
+    for (int i=0; i < nb_rows; i++) {
+        std::sort(&col_id[i*stencil_size], &col_id[(i+1)*stencil_size]);
+    }
+    d.registerDensity(col_id, nb_rows, stencil_size, "orig matrix: ");
+    d.registerDensity(new_col_ind, nb_rows, stencil_size, "reordered matrix: ");
+    //d.reorderMatrix(); // done in reduceBandwidthwithRCM
+    exit(0);
+}
+//--------------------------------------------------------------------
+//----------------------------------------------------------------------
+template <typename T>
 void ELL_OPENMP<T>::cuthillMcKee(std::vector<int>& col_id, int nb_rows, int stencil_size)
 {
     std::vector<int> row_ptr;
@@ -3158,15 +3336,18 @@ void ELL_OPENMP<T>::cuthillMcKee(std::vector<int>& col_id, int nb_rows, int sten
 
     row_ptr.push_back(0);
     for (int i=0; i < nb_rows; i++) {
-        row_ptr.push_back(stencil_size);
+        row_ptr.push_back((i+1)*stencil_size);
     }
 
     printf("Bandwidth reduction using ViennaCL\n");
     new_col_ind.resize(0);
     new_row_ptr.resize(0);
-    vcl::ConvertMatrix d(nb_rows, col_id, row_ptr, new_col_ind, new_row_ptr);
-    int bw = d.calcOrigBandwidth();
-    printf("initial bw (VCL): %d\n", bw);
+    // last arg: symmetrize adjacency matrix
+    vcl::ConvertMatrix d(nb_rows, col_id, row_ptr, new_col_ind, new_row_ptr, 1);
+    float bw_mean;
+    float bw_std;
+    int bw = d.calcOrigBandwidth(bw_mean, bw_std);
+    printf("initial bw (VCL): %d, mean: %d, std: %d\n", bw, bw_mean, bw_std );
     d.reduceBandwidthRCM();
     //d.reorderMatrix(); // done in reduceBandwidthwithRCM
     exit(0);

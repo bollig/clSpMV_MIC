@@ -23,7 +23,7 @@ include_directories(
     #/usr/boost-1.45/include
 ) 
 
-set(CMAKE_CXX_FLAGS "-std=c++0x -O2 -openmp -mmic")
+set(CMAKE_CXX_FLAGS "-std=c++0x -O2 -openmp -mmic -DNDEBUG")
 set(CMAKE_EXE_LINKER_FLAGS "-mmic")
 
 #add_definitions(-std=c++0x -O2 -openmp -mmic) 
