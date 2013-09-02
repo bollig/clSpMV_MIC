@@ -308,3 +308,6 @@ Below the Q\B row, I need the first index of the B matrix and the first index of
 So last_QmB[QmB.size()], first_B(B.size()) and first_R(R.size()). 
 CHECK: is B.size() == R.size()
 ----------------------------------------------------------------------
+
+On host, I need to set threads inside the program. I doubt affinity, etc. set thorugh environment 
+variables are recognized. 

@@ -3,7 +3,7 @@ set(CMAKE_C_COMPILER "icc")
 set(CMAKE_CXX_COMPILER "icpc")                                                                                       
 #set(CMAKE_CXX_COMPILER /opt/intel/composer_xe_2013.5.192/bin/intel64/icpc)
 
-project(spmv_openmp_host)
+project(mem_tests_host)
 
 set(D ../src_template/)
 set(SOURCES 
@@ -27,7 +27,7 @@ FIND_LIBRARY(LIBOMP iomp5 PATH /opt/intel/composer_xe_2013.5.192/compiler/lib/in
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../../linux/release)  # relative to cwd
 
 
-set(EXEC spmv_openmp_host)
+set(EXEC mem_test_host)
 ADD_EXECUTABLE(${EXEC} ${SOURCES})
 TARGET_LINK_LIBRARIES ( ${EXEC}
     ${LIBOMP}

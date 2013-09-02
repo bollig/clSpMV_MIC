@@ -78,6 +78,8 @@ public:
 	USE(optmethod);
 
     RunData rd;
+    int num_threads; // controlled from test.conf
+    std::string method_name;
 
     double overallopttime;
 	std::vector<T> paddedvec_v;
@@ -219,61 +221,29 @@ protected:
 template <typename T>
 void ELL_OPENMP<T>::run()
 {
-    int num_threads[] = {1,2,4,8,16,32,64,96,128,160,192,224,244};
-    //spmv_serial(mat, vec_v, result_v);
-    //printf("l2norm of serial version: %f\n", l2norm(result_v));
-    //spmv_serial_row(mat, vec_v, result_v);
-    //printf("l2norm of serial row version: %f\n", l2norm(result_v));
-    //exit(0);
-    //method_0();
-	//method_1(4);
-	//method_2(1);
-	//method_3(4);
-	//method_4(4);
-	//method_5(4); // correct results
-	//method_6(4);
-
-#if 0
-    rd.nb_rows = rd.n3d*rd.n3d*rd.n3d;
-    printf("rd.nb_rows: %d\n", rd.nb_rows);
-    int save_nb_threads = omp_get_num_threads();
-    //for (int i=0; i < 13; i++) {
-    for (int i=12; i < 13; i++) {
-        //num_threads[i] = 1;// TEMPORARY
-        omp_set_num_threads(num_threads[i]);
-        printf("rd/wr, nb threads: %d\n", num_threads[i]);
-	    method_rd_wr(4); // correct results
-    }
-    //for (int i=0; i < 13; i++) {
-    for (int i=12; i < 13; i++) {
-        omp_set_num_threads(num_threads[i]);
-        method_rd_wr_local_thread(4);
-    }
-    exit(0);
-#endif
-
-	//method_7(4); // correct results
-    //exit(0);
-	//method_7a(4); // Something wrong with random matrices
+    int num_threads_v[] = {1,2,4,8,16,32,64,96,128,160,192,224,244};
+    int nb_slots = 13;
 
     int count = 0;
     int max_nb_runs = 1;
 
-#if 0
-    while (1) {
-        rd.nb_rows = rd.n3d*rd.n3d*rd.n3d;
+    for (int i=0; i < nb_slots; i++) {
+        omp_set_num_threads(num_threads_v[i]);
+#pragma omp parallel
+        {
+#pragma omp single
+        num_threads = omp_get_num_threads();
+        }
 
-	    method_8a(4);
-        count++;
-
-        printf("update inner bandwidth: %d\n", rd.inner_bandwidth);
-        if (rd.inner_bandwidth >= 233000) break;
-        if (rd.diag_sep >= 200000) break;
-        if (rd.n3d > 80) break; // maximum size grid to experiment with. 
-        if (rd.sort_col_indices > 1) break;
-        if (count >= max_nb_runs) break;
+        method_8a_multi_novec(4);
     }
-#endif
+    for (int i=0; i < nb_slots; i++) {
+        omp_set_num_threads(num_threads_v[i]);
+        num_threads = omp_get_num_threads();
+        method_8a_multi(4);
+    }
+    return;
+
 
     if (rd.use_subdomains == 0 || nb_subdomains == 1) {
         //method_8a(4);
@@ -1950,6 +1920,7 @@ template <typename T>
 void ELL_OPENMP<T>::method_8a_multi_novec(int nbit)
 {
 	printf("============== METHOD 8a Multi NoVec, %d domain  ===================\n", nb_subdomains);
+    method_name = "method_8a_multi_cpp";
     printf("nb subdomains= %d\n", nb_subdomains);
     printf("nb_rows_multi = %d\n", nb_rows_multi[0]);
 
@@ -2040,7 +2011,8 @@ printf("nz= %d\n", nz);
 }   // omp parallel
    }
 
-   printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
+   //printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
+   printf("%s, threads: %d, Max Gflops: %f, min time: %f (ms)\n", method_name.c_str(), num_threads, max_gflops, min_elapsed);
    printf("before checkSolutions\n");
     // necessary to check solutiosn
     result_vt = subdomains[0].result_vt;
@@ -2049,7 +2021,7 @@ printf("nz= %d\n", nz);
     vec_vt = subdomains[0].vec_vt;
 
     printf("before solutionsNoVec\n");
-   checkSolutionsNoVec();
+   //checkSolutionsNoVec();
    printf("after checkSolutions\n");
    freeInputMatricesAndVectorsMulti();
    printf("after free matrices\n");
@@ -2060,6 +2032,7 @@ template <typename T>
 void ELL_OPENMP<T>::method_8a_multi(int nbit)
 {
 	printf("============== METHOD 8a Multi, %d domain  ===================\n", nb_subdomains);
+    method_name = "method_8a_multi_cpp";
     printf("nb subdomains= %d\n", nb_subdomains);
     printf("nb_rows_multi = %d\n", nb_rows_multi[0]);
 
@@ -2176,8 +2149,9 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
     data_t = subdomains[0].data_t;
     col_id_t = subdomains[0].col_id_t;
     vec_vt = subdomains[0].vec_vt;
-   printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
-   checkSolutions();
+   //printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
+   printf("%s, threads: %d, Max Gflops: %f, min time: %f (ms)\n", method_name.c_str(), num_threads, max_gflops, min_elapsed);
+   //checkSolutions();
    freeInputMatricesAndVectorsMulti();
 }
 //----------------------------------------------------------------------
