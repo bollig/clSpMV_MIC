@@ -19,13 +19,17 @@ F="matrix/ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_128x_128y_128z.bmtx"
 F="matrix/ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_192x_192y_192z.bmtx"
 F="matrix/ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_192x_192y_192z.bmtx"
 F="matrix/ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_128x_128y_128z.bmtx"
-F="matrix/ell_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx"
+F="matrix/ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_96x_96y_96z.bmtx"
 F="matrix/ell_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx"
+F="matrix/ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_96x_96y_96z.bmtx"
+F="matrix/ell_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx"
+
 EXEC= "./linux/release/spmv_openmp_mic %s 1" % F
 #-------------------------------------------------------
 def make_cmd_from_host(outfile):
     OMP= "%s;%s;%s" % (THREADS, SCHEDULE, KMC)
-    INNER= "\'cd mic; %s; %s; %s > %s \'" % (OMP, LIB, EXEC, outfile)
+    #INNER= "\'cd mic; %s; %s; %s > %s \'" % (OMP, LIB, EXEC, outfile)
+    INNER= "\'cd mic; %s; %s; %s  \'" % (OMP, LIB, EXEC)
     CMD="(ssh S2-mic0 %s)" % INNER
     return(CMD)
 #-------------------------------------------------------
