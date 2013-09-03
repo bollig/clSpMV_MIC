@@ -188,7 +188,9 @@ public:
     void retrieve_vector(T* vec, T* retrieved, int vec_id, int nb_vec, int nb_rows);
     //void retrieve_data(std::vector<T>& data_in, std::vector<T>& data_out, int mat_id, int nbz, int nb_rows, int nb_mat);
     void retrieve_data(T* data_in, T* data_out, int mat_id, int nbz, int nb_rows, int nb_mat);
+    void retrieve_data_base(T* data_in, T* data_out, int mat_id, int nbz, int nb_rows);
     void checkAllSerialSolutions(T* data_t, int* col_id_t, T* vec_vt, T* one_res, int nz, int nb_mat, int nb_vec, int nb_rows);
+    void checkAllSerialSolutionsBase(T* data_t, int* col_id_t, T* vec_vt, T* one_res, int nz, int nb_mat, int nb_vec, int nb_rows);
     void generateInputMatricesAndVectors();
     void generateInputMatricesAndVectorsBase(int align=16); // for col_id
     void generateInputMatricesAndVectorsMulti();
@@ -233,8 +235,9 @@ void ELL_OPENMP<T>::run()
     int count = 0;
     int max_nb_runs = 1;
 
-#if 1
-    omp_set_num_threads(244);
+#if 0
+    //omp_set_num_threads(244);
+    omp_set_num_threads(1);
 #pragma omp parallel
         {
 #pragma omp single
@@ -2180,7 +2183,7 @@ template <typename T>
 void ELL_OPENMP<T>::method_8a_base(int nbit)
 {
 // Single matrix, single vector, base case. 
-	printf("============== METHOD 8a Multi, %d domain  ===================\n", nb_subdomains);
+	printf("============== METHOD 8a Base, %d domain  ===================\n", nb_subdomains);
     method_name = "method_8a_base";
     printf("nb subdomains= %d\n", nb_subdomains);
     printf("nb_rows_multi = %d\n", nb_rows_multi[0]);
@@ -2236,15 +2239,15 @@ void ELL_OPENMP<T>::method_8a_base(int nbit)
 #if 1
 #pragma omp for 
         for (int r=0; r < nb_rows; r+=16) {
-#pragma simd
-            for (int r1=0; r1 < 16; r1++) {
-            //printf("r= %d\n", r);
-            int rr = r+r1;
+//#pragma simd
+         //for (int r1=0; r1 < 16; r1++) {
             accu = _mm512_setzero_ps(); // 16 floats for 16 rows
+            //printf("r= %d\n", r);
+            //int rr = r+r1;
             // for each group of 16 rows, perform scalar product. 
             // Assume that row varies fastest (fix solutions and check later)
 
-#pragma simd
+//#pragma simd
             for (int n=0; n < nz; n++) {  // nz is multiple of 32 (for now)
                 //printf("n= %d\n", n);
                 v1_old = _mm512_load_ps(dom.data_t       + (r+n*nb_rows)); // load 16 rows at column n
@@ -2258,10 +2261,11 @@ void ELL_OPENMP<T>::method_8a_base(int nbit)
                 //accu = _mm512_fmadd_ps(v1_old, v1_old, accu);
                 accu = _mm512_fmadd_ps(v1_old, v, accu);
             }
-            }
+            //}
             // inefficient since only a single row computed at a time. How to 
             // fill a register with 16 calculations before storing? 
-            _mm512_storenrngo_ps(dom.result_vt+r, accu);  
+            //_mm512_storenrngo_ps(dom.result_vt+r, accu);  
+            _mm512_store_ps(dom.result_vt+r, accu);  
         } 
 #endif
 }
@@ -2272,7 +2276,7 @@ void ELL_OPENMP<T>::method_8a_base(int nbit)
         elapsed = tm["spmv"]->getTime();
         // nb_rows is wrong. 
         //printf("%d, %d, %d, %d\n", rd.nb_mats, rd.nb_vecs, rd.stencil_size, rd.nb_rows);
-        gflops = rd.nb_mats * rd.nb_vecs * 2.*rd.stencil_size*rd.nb_rows*1e-9 / (1e-3*elapsed); // assumes count of 1
+        gflops = 2.*rd.stencil_size*rd.nb_rows*1e-9 / (1e-3*elapsed); // assumes count of 1
         printf("%f gflops, %f (ms)\n", gflops, elapsed);
         if (gflops > max_gflops) {
             max_gflops = gflops;
@@ -2290,6 +2294,24 @@ void ELL_OPENMP<T>::method_8a_base(int nbit)
    freeInputMatricesAndVectorsMulti();
 }
 //----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::checkAllSerialSolutionsBase(T* data_t, int* col_id_t, T* vec_vt, T* one_res, int nz, int nb_mat, int nb_vec, int nb_rows)
+{
+    printf("Enter checkAllSerialSolutionsBase\n");
+    T* v = (T*) _mm_malloc(sizeof(T)*nb_rows, 16);
+    T* d = (T*) _mm_malloc(sizeof(T)*nb_rows*nz, 16);
+    
+    for (int mat_id=0; mat_id < nb_mat; mat_id++) {
+        retrieve_data_base(&data_t[0], d, mat_id, nz, nb_rows);
+    for (int vec_id=0; vec_id < nb_vec; vec_id++) {
+        retrieve_vector(vec_vt, v, vec_id, nb_vec, nb_rows); 
+        spmv_serial_row(&col_id_t[0], d, v, &one_res[0], nz, nb_rows);
+        printf("method_8a, l2norm of serial vec/mat= %d/%d, %f\n", vec_id, mat_id, l2norm(one_res, nb_rows)); // need matrix and vector index
+    }}
+
+    _mm_free(v);
+    _mm_free(d);
+}
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP<T>::checkAllSerialSolutions(T* data_t, int* col_id_t, T* vec_vt, T* one_res, int nz, int nb_mat, int nb_vec, int nb_rows)
@@ -2309,6 +2331,26 @@ void ELL_OPENMP<T>::checkAllSerialSolutions(T* data_t, int* col_id_t, T* vec_vt,
     _mm_free(v);
     _mm_free(d);
 }
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::checkAllSerialSolutionsNoVec(T* data_t, int* col_id_t, T* vec_vt, T* one_res, int nz, int nb_mat, int nb_vec, int nb_rows)
+{
+    printf("Enter checkAllSerialSolutionsNoVec\n");
+    T* v = (T*) _mm_malloc(sizeof(T)*nb_rows, 16);
+    T* d = (T*) _mm_malloc(sizeof(T)*nb_rows*nz, 16);
+    
+    for (int mat_id=0; mat_id < nb_mat; mat_id++) {
+        retrieve_data_novec(&data_t[0], d, mat_id, nz, nb_rows, nb_mat); // Only change with respect to checkAllSerialSolutions
+    for (int vec_id=0; vec_id < nb_vec; vec_id++) {
+        retrieve_vector(vec_vt, v, vec_id, nb_vec, nb_rows); 
+        spmv_serial_row(&col_id_t[0], d, v, &one_res[0], nz, nb_rows);
+        printf("method_8a, l2norm of serial vec/mat= %d/%d, %f\n", vec_id, mat_id, l2norm(one_res, nb_rows)); // need matrix and vector index
+    }}
+
+    _mm_free(v);
+    _mm_free(d);
+}
+//----------------------------------------------------------------------
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP<T>::spmv_serial(ell_matrix<int, T>& mat, std::vector<T>& v, std::vector<T>& result)
@@ -2501,12 +2543,12 @@ void ELL_OPENMP<T>::fill_random(ell_matrix<int, T>& mat, std::vector<T>& v)
 {
     for (int i=0; i < v.size(); i++) {
             v[i] = (T) getRandf();  
-            v[i] = 1.0;   // Did not work
+            //v[i] = 1.0;   // Did not work
     }
 
     for (int i=0; i < mat.ell_col_id.size(); i++) {
             mat.ell_data[i] = getRandf(); // problem is with random matrices
-            mat.ell_data[i] = 1.0;  // worked
+            //mat.ell_data[i] = 1.0;  // worked
     }
 
 #if 0
@@ -2671,9 +2713,11 @@ void ELL_OPENMP<T>::generate_vector(T* vec, int nb_rows, int nb_vec)
     for (int i=0; i < sz; i++) {
         //if (!(i % 10000))  printf("i= %d\n", i);
         // works with matrix random, vector non-random
-        vec[i] = (T) getRandf();// incorrect norms 
+        vec[i] = ((i+1.)/sz) * ((T) getRandf());// incorrect norms  (differences are more serious)
         //vec[i] = 1.0; // wrong norms when matrices random, although only 4 different norms
     }
+    //printf("inside generate_vector: = 1.0\n");
+    printf("inside generate_vector: = \n");
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -2889,24 +2933,6 @@ void ELL_OPENMP<T>::retrieve_vector(T* vec, T* retrieved, int vec_id, int nb_vec
     }
 }
 //----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP<T>::retrieve_data(T* data_in, T* data_out, int mat_id, int nbz, int nb_rows, int nb_mat)
-{
-    assert(nb_mat == 4);
-    //assert(data_out.size() == nbz*nb_rows);
-
-    int n_skip = nb_mat;
-    int nz4 = nbz / n_skip;
-    for (int r=0; r < nb_rows; r++) {
-        for (int n=0; n < nbz; n += n_skip) {
-            int n4 = n / nb_mat;
-            for (int in=0; in < nb_mat; in++) {
-                //data_out[r+nb_rows*(n+in)] = data_in[in+n_skip*(mat_id+nb_mat*(n4+nz4*r))];
-                data_out[n+in + nbz*r] = data_in[in+n_skip*(mat_id+nb_mat*(n4+nz4*r))];
-            }
-        }
-    }
-}
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -3111,14 +3137,16 @@ void ELL_OPENMP<T>::checkSolutionsBase()
     std::vector<float> one_res(rd.nb_rows);  // single result
     printf("method_8a, l2norm=of omp version: %f\n", l2norm(result_vt, rd.nb_rows));
 
+    printf("checkSolutionsBase, nb_rows: %d, stencil_size: %d\n", rd.nb_rows, rd.stencil_size);
     // transpose data_t and col_id_t again
     // nb_rows varies fastest  (col_id[nz][nb_rows])
     transpose1(col_id_t, rd.stencil_size, rd.nb_rows);
     transpose1(data_t, rd.stencil_size, rd.nb_rows);
+    printf("transpose back, checkSolutionsBase\n");
 
     int nb_mats = 1;
     int nb_vecs = 1;
-    checkAllSerialSolutions(data_t, col_id_t, vec_vt, &result_vt[0], rd.stencil_size, nb_mats, nb_vecs, rd.nb_rows);
+    checkAllSerialSolutionsBase(data_t, col_id_t, vec_vt, &result_vt[0], rd.stencil_size, nb_mats, nb_vecs, rd.nb_rows);
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -3185,6 +3213,7 @@ void ELL_OPENMP<T>::generateInputMatricesAndVectorsBase(int align)
         generate_ell_matrix_data_novec(s.data_t, nz, nb_rows, nb_mat); // special
  
         // Transpose the col_id and data_t matrices to be more efficiency in the 1 matrix/1 vector case
+        printf("Two transposes in generate_solution, Base\n");
         transpose1(s.col_id_t, nb_rows, nz);
         transpose1(s.data_t, nb_rows, nz);
     }
@@ -3276,8 +3305,43 @@ void ELL_OPENMP<T>::generate_ell_matrix_data_novec(T* data, int nbz, int nb_rows
     for (int r=0; r < nb_rows; r++) {
         for (int n=0; n < nbz; n++) {
             for (int m=0; m < nb_mat; m++) {
-                data[m+nb_mat*(n+nbz*r)] = getRandf();
+               data[m+nb_mat*(n+nbz*r)] = getRandf();
                 //data[m+nb_mat*(n+nbz*r)] = 1.0;
+            }
+        }
+    }
+    printf("inside generate_ell_matrix_data_novec: = getRandf()\n");
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::retrieve_data_base(T* data_in, T* data_out, int mat_id, int nbz, int nb_rows)
+{
+    printf("retrieve data base: %d\n");
+    printf("retreieve_data_base: identity operator\n");
+
+    for (int r=0; r < nb_rows; r++) {
+        for (int n=0; n < nbz; n++) {
+            data_out[n+nbz*r] = data_in[n+nbz*r];
+        }
+    }
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::retrieve_data(T* data_in, T* data_out, int mat_id, int nbz, int nb_rows, int nb_mat)
+{
+    printf("retrieve data: nb_mat: %d\n", nb_mat);
+    //assert(nb_mat == 4);
+    //assert(1 == 0);
+    //assert(data_out.size() == nbz*nb_rows);
+
+    int n_skip = nb_mat;
+    int nz4 = nbz / n_skip;
+    for (int r=0; r < nb_rows; r++) {
+        for (int n=0; n < nbz; n += n_skip) {
+            int n4 = n / nb_mat;
+            for (int in=0; in < nb_mat; in++) {
+                //data_out[r+nb_rows*(n+in)] = data_in[in+n_skip*(mat_id+nb_mat*(n4+nz4*r))];
+                data_out[n+in + nbz*r] = data_in[in+n_skip*(mat_id+nb_mat*(n4+nz4*r))];
             }
         }
     }
@@ -3286,7 +3350,8 @@ void ELL_OPENMP<T>::generate_ell_matrix_data_novec(T* data, int nbz, int nb_rows
 template <typename T>
 void ELL_OPENMP<T>::retrieve_data_novec(T* data_in, T* data_out, int mat_id, int nbz, int nb_rows, int nb_mat)
 {
-    assert(nb_mat == 4);
+    //assert(nb_mat == 4);
+    printf("retrieve data novec: %d\n", nb_mat);
 
     for (int r=0; r < nb_rows; r++) {
         for (int n=0; n < nbz; n++) {
@@ -3294,25 +3359,6 @@ void ELL_OPENMP<T>::retrieve_data_novec(T* data_in, T* data_out, int mat_id, int
         }
     }
 }
-//----------------------------------------------------------------------
-template <typename T>
-void ELL_OPENMP<T>::checkAllSerialSolutionsNoVec(T* data_t, int* col_id_t, T* vec_vt, T* one_res, int nz, int nb_mat, int nb_vec, int nb_rows)
-{
-    T* v = (T*) _mm_malloc(sizeof(T)*nb_rows, 16);
-    T* d = (T*) _mm_malloc(sizeof(T)*nb_rows*nz, 16);
-    
-    for (int mat_id=0; mat_id < nb_mat; mat_id++) {
-        retrieve_data_novec(&data_t[0], d, mat_id, nz, nb_rows, nb_mat);
-    for (int vec_id=0; vec_id < nb_vec; vec_id++) {
-        retrieve_vector(vec_vt, v, vec_id, nb_vec, nb_rows); 
-        spmv_serial_row(&col_id_t[0], d, v, &one_res[0], nz, nb_rows);
-        printf("method_8a, l2norm of serial vec/mat= %d/%d, %f\n", vec_id, mat_id, l2norm(one_res, nb_rows)); // need matrix and vector index
-    }}
-
-    _mm_free(v);
-    _mm_free(d);
-}
-//----------------------------------------------------------------------
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
