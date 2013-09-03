@@ -233,7 +233,7 @@ void ELL_OPENMP<T>::run()
     int count = 0;
     int max_nb_runs = 1;
 
-#if 0
+#if 1
     omp_set_num_threads(244);
 #pragma omp parallel
         {
