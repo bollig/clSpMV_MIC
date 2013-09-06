@@ -14,3 +14,7 @@ for output of result.
 I should also implement a version puresly in C++. 
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
+I must check that sol_id after RCM still has exacty 32 nonzeros per row. I do not believe that is true when 
+I symmetrize. So there must be an error. Yet any matrix permutation of rows and/or columns should not modify the
+number of nonzeros per row. 
+----------------------------------------------------------------------

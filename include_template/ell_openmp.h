@@ -151,6 +151,7 @@ public:
     T l2norm(T*, int n);
 
 	virtual void run();
+    void gather_test(int do_transpose);
 	void method_3(int nb=0);
 	void method_4(int nb=0);
 	void method_5(int nb=0);
@@ -167,6 +168,8 @@ public:
     void method_8a_multi_novec(int nb=0);
     void transpose1(float* mat, int nr_slow, int nc_fast);
     void transpose1(int* mat, int nr_slow, int nc_fast);
+    void transpose1(float* mat, float* mat_t, int nr_slow, int nc_fast);
+    void transpose1(int* mat, int* mat_t, int nr_slow, int nc_fast);
 
     inline __m512 permute(__m512 v1, _MM_PERM_ENUM perm);
     inline __m512 read_aaaa(float* a);
@@ -236,8 +239,14 @@ void ELL_OPENMP<T>::run()
     int max_nb_runs = 1;
 
 #if 0
-    //omp_set_num_threads(244);
+    gather_test(0); // no transpose
+    gather_test(1); // transpose
+    //exit(0);
+#endif
+
+#if 1
     omp_set_num_threads(1);
+    omp_set_num_threads(244);
 #pragma omp parallel
         {
 #pragma omp single
@@ -2180,6 +2189,100 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
 }
 //----------------------------------------------------------------------
 template <typename T>
+void ELL_OPENMP<T>::gather_test(int do_transpose)
+{
+    printf("===========================================================\n");
+    generateInputMatricesAndVectorsBase(64);
+    printf("orig col_id=, mat.ell_col_id, then dom.col_id  \n"); 
+    const Subdomain& dom = subdomains[0];
+    printf("\nmat: row 1: \n");
+    for (int i=0; i < 32; i++) {
+        printf("%d,", mat.ell_col_id[i]);
+    }
+    printf("\nmat: row 2: \n");
+    for (int i=32; i < 64; i++) {
+        printf("%d,", mat.ell_col_id[i]);
+    }
+    printf("\n");
+    printf("\nsub: row 1: \n");
+    for (int i=0; i < 32; i++) {
+        printf("%d,", dom.col_id_t[i]);
+    }
+    printf("\nsub: row 2: \n");
+    for (int i=32; i < 64; i++) {
+        printf("%d,", dom.col_id_t[i]);
+    }
+    printf("\n");
+    int nz1 = 32;
+    if (do_transpose) {
+        printf("DO TRANSPOSE\n");
+        transpose1(dom.col_id_t, rd.nb_rows, nz1);
+        transpose1(dom.data_t, rd.nb_rows, nz1);
+    } else {
+        printf("DO NO TRANSPOSE\n");
+    }
+    printf("modified col_id= \n"); 
+    for (int i=0; i < 32; i++) {
+        printf("%d,", dom.col_id_t[i]);
+    }
+    printf("\n");
+
+    __m512 v1_old = _mm512_setzero_ps();
+    __m512 v2_old = _mm512_setzero_ps();
+    __m512 v3_old = _mm512_setzero_ps();
+    __m512 v3_oldi;
+    __m512i i3_old = _mm512_setzero_epi32();
+    __m512  v = _mm512_setzero_ps(); // TEMPORARY
+    __m512  accu;
+
+    int nb_rows = rd.nb_rows;
+    printf("nb_rows= %d\n", nb_rows);
+
+    for (int r=0; r < 2; r++) {
+        printf("row %d\n", r);
+    for (int n=0; n < 32; n++) {
+        //printf("%d,", dom.col_id_t[r+n*nb_rows]);
+        printf("%d,", dom.col_id_t[n+r*32]);
+    } 
+        printf("\n");
+    }
+    printf("\n");
+    //exit(0);
+
+    for (int n=0; n < 1; n++) {
+        printf("\n--- check col_id = %d\n", n);
+        for (int r=0; r < 16; r++) {
+            printf("%d,", dom.col_id_t[r+n*nb_rows]);
+        }
+        printf("\n vec_vt: \n");
+        for (int r=0; r < 16; r++) {
+            printf("%f,", dom.vec_vt[dom.col_id_t[r+n*nb_rows]]);
+        }
+    }
+    printf("\n");
+
+    printf("=== test of gatherd ===\n");
+
+   const __m512i offsets = _mm512_set4_epi32(3,2,1,0);  // original
+   const __m512i four = _mm512_set4_epi32(4,4,4,4); 
+   int nz=32;
+   int scale = 4;
+
+        for (int r=0; r < 32; r+=16) {
+            printf("--- row %d\n", r);
+            accu = _mm512_setzero_ps(); // 16 floats for 16 rows
+            for (int n=0; n < 1; n++) {  // nz is multiple of 32 (for now)
+                v1_old = _mm512_load_ps(dom.data_t       + (r+n*nb_rows)); // load 16 rows at column n
+                print_ps(v1_old, "v1_old");
+                v3_oldi = _mm512_load_epi32(dom.col_id_t + (r+n*nb_rows)); // ERROR SOMEHOW!
+                print_epi32(v3_oldi, "v3_oldi");
+                v  = _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale); // scale = 4 bytes (floats) HOW DOES SCALE WORK?
+                print_ps(v, "v");
+            }
+        }
+}
+//----------------------------------------------------------------------
+template <typename T>
 void ELL_OPENMP<T>::method_8a_base(int nbit)
 {
 // Single matrix, single vector, base case. 
@@ -2188,16 +2291,62 @@ void ELL_OPENMP<T>::method_8a_base(int nbit)
     printf("nb subdomains= %d\n", nb_subdomains);
     printf("nb_rows_multi = %d\n", nb_rows_multi[0]);
 
+#if 0
+    // test transpose with 3x4 (4 fastest)
+    std::vector<int> ci(12);
+    std::vector<int> ct(12);
+    ci.resize(12);
+    ct.resize(12);
+    ci[2] = 31; printf("ci[2]= %d\n", ci[2]);
+    for (int j=0; j < 3; j++) {
+    for (int i=0; i < 4; i++) {
+        //printf("i+4*j= %d\n", i+4*j);
+        int i1 = i+1;
+        int j1 = j+1;
+        ci[i+4*j] = i1 + 10*j1; // i is fastest
+        ct[i+4*j] = ci[i+4*j];
+    }}
+    transpose1(&ci[0], &ct[0], 3, 4); // 2nd arg is fastest varying index
+    //transpose1(&ci[0], 3, 4); // 2nd arg is fastest
+    //transpose1(&ci[0], 4, 3); // 2nd arg is fastest
+    printf("ci[i+4*j], i=0..3, j=0..2\n");
+    for (int j=0; j < 3; j++) {
+    for (int i=0; i < 4; i++) {
+        printf("ci(%d,%d): %d, ct(%d,%d)= %d\n", i, j, ci[i+4*j], i, j, ct[i+4*j]);
+    }}
+    exit(0);
+#endif
+
+    printf("before generate\n");
     generateInputMatricesAndVectorsBase(64);
+    int nz = rd.stencil_size;
+#if 0
+        std::vector<int> coll(rd.nb_rows*nz);
+        std::copy(subdomains[0].col_id_t, subdomains[0].col_id_t+rd.nb_rows*nz, coll.begin());
+        transpose1(subdomains[0].col_id_t, rd.nb_rows, nz);
+        transpose1(subdomains[0].col_id_t, nz, rd.nb_rows);
+        for (int i=0; i < rd.nb_rows*nz; i++) {
+            if (fabs(subdomains[0].col_id_t[i] - coll[i]) > 1.e-5) {
+                    printf("mismatch due to transpose, i= %d\n");
+                    exit(0);
+            }
+        }
+        exit(0);
+#endif
+        // get back original matrix? 
+        transpose1(subdomains[0].data_t, rd.nb_rows, nz); // nz varies fastest
+        transpose1(subdomains[0].col_id_t, rd.nb_rows, nz); // nz varies fastest
+    printf("before bandwidth\n");
     bandwidth(subdomains[0].col_id_t, nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
+    printf("after bandwidth\n");
     bandwidthQ(subdomains[0], nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
+    printf("after bandwidthQ\n");
  
     float gflops;
     float max_gflops = 0.;
     float elapsed = 0.; 
     float min_elapsed = 0.; 
     //int nb_rows = rd.nb_rows;
-    int nz = rd.stencil_size;
     printf("*** nb_subdomains: %d\n", nb_subdomains);
 
     // Must now work on alignmentf vectors. 
@@ -2207,25 +2356,27 @@ void ELL_OPENMP<T>::method_8a_base(int nbit)
       for (int s=0; s < nb_subdomains; s++) {
         //printf("iter %d, subdom %d\n", it, s);
 // Should all 4 subdomains be contained in a single omp parallel pragma?
+
+#if 1
 #pragma omp parallel firstprivate(nz)
 {
     const int nb_rows = nb_rows_multi[s];
-    const int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
-    const int nb_mat = 1;
-    const int nb_vec = 1;
-    const int scale = 4;
+    //const int int_mask_lo = (1 << 0) + (1 << 4) + (1 << 8) + (1 << 12);
+    //const int nb_mat = 1;
+    //const int nb_vec = 1;
+    const int scale = 4; // seg fault if 1 (WHY?)
     const int nz = rd.stencil_size;
     const Subdomain& dom = subdomains[s];
 
     __m512 v1_old = _mm512_setzero_ps();
-    __m512 v2_old = _mm512_setzero_ps();
-    __m512 v3_old = _mm512_setzero_ps();
+    //__m512 v2_old = _mm512_setzero_ps();
+    //__m512 v3_old = _mm512_setzero_ps();
     __m512 v3_oldi;
-    __m512i i3_old = _mm512_setzero_epi32();
+    //__m512i i3_old = _mm512_setzero_epi32();
     __m512  v = _mm512_setzero_ps(); // TEMPORARY
     __m512  accu;
-   const __m512i offsets = _mm512_set4_epi32(3,2,1,0);  // original
-   const __m512i four = _mm512_set4_epi32(4,4,4,4); 
+   //const __m512i offsets = _mm512_set4_epi32(3,2,1,0);  // original
+   //const __m512i four = _mm512_set4_epi32(4,4,4,4); 
     //printf("after subdomain\n");
 
 // for correct solution, both GATHER and PERMUTE MUST BE DEFINED
@@ -2239,37 +2390,48 @@ void ELL_OPENMP<T>::method_8a_base(int nbit)
 #if 1
 #pragma omp for 
         for (int r=0; r < nb_rows; r+=16) {
-//#pragma simd
-         //for (int r1=0; r1 < 16; r1++) {
             accu = _mm512_setzero_ps(); // 16 floats for 16 rows
-            //printf("r= %d\n", r);
-            //int rr = r+r1;
-            // for each group of 16 rows, perform scalar product. 
-            // Assume that row varies fastest (fix solutions and check later)
 
-//#pragma simd
+#pragma simd
             for (int n=0; n < nz; n++) {  // nz is multiple of 32 (for now)
-                //printf("n= %d\n", n);
                 v1_old = _mm512_load_ps(dom.data_t       + (r+n*nb_rows)); // load 16 rows at column n
                 v3_oldi = _mm512_load_epi32(dom.col_id_t + (r+n*nb_rows)); // ERROR SOMEHOW!
-                //v3_oldi = _mm512_setzero_epi32();
-                //print_epi32(v3_oldi, "v3_oldi");
-//exit(0);
                 v  = _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale); // scale = 4 bytes (floats) HOW DOES SCALE WORK?
-                //print_ps(v, "gathered v");
-                   //v = _mm512_setzero_ps();
-                //accu = _mm512_fmadd_ps(v1_old, v1_old, accu);
                 accu = _mm512_fmadd_ps(v1_old, v, accu);
             }
             //}
             // inefficient since only a single row computed at a time. How to 
             // fill a register with 16 calculations before storing? 
-            //_mm512_storenrngo_ps(dom.result_vt+r, accu);  
-            _mm512_store_ps(dom.result_vt+r, accu);  
+            _mm512_storenrngo_ps(dom.result_vt+r, accu);  
+            //_mm512_store_ps(dom.result_vt+r, accu);  
         } 
 #endif
+} // omp parallel
+#endif
+
+#if 0
+#pragma omp parallel 
+{
+    //printf("====== Test in serial cpp mode ===");
+    //printf("rd.nb_rows= %d\n", rd.nb_rows);
+
+    const int nz = rd.stencil_size;
+    const Subdomain& dom = subdomains[s];
+
+    // works (columns vary fastest in icol and data)
+#pragma omp for
+    for (int r=0; r < rd.nb_rows; r++) {
+        float sum = 0.;
+        for (int n=0; n < nz; n++) { 
+            int icol= dom.col_id_t[n+r*nz];
+            sum += dom.data_t[n+r*nz] * dom.vec_vt[icol];
+        }
+        dom.result_vt[r] = sum;
+    }
 }
-     }
+    //break; // break out of iteration loop. On only used to check solution, in non simd form
+#endif
+      }
 //exit(0); // seg fault
         tm["spmv"]->end();  // time for each matrix/vector multiply
         if (it < 3) continue;
@@ -2289,9 +2451,11 @@ void ELL_OPENMP<T>::method_8a_base(int nbit)
     col_id_t = subdomains[0].col_id_t;
     vec_vt = subdomains[0].vec_vt;
    //printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
-   printf("%s, threads: %d, Max Gflops: %f, min time: %f (ms)\n", method_name.c_str(), num_threads, max_gflops, min_elapsed);
-   checkSolutionsBase();
-   freeInputMatricesAndVectorsMulti();
+    printf("%s, threads: %d, Max Gflops: %f, min time: %f (ms)\n", method_name.c_str(), num_threads, max_gflops, min_elapsed);
+    transpose1(col_id_t, rd.stencil_size, rd.nb_rows);
+    transpose1(data_t, rd.stencil_size, rd.nb_rows);
+    checkSolutionsBase();
+    freeInputMatricesAndVectorsMulti();
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -3140,9 +3304,9 @@ void ELL_OPENMP<T>::checkSolutionsBase()
     printf("checkSolutionsBase, nb_rows: %d, stencil_size: %d\n", rd.nb_rows, rd.stencil_size);
     // transpose data_t and col_id_t again
     // nb_rows varies fastest  (col_id[nz][nb_rows])
-    transpose1(col_id_t, rd.stencil_size, rd.nb_rows);
-    transpose1(data_t, rd.stencil_size, rd.nb_rows);
-    printf("transpose back, checkSolutionsBase\n");
+    //transpose1(col_id_t, rd.stencil_size, rd.nb_rows);
+    //transpose1(data_t, rd.stencil_size, rd.nb_rows);
+    //printf("transpose back, checkSolutionsBase\n");
 
     int nb_mats = 1;
     int nb_vecs = 1;
@@ -3189,6 +3353,7 @@ void ELL_OPENMP<T>::generateInputMatricesAndVectorsBase(int align)
         Subdomain& s = subdomains[i];
 
         s.vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * vec_size, 64);
+        //s.vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * vec_size, 4); // for use with gatherd with scale=1 (still seg fault)
         s.result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * nb_rows, 64);
         s.col_id_t  = (int*)   _mm_malloc(sizeof(int)   * tot_nz, align);
         s.data_t    = (float*) _mm_malloc(sizeof(float) * nb_mat * tot_nz, 64);
@@ -3198,6 +3363,7 @@ void ELL_OPENMP<T>::generateInputMatricesAndVectorsBase(int align)
             exit(0);
         }
 
+        printf("generateBase:: offsets_multi: %d, %d\n", offsets_multi[0], offsets_multi[1]);
         for (int j=offsets_multi[i], k=0; j < offsets_multi[i+1]; j++) {
             s.col_id_t[k++] = mat.ell_col_id[j];
         }
@@ -3212,11 +3378,56 @@ void ELL_OPENMP<T>::generateInputMatricesAndVectorsBase(int align)
         generate_col_id(s.col_id_t, nz, nb_rows);
         generate_ell_matrix_data_novec(s.data_t, nz, nb_rows, nb_mat); // special
  
-        // Transpose the col_id and data_t matrices to be more efficiency in the 1 matrix/1 vector case
+        // Transpose the col_id and data_t matrices to be more efficient in the 1 matrix/1 vector case
         printf("Two transposes in generate_solution, Base\n");
-        transpose1(s.col_id_t, nb_rows, nz);
-        transpose1(s.data_t, nb_rows, nz);
+        //transpose1(s.col_id_t, nb_rows, nz);
+        //transpose1(s.data_t, nb_rows, nz);
     }
+}
+//----------------------------------------------------------------
+// use of templatized function is not working properly. Do not know why. 
+template <typename T>
+void ELL_OPENMP<T>::transpose1(int* mat, int* mat_t, int nr_slow, int nc_fast)
+// on entry: nc is fastest varying index of mat. Not efficient implementation.
+// on exit: nr is fastest varying index of mat
+{
+    int tmp;
+    // start with mat[nr_slow][nc_fast]
+    //   end with mat[nc_fast][nr_slow]
+    //
+    //printf("disable transposes for testings\n"); 
+    //return;
+
+    printf("inside transpose1, slow: %d, fast: %d\n", nr_slow, nc_fast);
+    // nc columns:  col_id(col, row), col varies fastest
+#define MAT1(c,r)  mat[(c)+nc_fast*(r)]
+#define MAT2(c,r)  mat[(r)+nc_slow*(c)]
+
+    for (int r=0; r < nr_slow; r++) {
+        for (int c=0; c < nc_fast; c++) {
+            mat_t[r+nr_slow*c] = mat[c+nc_fast*r];
+        }
+   }
+}
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::transpose1(float* mat, float* mat_t, int nr_slow, int nc_fast)
+// on entry: nc is fastest varying index of mat. Not efficient implementation.
+// on exit: nr is fastest varying index of mat
+{
+    float tmp;
+    //printf("disable transposes for testings\n"); 
+    //return;
+    //
+    // Is my transpose working properly? 
+
+    printf("inside transpose1\n");
+
+    for (int r=0; r < nr_slow; r++) {
+        for (int n=0; n < nc_fast; n++) {
+            mat_t[r+nr_slow*c] = mat[c+nc_fast*r];
+        }
+   }
 }
 //----------------------------------------------------------------
 // use of templatized function is not working properly. Do not know why. 
@@ -3225,15 +3436,21 @@ void ELL_OPENMP<T>::transpose1(int* mat, int nr_slow, int nc_fast)
 // on entry: nc is fastest varying index of mat. Not efficient implementation.
 // on exit: nr is fastest varying index of mat
 {
-    int tmp;
+    int* mat_t = new int [nr_slow*nc_fast];
 
-    for (int i=0; i < nr_slow; i++) {
-        for (int j=0; j < nc_fast; j++) {
-            tmp = mat[j+nc_fast*i];
-            mat[j+nc_fast*i] = mat[i+nr_slow*j];
-            mat[i+nr_slow*j] = tmp;
+    printf("inside transpose1\n");
+
+    for (int r=0; r < nr_slow; r++) {
+        for (int n=0; n < nc_fast; n++) {
+            mat_t[r+nr_slow*n] = mat[n+nc_fast*r];
         }
-   }
+    }
+
+    for (int i=0; i < nr_slow*nc_fast; i++) {
+        mat[i] = mat_t[i];
+    }
+
+    delete [] mat_t;
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -3242,14 +3459,21 @@ void ELL_OPENMP<T>::transpose1(float* mat, int nr_slow, int nc_fast)
 // on exit: nr is fastest varying index of mat
 {
     float tmp;
+    float* mat_t = new float [nr_slow*nc_fast];
 
-    for (int i=0; i < nr_slow; i++) {
-        for (int j=0; j < nc_fast; j++) {
-            tmp = mat[j+nc_fast*i];
-            mat[j+nc_fast*i] = mat[i+nr_slow*j];
-            mat[i+nr_slow*j] = tmp;
+    printf("inside transpose1\n");
+
+    for (int r=0; r < nr_slow; r++) {
+        for (int n=0; n < nc_fast; n++) {
+            mat_t[r+nr_slow*n] = mat[n+nc_fast*r];
         }
-   }
+    }
+
+    for (int i=0; i < nr_slow*nc_fast; i++) {
+        mat[i] = mat_t[i];
+    }
+
+    delete [] mat_t;
 }
 //----------------------------------------------------------------------
 template <typename T>
@@ -3422,7 +3646,7 @@ void ELL_OPENMP<T>::bandwidth(int* col_id, int nb_rows, int stencil_size, int ve
         #endif
     }
     printf("\n");
-    printf("max bandwidth: %d\n", max_bandwidth);
+    printf("bandwidth::max bandwidth: %d\n", max_bandwidth);
     //exit(0);
 }
 //----------------------------------------------------------------------
