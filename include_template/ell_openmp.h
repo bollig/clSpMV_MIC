@@ -162,9 +162,11 @@ public:
     void method_rd_wr_local_thread(int nbit);
 	void method_7a(int nb=0); // 4 matrices, 4 vectors, using new matrix generators
 	//void method_8(int nb=0); // 4 matrices, 4 vectors
+    int setNbThreads(int nb_threads); // set the variable num_threads
 	void method_8a(int nb=0); // 4 matrices, 4 vectors
     void method_8a_multi(int nb=0);
     void method_8a_base(int nbit);
+    void method_8a_base_bflops(int nbit);
     void method_8a_multi_novec(int nb=0);
     void transpose1(float* mat, int nr_slow, int nc_fast);
     void transpose1(int* mat, int nr_slow, int nc_fast);
@@ -233,48 +235,39 @@ void ELL_OPENMP<T>::run()
 {
     int num_threads_v[] = {1,2,4,8,16,32,64,96,128,160,192,224,244};
     int nb_slots = 13;
-    nb_slots = 1; num_threads_v[0] = 244; // for testing
+    //nb_slots = 1; num_threads_v[0] = 244; // for testing
 
     int count = 0;
     int max_nb_runs = 1;
 
-#if 0
-    gather_test(0); // no transpose
-    gather_test(1); // transpose
-    //exit(0);
+#if 1
+    for (int i=0; i < nb_slots; i++) {
+        setNbThreads(num_threads_v[i]);
+        //setNbThreads(244);
+        method_8a_base_bflops(4);
+        //exit(0);
+    }
+    exit(0);
 #endif
 
-#if 1
-    omp_set_num_threads(1);
-    omp_set_num_threads(244);
-#pragma omp parallel
-        {
-#pragma omp single
-        num_threads = omp_get_num_threads();
-        }
-
+#if 0
+    setNbThreads(1);
+    setNbThreads(244);
     method_8a_base(4);
     exit(0);
 #endif
 
     for (int i=0; i < nb_slots; i++) {
-        omp_set_num_threads(num_threads_v[i]);
-#pragma omp parallel
-        {
-#pragma omp single
-        num_threads = omp_get_num_threads();
-        }
-
+        setNbThreads(num_threads_v[i]);
         method_8a_multi_novec(4);
     }
     for (int i=0; i < nb_slots; i++) {
-        omp_set_num_threads(num_threads_v[i]);
-#pragma omp parallel
-        {
-#pragma omp single
-        num_threads = omp_get_num_threads();
-        }
+        setNbThreads(num_threads_v[i]);
         method_8a_multi(4);
+    }
+    for (int i=0; i < nb_slots; i++) {
+        setNbThreads(num_threads_v[i]);
+        method_8a_base(4);
     }
     return;
 
@@ -2053,11 +2046,8 @@ printf("nz= %d\n", nz);
     col_id_t = subdomains[0].col_id_t;
     vec_vt = subdomains[0].vec_vt;
 
-    printf("before solutionsNoVec\n");
-   checkSolutionsNoVec();
-   printf("after checkSolutions\n");
+   //checkSolutionsNoVec();
    freeInputMatricesAndVectorsMulti();
-   printf("after free matrices\n");
 }
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -2184,7 +2174,7 @@ void ELL_OPENMP<T>::method_8a_multi(int nbit)
     vec_vt = subdomains[0].vec_vt;
    //printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
    printf("%s, threads: %d, Max Gflops: %f, min time: %f (ms)\n", method_name.c_str(), num_threads, max_gflops, min_elapsed);
-   checkSolutions();
+   //checkSolutions();
    freeInputMatricesAndVectorsMulti();
 }
 //----------------------------------------------------------------------
@@ -2281,6 +2271,100 @@ void ELL_OPENMP<T>::gather_test(int do_transpose)
             }
         }
 }
+//----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP<T>::method_8a_base_bflops(int nbit)
+{
+// Single matrix, single vector, base case. 
+// Measure raw speed by increasing number of calculations to overwhelm communcation costs. 
+// Make sure all data can reside in cache. Use supercompact, which will help in this regard. 
+
+	printf("============== METHOD 8a Base Gflops, %d domain  ===================\n", nb_subdomains);
+    method_name = "method_8a_base_gflops";
+    printf("nb subdomains= %d\n", nb_subdomains);
+    printf("nb_rows_multi = %d\n", nb_rows_multi[0]);
+
+
+    generateInputMatricesAndVectorsBase(64);
+    // vectorize across rows requires a transpose
+    int nz = rd.stencil_size;
+    transpose1(subdomains[0].data_t, rd.nb_rows, nz); // nz varies fastest
+    transpose1(subdomains[0].col_id_t, rd.nb_rows, nz); // nz varies fastest
+
+    float gflops;
+    float max_gflops = 0.;
+    float elapsed = 0.; 
+    float min_elapsed = 0.; 
+    int nb_repeats = 2*32;
+    //int nb_rows = rd.nb_rows;
+    printf("*** nb_subdomains: %d\n", nb_subdomains);
+
+    // Must now work on alignmentf vectors. 
+    // Produces the correct serial result
+    for (int it=0; it < 10; it++) {
+      tm["spmv"]->start();
+      for (int s=0; s < nb_subdomains; s++) {
+
+#pragma omp parallel firstprivate(nz, nb_repeats)
+{
+    const int nb_rows = nb_rows_multi[s];
+    //const int scale = 4; // seg fault if 1 (WHY?)
+    const int nz = rd.stencil_size;
+    const Subdomain& dom = subdomains[s];
+
+    //__m512 v3_oldi;
+    //__m512  v = _mm512_setzero_ps(); // TEMPORARY
+    __m512 v1_old = _mm512_setzero_ps();
+    __m512  accu;
+
+    //printf("nb_repeats= %d\n", nb_repeats);
+    //printf("nb_rows= %d\n", nb_rows);
+
+
+#pragma omp for 
+        for (int r=0; r < nb_rows; r+=16) {
+            accu = _mm512_setzero_ps(); // 16 floats for 16 rows
+
+#pragma simd
+                for (int n=0; n < nz; n++) {  // nz is multiple of 32 (for now)
+                    v1_old = _mm512_load_ps(dom.data_t       + (r+n*nb_rows)); // load 16 rows at column n
+            for (int iter=0; iter < nb_repeats; iter++) {
+                    //v3_oldi = _mm512_load_epi32(dom.col_id_t + (r+n*nb_rows)); // ERROR SOMEHOW!
+                    //v  = _mm512_i32gather_ps(v3_oldi, dom.vec_vt, scale); // scale = 4 bytes (floats) HOW DOES SCALE WORK?
+                    accu = _mm512_fmadd_ps(v1_old, v1_old, accu);
+                    accu = _mm512_fmadd_ps(v1_old, v1_old, accu);
+                    accu = _mm512_fmadd_ps(v1_old, v1_old, accu);
+                    accu = _mm512_fmadd_ps(v1_old, v1_old, accu);
+#if 0
+                    accu = _mm512_fmadd_ps(v1_old, v1_old, accu);
+                    accu = _mm512_fmadd_ps(v1_old, v1_old, accu);
+                    accu = _mm512_fmadd_ps(v1_old, v1_old, accu);
+                    accu = _mm512_fmadd_ps(v1_old, v1_old, accu);
+#endif
+                }
+            }
+            _mm512_storenrngo_ps(dom.result_vt+r, accu);  
+        } 
+} // omp parallel
+
+      }
+        tm["spmv"]->end();  // time for each matrix/vector multiply
+        if (it < 3) continue;
+        elapsed = tm["spmv"]->getTime();
+        // nb_rows is wrong. 
+        //printf("%d, %d, %d, %d\n", rd.nb_mats, rd.nb_vecs, rd.stencil_size, rd.nb_rows);
+        gflops = 4*nb_repeats * 2.*rd.stencil_size*rd.nb_rows*1e-9 / (1e-3*elapsed); // assumes count of 1
+        printf("%f gflops, %f (ms)\n", gflops, elapsed);
+        if (gflops > max_gflops) {
+            max_gflops = gflops;
+            min_elapsed = elapsed;
+        }
+   }
+
+    printf("%s, threads: %d, Max Gflops: %f, min time: %f (ms)\n", method_name.c_str(), num_threads, max_gflops, min_elapsed);
+    freeInputMatricesAndVectorsMulti();
+}
+//----------------------------------------------------------------------
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP<T>::method_8a_base(int nbit)
@@ -2452,9 +2536,9 @@ void ELL_OPENMP<T>::method_8a_base(int nbit)
     vec_vt = subdomains[0].vec_vt;
    //printf("Max Gflops: %f, min time: %f (ms)\n", max_gflops, min_elapsed);
     printf("%s, threads: %d, Max Gflops: %f, min time: %f (ms)\n", method_name.c_str(), num_threads, max_gflops, min_elapsed);
-    transpose1(col_id_t, rd.stencil_size, rd.nb_rows);
-    transpose1(data_t, rd.stencil_size, rd.nb_rows);
-    checkSolutionsBase();
+    //transpose1(col_id_t, rd.stencil_size, rd.nb_rows);
+    //transpose1(data_t, rd.stencil_size, rd.nb_rows);
+    //checkSolutionsBase();
     freeInputMatricesAndVectorsMulti();
 }
 //----------------------------------------------------------------------
@@ -3952,7 +4036,18 @@ int ELL_OPENMP<T>::i4_max ( int i1, int i2 )
   {
     return i2;
   }
-
+}
+//----------------------------------------------------------------------
+template <typename T>
+int ELL_OPENMP<T>::setNbThreads(int nb_threads)
+{
+// If I do not set num_threads in an omp parallel loop, num_threads is not set correctly. 
+        omp_set_num_threads(nb_threads);
+#pragma omp parallel
+        {
+#pragma omp single
+        num_threads = omp_get_num_threads();
+        }
 }
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
