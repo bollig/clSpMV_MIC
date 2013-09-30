@@ -1,0 +1,109 @@
+MicInfo Utility Log
+
+Created Mon Sep 30 15:05:47 2013
+
+
+	System Info
+		HOST OS			: Linux
+		OS Version		: 2.6.32-279.1.1.el6.x86_64
+		Driver Version		: 6720-19
+		MPSS Version		: 2.1.6720-19
+		Host Physical Memory	: 66074 MB
+
+Device No: 0, Device Name: mic0
+
+	Version
+		Flash Version 		 : 2.1.02.0386
+		SMC Firmware Version	 : 1.14.4616
+		SMC Boot Loader Version	 : 1.8.4326
+		uOS Version 		 : 2.6.38.8-gefd324e
+		Device Serial Number 	 : 0123456789AB
+
+	Board
+		Vendor ID 		 : 0x8086
+		Device ID 		 : 0x2250
+		Subsystem ID 		 : 0x2500
+		Coprocessor Stepping ID	 : 0
+		PCIe Width 		 : Insufficient Privileges
+		PCIe Speed 		 : Insufficient Privileges
+		PCIe Max payload size	 : Insufficient Privileges
+		PCIe Max read req size	 : Insufficient Privileges
+		Coprocessor Model	 : 0x01
+		Coprocessor Model Ext	 : 0x00
+		Coprocessor Type	 : 0x00
+		Coprocessor Family	 : 0x0b
+		Coprocessor Family Ext	 : 0x00
+		Coprocessor Stepping 	 : A0
+		Board SKU 		 : A0PO-SKU1
+		ECC Mode 		 : Enabled
+		SMC HW Revision 	 : CRB 300W Active NCS
+
+	Cores
+		Total No of Active Cores : 60
+		Voltage 		 : 1085000 uV
+		Frequency		 : 1000000 kHz
+
+	Thermal
+		Fan Speed Control 	 : On
+		Fan RPM 		 : 4500
+		Fan PWM 		 : 87
+		Die Temp		 : 0 C
+
+	GDDR
+		GDDR Vendor		 : Hynix
+		GDDR Version		 : 0x2
+		GDDR Density		 : 2048 Mb
+		GDDR Size		 : 3968 MB
+		GDDR Technology		 : GDDR5 
+		GDDR Speed		 : 2.400000 GT/s 
+		GDDR Frequency		 : 1200000 kHz
+		GDDR Voltage		 : 1501000 uV
+
+Device No: 1, Device Name: mic1
+
+	Version
+		Flash Version 		 : 2.1.02.0386
+		SMC Firmware Version	 : 1.14.4616
+		SMC Boot Loader Version	 : 1.8.4326
+		uOS Version 		 : 2.6.38.8-gefd324e
+		Device Serial Number 	 : 0123456789AB
+
+	Board
+		Vendor ID 		 : 0x8086
+		Device ID 		 : 0x2250
+		Subsystem ID 		 : 0x2500
+		Coprocessor Stepping ID	 : 0
+		PCIe Width 		 : Insufficient Privileges
+		PCIe Speed 		 : Insufficient Privileges
+		PCIe Max payload size	 : Insufficient Privileges
+		PCIe Max read req size	 : Insufficient Privileges
+		Coprocessor Model	 : 0x01
+		Coprocessor Model Ext	 : 0x00
+		Coprocessor Type	 : 0x00
+		Coprocessor Family	 : 0x0b
+		Coprocessor Family Ext	 : 0x00
+		Coprocessor Stepping 	 : A0
+		Board SKU 		 : A0PO-SKU1
+		ECC Mode 		 : Enabled
+		SMC HW Revision 	 : CRB 300W Active NCS
+
+	Cores
+		Total No of Active Cores : 60
+		Voltage 		 : 1079000 uV
+		Frequency		 : 1000000 kHz
+
+	Thermal
+		Fan Speed Control 	 : On
+		Fan RPM 		 : 4800
+		Fan PWM 		 : 87
+		Die Temp		 : 0 C
+
+	GDDR
+		GDDR Vendor		 : Hynix
+		GDDR Version		 : 0x2
+		GDDR Density		 : 2048 Mb
+		GDDR Size		 : 3968 MB
+		GDDR Technology		 : GDDR5 
+		GDDR Speed		 : 2.400000 GT/s 
+		GDDR Frequency		 : 1200000 kHz
+		GDDR Voltage		 : 1501000 uV
