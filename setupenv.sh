@@ -13,6 +13,7 @@ if [ $HOSTNAME = "S2" ] ; then
 elif [ $HOSTNAME = "casiornis" -o $HOSTNAME = "cas013" ] ; then
 	echo $HOSTNAME
 	module load intel
+    module load intel/cluster
 	export CL_DEVICE_TYPE="CL_DEVICE_TYPE_ACCELERATOR"
 	export CLSPMVPATH=$HOME/src/clSpMV_MIC
 	export CL_KERNELS=${CLSPMVPATH}/kernels
