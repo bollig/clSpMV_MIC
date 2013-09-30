@@ -5,7 +5,8 @@ import os
 
 #-------------------------------------------------------
 # not clear the threads command is working
-THREADS= "export OMP_NUM_THREADS=244"
+THREADS= "export OMP_NUM_THREADS=244"  # on S1
+THREADS= "export OMP_NUM_THREADS=240"  # on S2
 SCHEDULE= "export OMP_SCHEDULE=static,64"
 KMC= "export KMP_AFFINITY=granularity=fine,scatter"
 KMC= "export KMP_AFFINITY=scatter"
@@ -33,7 +34,7 @@ def make_cmd_from_host(outfile):
     OMP= "%s;%s;%s" % (THREADS, SCHEDULE, KMC)
     INNER= "\'cd mic; %s; %s; %s > %s \'" % (OMP, LIB, EXEC, outfile)
     #INNER= "\'cd mic; %s; %s; %s  \'" % (OMP, LIB, EXEC)
-    CMD="(ssh S2-mic0 %s)" % INNER
+    CMD="(ssh S3-mic0 %s)" % INNER
     return(CMD)
 #-------------------------------------------------------
 #-------------------------------------------------------

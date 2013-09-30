@@ -233,7 +233,8 @@ protected:
 template <typename T>
 void ELL_OPENMP<T>::run()
 {
-    int num_threads_v[] = {1,2,4,8,16,32,64,96,128,160,192,224,244};
+    // 244 on S2, 240 on S3
+    int num_threads_v[] = {1,2,4,8,16,32,64,96,128,160,192,224,240};
     int nb_slots = 13;
     //nb_slots = 1; num_threads_v[0] = 244; // for testing
 
@@ -242,8 +243,9 @@ void ELL_OPENMP<T>::run()
 
 #if 1
     for (int i=0; i < nb_slots; i++) {
+        printf("i= %d\n", i);
         setNbThreads(num_threads_v[i]);
-        //setNbThreads(244);
+        //setNbThreads(240);
         method_8a_base_bflops(4);
         //exit(0);
     }
