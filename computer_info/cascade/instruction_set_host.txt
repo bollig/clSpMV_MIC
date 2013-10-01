@@ -1,0 +1,16 @@
+Cascade
+ark.intel.com/product/47923
+E5640
+2.66 GHz, 2.93GHz (max turbo)
+cache: 12 MB
+64-bit, sse4.2
+max memory bandwidth: 25.6 GB/s
+----------------------------------------------------------------------
+Frodo
+E52650
+2 GHZ, max turbo freq. 2.8 GHZ
+cache: 20 MB
+64-bit, AVX
+max memory bandwidth: 51.2 GB/s
+----------------------------------------------------------------------
+

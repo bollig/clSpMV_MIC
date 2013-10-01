@@ -559,6 +559,7 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
     generateInputMatricesAndVectorsMulti();
     bandwidth(subdomains[0].col_id_t, nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
     bandwidthQ(subdomains[0], nb_rows_multi[0], rd.stencil_size, nb_vec_elem_multi[0]);
+    printf("after bandwidthQ");
     
  
     float gflops;
@@ -574,6 +575,7 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
     for (int it=0; it < 10; it++) {
       tm["spmv"]->start();
       for (int s=0; s < nb_subdomains; s++) {
+          printf("s= %d\n", s);
         //printf("iter %d, subdom %d\n", it, s);
 // Should all 4 subdomains be contained in a single omp parallel pragma?
 
@@ -581,11 +583,13 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
 
 #pragma omp parallel firstprivate(nz)
 {
+    printf("inside omp\n");
     const int nb_rows = nb_rows_multi[s];
     const int nb_mat = 4;
     const int nb_vec = 4;
     const int nz = rd.stencil_size;
     const Subdomain& dom = subdomains[s];
+    printf("before first vec statement\n");
 
 
     __m256 v1_old = _mm256_setzero_ps();
@@ -1626,7 +1630,7 @@ void ELL_OPENMP_HOST<T>::bandwidthQ(Subdomain& s, int nb_rows, int stencil_size,
         max_bandwidth = bw[r] > max_bandwidth ? bw[r] : max_bandwidth;
     }
     printf("\n");
-    printf("max bandwidthQ: %d\n", max_bandwidth);
+    printf("2 max bandwidthQ: %d\n", max_bandwidth);
 }
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -1661,7 +1665,7 @@ void ELL_OPENMP_HOST<T>::bandwidth(int* col_id, int nb_rows, int stencil_size, i
         #endif
     }
     printf("\n");
-    printf("max bandwidth: %d\n", max_bandwidth);
+    printf("1 max bandwidth: %d\n", max_bandwidth);
     //exit(0);
 }
 //----------------------------------------------------------------------
