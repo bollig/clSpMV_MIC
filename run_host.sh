@@ -12,7 +12,7 @@ F=ell_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
 F=ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_128x_128y_128z.bmtx
 F=ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_192x_192y_192z.bmtx
 F=ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_128x_128y_128z.bmtx
-F=ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_192x_192y_192z.bmtx
+F=ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_96x_96y_96z.bmtx
 
 export F=$F
 #no speedup past 16

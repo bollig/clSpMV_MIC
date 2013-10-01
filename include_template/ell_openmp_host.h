@@ -551,6 +551,7 @@ printf("nz= %d\n", nz);
 template <typename T>
 void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
 {
+#ifdef AVX
     method_name = "method_8a_multi";
 	printf("============== METHOD 8a Multi, %d domain  ===================\n", nb_subdomains);
     printf("nb subdomains= %d\n", nb_subdomains);
@@ -636,11 +637,13 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
     vec_vt = subdomains[0].vec_vt;
    //checkSolutions(); // code works ok
    freeInputMatricesAndVectorsMulti();
+#endif
 }
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP_HOST<T>::method_8a_multi_optimal(int nbit)
 {
+#ifdef AVX
     method_name = "method_8a_multi_optimal";
 	printf("============== METHOD 8a Multi Optimal, %d domain  ===================\n", nb_subdomains);
     printf("nb subdomains= %d\n", nb_subdomains);
@@ -749,6 +752,7 @@ void ELL_OPENMP_HOST<T>::method_8a_multi_optimal(int nbit)
     vec_vt = subdomains[0].vec_vt;
    //checkSolutions(); // code works ok
    freeInputMatricesAndVectorsMulti();
+#endif
 }
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -934,6 +938,7 @@ T ELL_OPENMP_HOST<T>::l2norm(T* v, int n)
 template <typename T>
 __m256 ELL_OPENMP_HOST<T>::read_abcd(float* a)
 {
+#if AVX
     // read 8 floats a,b,c,d,  e,f,g,h (I cannot read 4 floats at a time)
     // So I would call this routine twice, once to get e,f,g,h twice, and once
     // to get a,b,c,d twice. The second time, the load will be free since the data will 
@@ -953,11 +958,13 @@ __m256 ELL_OPENMP_HOST<T>::read_abcd(float* a)
     //print_ps(vv, "insertf128_ps");
 
     return(v);
+#endif
 }
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP_HOST<T>::read_abcd(float* a, __m256& word1, __m256& word2)
 {
+#ifdef AVX
     // read 8 floats a,b,c,d,  e,f,g,h (I cannot read 4 floats at a time)
     // So I would call this routine twice, once to get e,f,g,h twice, and once
     // to get a,b,c,d twice. The second time, the load will be free since the data will 
@@ -974,11 +981,13 @@ void ELL_OPENMP_HOST<T>::read_abcd(float* a, __m256& word1, __m256& word2)
     v128 = _mm256_extractf128_ps(v, 1);
     word1 = _mm256_insertf128_ps(v, v128, 0);
     //print_ps(word1, "insertf128_ps");     // e,f,g,h,   e,f,g,h
+#endif
 }
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP_HOST<T>::read_abcd(int col_id, float* a, __m256& word1)
 {
+#ifdef AVX
     // reads 4 vectors from float array, pointed to by first argument
     //printf("read_abcd\n");
     __m256 v;
@@ -987,11 +996,13 @@ void ELL_OPENMP_HOST<T>::read_abcd(int col_id, float* a, __m256& word1)
     v128 = _mm256_extractf128_ps(v, 0);
     word1 = _mm256_insertf128_ps(v, v128, 1);  // a,b,c,d,  a,b,c,d
 //    print_ps(word1, "insertf128_ps");
+#endif
 }
 //----------------------------------------------------------------------
 template <typename T>
 void ELL_OPENMP_HOST<T>::read_aaaa(float* a, __m256& v1, __m256& v2)
 {
+#ifdef AVX
     // a : unaligned pointer to memory
     // in v1: aaaa bbbb
     // in v2: cccc dddd
@@ -1027,6 +1038,7 @@ void ELL_OPENMP_HOST<T>::read_aaaa(float* a, __m256& v1, __m256& v2)
     v1 = _mm256_insertf128_ps(w1, v128, 1);
 
     return;
+#endif
 }
 //----------------------------------------------------------------------
 template <typename T>
