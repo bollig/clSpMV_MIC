@@ -1,0 +1,999 @@
+argv[0]= ./linux/release/spmv_openmp_mic
+argv[1]= matrix/ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
+argv[2]= 1
+filename= matrix/ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
+choice= 1
+argv[0]= 1
+[ProjectSettings]   Reading config file: test.conf
+[Project Settings] 	asci_binary = binary
+asci_binary= binary
+[Project Settings] 	in_format = ELL
+filename = matrix/ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
+choice= 1
+spmv in ell format using OpenNP in Native mode
+[ProjectSettings]   Reading config file: test.conf
+[Project Settings] 	asci_binary = binary
+[Project Settings] 	sparsity = NONE
+[Project Settings] 	diag_sep = 80000
+[Project Settings] 	inner_bandwidth = 2000
+[Project Settings] 	sort_col_indices = 0
+[Project Settings] 	n3d = 128
+[Project Settings] 	random_seed = 1
+seed: 1380681520
+[Project Settings] 	use_subdomains = 0
+sparsity = NONE
+[Project Settings] 	in_format = ELL
+
+Read ELLPACK file
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+Inside empty ProjectSettings destructor
+============== METHOD 8a Multi NoVec, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+nb_rows= 262144
+nb_vec= 4
+nb_mat= 4
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+*** nb_subdomains: 1
+nz= 32
+-1.648127 gflops, -162.873001 (ms)
+0.320950 gflops, 836.377991 (ms)
+-1.651657 gflops, -162.524994 (ms)
+-1.648755 gflops, -162.811005 (ms)
+-1.650793 gflops, -162.610001 (ms)
+-1.649586 gflops, -162.729004 (ms)
+-1.649626 gflops, -162.725006 (ms)
+method_8a_multi_cpp, threads: 1, Max Gflops: 0.320950, min time: 836.377991 (ms)
+before checkSolutions
+============== METHOD 8a Multi NoVec, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+nb_rows= 262144
+nb_vec= 4
+nb_mat= 4
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+*** nb_subdomains: 1
+nz= 32
+0.555336 gflops, 483.375000 (ms)
+-0.520410 gflops, -515.815002 (ms)
+0.555556 gflops, 483.183014 (ms)
+-0.520541 gflops, -515.685974 (ms)
+0.555444 gflops, 483.281006 (ms)
+-0.520454 gflops, -515.771973 (ms)
+0.555732 gflops, 483.029999 (ms)
+method_8a_multi_cpp, threads: 2, Max Gflops: 0.555732, min time: 483.029999 (ms)
+before checkSolutions
+============== METHOD 8a Multi NoVec, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+nb_rows= 262144
+nb_vec= 4
+nb_mat= 4
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+*** nb_subdomains: 1
+nz= 32
+-0.516067 gflops, -520.156006 (ms)
+0.560657 gflops, 478.786987 (ms)
+-0.515944 gflops, -520.280029 (ms)
+0.561094 gflops, 478.414001 (ms)
+0.560844 gflops, 478.627991 (ms)
+-0.516491 gflops, -519.729004 (ms)
+0.560200 gflops, 479.178009 (ms)
+method_8a_multi_cpp, threads: 4, Max Gflops: 0.561094, min time: 478.414001 (ms)
+before checkSolutions
+============== METHOD 8a Multi NoVec, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+nb_rows= 262144
+nb_vec= 4
+nb_mat= 4
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+*** nb_subdomains: 1
+nz= 32
+1.131021 gflops, 237.339005 (ms)
+1.129836 gflops, 237.587997 (ms)
+-0.352418 gflops, -761.695984 (ms)
+1.130754 gflops, 237.395004 (ms)
+1.129988 gflops, 237.556000 (ms)
+1.131202 gflops, 237.300995 (ms)
+1.130850 gflops, 237.375000 (ms)
+method_8a_multi_cpp, threads: 8, Max Gflops: 1.131202, min time: 237.300995 (ms)
+before checkSolutions
+============== METHOD 8a Multi NoVec, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+nb_rows= 262144
+nb_vec= 4
+nb_mat= 4
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+*** nb_subdomains: 1
+nz= 32
+-0.305543 gflops, -878.551025 (ms)
+2.229068 gflops, 120.425003 (ms)
+2.227717 gflops, 120.498001 (ms)
+2.229179 gflops, 120.418999 (ms)
+2.227884 gflops, 120.488998 (ms)
+2.227772 gflops, 120.495003 (ms)
+2.227606 gflops, 120.503998 (ms)
+method_8a_multi_cpp, threads: 16, Max Gflops: 2.229179, min time: 120.418999 (ms)
+before checkSolutions
+============== METHOD 8a Multi NoVec, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+nb_rows= 262144
+nb_vec= 4
+nb_mat= 4
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+*** nb_subdomains: 1
+nz= 32
+4.640920 gflops, 57.841000 (ms)
+4.702876 gflops, 57.078999 (ms)
+4.704937 gflops, 57.054001 (ms)
+4.711709 gflops, 56.972000 (ms)
+4.706174 gflops, 57.039001 (ms)
+4.708155 gflops, 57.014999 (ms)
+4.712784 gflops, 56.959000 (ms)
+method_8a_multi_cpp, threads: 32, Max Gflops: 4.712784, min time: 56.959000 (ms)
+before checkSolutions
+============== METHOD 8a Multi NoVec, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+nb_rows= 262144
+nb_vec= 4
+nb_mat= 4
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+*** nb_subdomains: 1
+nz= 32
+10.756781 gflops, 24.955000 (ms)
+10.803102 gflops, 24.848000 (ms)
+10.740855 gflops, 24.992001 (ms)
+10.798321 gflops, 24.858999 (ms)
+10.659815 gflops, 25.181999 (ms)
+10.811804 gflops, 24.827999 (ms)
+10.764113 gflops, 24.938000 (ms)
+method_8a_multi_cpp, threads: 64, Max Gflops: 10.811804, min time: 24.827999 (ms)
+before checkSolutions
+============== METHOD 8a Multi NoVec, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+nb_rows= 262144
+nb_vec= 4
+nb_mat= 4
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+*** nb_subdomains: 1
+nz= 32
+15.448634 gflops, 17.375999 (ms)
+15.401655 gflops, 17.429001 (ms)
+15.416693 gflops, 17.412001 (ms)
+15.414037 gflops, 17.415001 (ms)
+15.463763 gflops, 17.358999 (ms)
+15.382239 gflops, 17.451000 (ms)
+15.406960 gflops, 17.423000 (ms)
+method_8a_multi_cpp, threads: 96, Max Gflops: 15.463763, min time: 17.358999 (ms)
+before checkSolutions
+============== METHOD 8a Multi NoVec, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+nb_rows= 262144
+nb_vec= 4
+nb_mat= 4
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+*** nb_subdomains: 1
+nz= 32
+21.353548 gflops, 12.571000 (ms)
+21.397804 gflops, 12.545000 (ms)
+21.373951 gflops, 12.559000 (ms)
+21.242023 gflops, 12.637000 (ms)
+21.351851 gflops, 12.572000 (ms)
+21.408045 gflops, 12.539000 (ms)
+20.963331 gflops, 12.805000 (ms)
+method_8a_multi_cpp, threads: 128, Max Gflops: 21.408045, min time: 12.539000 (ms)
+before checkSolutions
+============== METHOD 8a Multi NoVec, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+nb_rows= 262144
+nb_vec= 4
+nb_mat= 4
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+*** nb_subdomains: 1
+nz= 32
+26.704681 gflops, 10.052000 (ms)
+26.870417 gflops, 9.990000 (ms)
+25.983492 gflops, 10.331000 (ms)
+26.856974 gflops, 9.995000 (ms)
+26.878487 gflops, 9.987000 (ms)
+26.921619 gflops, 9.971000 (ms)
+26.633142 gflops, 10.079000 (ms)
+method_8a_multi_cpp, threads: 160, Max Gflops: 26.921619, min time: 9.971000 (ms)
+before checkSolutions
+============== METHOD 8a Multi NoVec, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+nb_rows= 262144
+nb_vec= 4
+nb_mat= 4
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+*** nb_subdomains: 1
+nz= 32
+28.929352 gflops, 9.279000 (ms)
+28.920004 gflops, 9.282000 (ms)
+28.941830 gflops, 9.275000 (ms)
+28.926235 gflops, 9.280000 (ms)
+28.916887 gflops, 9.283000 (ms)
+29.146086 gflops, 9.210000 (ms)
+28.932470 gflops, 9.278000 (ms)
+method_8a_multi_cpp, threads: 192, Max Gflops: 29.146086, min time: 9.210000 (ms)
+before checkSolutions
+============== METHOD 8a Multi NoVec, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+nb_rows= 262144
+nb_vec= 4
+nb_mat= 4
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+*** nb_subdomains: 1
+nz= 32
+34.043812 gflops, 7.885000 (ms)
+34.287323 gflops, 7.829000 (ms)
+34.043812 gflops, 7.885000 (ms)
+33.992081 gflops, 7.897000 (ms)
+33.979172 gflops, 7.900000 (ms)
+34.274193 gflops, 7.832000 (ms)
+34.335567 gflops, 7.818000 (ms)
+method_8a_multi_cpp, threads: 224, Max Gflops: 34.335567, min time: 7.818000 (ms)
+before checkSolutions
+============== METHOD 8a Multi NoVec, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+nb_rows= 262144
+nb_vec= 4
+nb_mat= 4
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+*** nb_subdomains: 1
+nz= 32
+36.402962 gflops, 7.374000 (ms)
+36.686546 gflops, 7.317000 (ms)
+36.373367 gflops, 7.380000 (ms)
+36.398029 gflops, 7.375000 (ms)
+36.373367 gflops, 7.380000 (ms)
+36.771980 gflops, 7.300000 (ms)
+36.363514 gflops, 7.382000 (ms)
+method_8a_multi_cpp, threads: 240, Max Gflops: 36.771980, min time: 7.300000 (ms)
+before checkSolutions
+============== METHOD 8a Multi, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 262144
+vec_size= 262144
+nb nonzeros per row= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+*** nb_subdomains: 1
+1.099154 gflops, 244.220001 (ms)
+1.098704 gflops, 244.320007 (ms)
+-0.355684 gflops, -754.703003 (ms)
+1.099006 gflops, 244.253006 (ms)
+1.100028 gflops, 244.026001 (ms)
+1.098601 gflops, 244.343002 (ms)
+1.099145 gflops, 244.222000 (ms)
+method_8a_multi, threads: 1, Max Gflops: 1.100028, min time: 244.026001 (ms)
+============== METHOD 8a Multi, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 262144
+vec_size= 262144
+nb nonzeros per row= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+*** nb_subdomains: 1
+1.664437 gflops, 161.276993 (ms)
+1.663983 gflops, 161.320999 (ms)
+1.663808 gflops, 161.337997 (ms)
+1.667208 gflops, 161.009003 (ms)
+-0.320383 gflops, -837.856995 (ms)
+1.665790 gflops, 161.145996 (ms)
+1.664798 gflops, 161.242004 (ms)
+method_8a_multi, threads: 2, Max Gflops: 1.667208, min time: 161.009003 (ms)
+============== METHOD 8a Multi, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 262144
+vec_size= 262144
+nb nonzeros per row= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+*** nb_subdomains: 1
+2.172880 gflops, 123.539001 (ms)
+2.173566 gflops, 123.500000 (ms)
+-0.306749 gflops, -875.098999 (ms)
+2.168667 gflops, 123.778999 (ms)
+2.168755 gflops, 123.774002 (ms)
+2.169579 gflops, 123.726997 (ms)
+2.166794 gflops, 123.886002 (ms)
+method_8a_multi, threads: 4, Max Gflops: 2.173566, min time: 123.500000 (ms)
+============== METHOD 8a Multi, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 262144
+vec_size= 262144
+nb nonzeros per row= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+*** nb_subdomains: 1
+4.420291 gflops, 60.728001 (ms)
+4.440473 gflops, 60.452000 (ms)
+4.442898 gflops, 60.418999 (ms)
+4.446062 gflops, 60.375999 (ms)
+4.415856 gflops, 60.789001 (ms)
+4.432920 gflops, 60.555000 (ms)
+-0.286027 gflops, -938.495972 (ms)
+method_8a_multi, threads: 8, Max Gflops: 4.446062, min time: 60.375999 (ms)
+============== METHOD 8a Multi, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 262144
+vec_size= 262144
+nb nonzeros per row= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+*** nb_subdomains: 1
+8.880064 gflops, 30.229000 (ms)
+-0.277093 gflops, -968.755981 (ms)
+8.866279 gflops, 30.275999 (ms)
+8.870088 gflops, 30.263000 (ms)
+8.874192 gflops, 30.249001 (ms)
+8.880358 gflops, 30.228001 (ms)
+8.872140 gflops, 30.256001 (ms)
+method_8a_multi, threads: 16, Max Gflops: 8.880358, min time: 30.228001 (ms)
+============== METHOD 8a Multi, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 262144
+vec_size= 262144
+nb nonzeros per row= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+*** nb_subdomains: 1
+17.653259 gflops, 15.206000 (ms)
+17.746624 gflops, 15.126000 (ms)
+17.654421 gflops, 15.205000 (ms)
+17.788963 gflops, 15.090000 (ms)
+17.608099 gflops, 15.245000 (ms)
+17.734901 gflops, 15.136000 (ms)
+17.680002 gflops, 15.183000 (ms)
+method_8a_multi, threads: 32, Max Gflops: 17.788963, min time: 15.090000 (ms)
+============== METHOD 8a Multi, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 262144
+vec_size= 262144
+nb nonzeros per row= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+*** nb_subdomains: 1
+37.496223 gflops, 7.159000 (ms)
+37.200035 gflops, 7.216000 (ms)
+37.076721 gflops, 7.240000 (ms)
+37.532921 gflops, 7.152000 (ms)
+37.386555 gflops, 7.180000 (ms)
+37.241322 gflops, 7.208000 (ms)
+37.267174 gflops, 7.203000 (ms)
+method_8a_multi, threads: 64, Max Gflops: 37.532921, min time: 7.152000 (ms)
+============== METHOD 8a Multi, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 262144
+vec_size= 262144
+nb nonzeros per row= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+*** nb_subdomains: 1
+54.109142 gflops, 4.961000 (ms)
+53.612034 gflops, 5.007000 (ms)
+54.405239 gflops, 4.934000 (ms)
+53.569237 gflops, 5.011000 (ms)
+54.394218 gflops, 4.935000 (ms)
+53.558548 gflops, 5.012000 (ms)
+53.978577 gflops, 4.973000 (ms)
+method_8a_multi, threads: 96, Max Gflops: 54.405239, min time: 4.934000 (ms)
+============== METHOD 8a Multi, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 262144
+vec_size= 262144
+nb nonzeros per row= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+*** nb_subdomains: 1
+72.608994 gflops, 3.697000 (ms)
+71.354454 gflops, 3.762000 (ms)
+72.491348 gflops, 3.703000 (ms)
+72.687637 gflops, 3.693000 (ms)
+70.789940 gflops, 3.792000 (ms)
+72.491348 gflops, 3.703000 (ms)
+-0.269705 gflops, -995.294006 (ms)
+method_8a_multi, threads: 128, Max Gflops: 72.687637, min time: 3.693000 (ms)
+============== METHOD 8a Multi, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 262144
+vec_size= 262144
+nb nonzeros per row= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+*** nb_subdomains: 1
+89.988419 gflops, 2.983000 (ms)
+93.466385 gflops, 2.872000 (ms)
+92.309303 gflops, 2.908000 (ms)
+93.596741 gflops, 2.868000 (ms)
+89.568054 gflops, 2.997000 (ms)
+93.109772 gflops, 2.883000 (ms)
+92.691803 gflops, 2.896000 (ms)
+method_8a_multi, threads: 160, Max Gflops: 93.596741, min time: 2.868000 (ms)
+============== METHOD 8a Multi, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 262144
+vec_size= 262144
+nb nonzeros per row= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+*** nb_subdomains: 1
+107.632500 gflops, 2.494000 (ms)
+108.022324 gflops, 2.485000 (ms)
+109.342346 gflops, 2.455000 (ms)
+104.206314 gflops, 2.576000 (ms)
+109.386902 gflops, 2.454000 (ms)
+108.546486 gflops, 2.473000 (ms)
+108.987190 gflops, 2.463000 (ms)
+method_8a_multi, threads: 192, Max Gflops: 109.386902, min time: 2.454000 (ms)
+============== METHOD 8a Multi, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 262144
+vec_size= 262144
+nb nonzeros per row= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+*** nb_subdomains: 1
+117.118431 gflops, 2.292000 (ms)
+121.739441 gflops, 2.205000 (ms)
+123.361877 gflops, 2.176000 (ms)
+123.874229 gflops, 2.167000 (ms)
+117.993599 gflops, 2.275000 (ms)
+123.418602 gflops, 2.175000 (ms)
+123.248604 gflops, 2.178000 (ms)
+method_8a_multi, threads: 224, Max Gflops: 123.874229, min time: 2.167000 (ms)
+============== METHOD 8a Multi, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 262144
+vec_size= 262144
+nb nonzeros per row= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+*** nb_subdomains: 1
+120.320694 gflops, 2.231000 (ms)
+132.039078 gflops, 2.033000 (ms)
+132.495285 gflops, 2.026000 (ms)
+130.944122 gflops, 2.050000 (ms)
+130.880280 gflops, 2.051000 (ms)
+125.789810 gflops, 2.134000 (ms)
+132.823090 gflops, 2.021000 (ms)
+method_8a_multi, threads: 240, Max Gflops: 132.823090, min time: 2.021000 (ms)
+============== METHOD 8a Base, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+before generate
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+before bandwidth
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 18249
+after bandwidth
+after bandwidthQ
+*** nb_subdomains: 1
+0.136105 gflops, 123.266998 (ms)
+0.134469 gflops, 124.765999 (ms)
+0.135881 gflops, 123.470001 (ms)
+0.133448 gflops, 125.721001 (ms)
+0.135756 gflops, 123.584000 (ms)
+0.136065 gflops, 123.303001 (ms)
+-0.019159 gflops, -875.689026 (ms)
+method_8a_base, threads: 1, Max Gflops: 0.136105, min time: 123.266998 (ms)
+============== METHOD 8a Base, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+before generate
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+before bandwidth
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 18249
+after bandwidth
+after bandwidthQ
+*** nb_subdomains: 1
+0.242333 gflops, 69.232002 (ms)
+0.238248 gflops, 70.418999 (ms)
+0.243459 gflops, 68.912003 (ms)
+0.242909 gflops, 69.068001 (ms)
+0.242631 gflops, 69.147003 (ms)
+0.243483 gflops, 68.904999 (ms)
+-0.018042 gflops, -929.880981 (ms)
+method_8a_base, threads: 2, Max Gflops: 0.243483, min time: 68.904999 (ms)
+============== METHOD 8a Base, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+before generate
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+before bandwidth
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 18249
+after bandwidth
+after bandwidthQ
+*** nb_subdomains: 1
+0.311612 gflops, 53.840000 (ms)
+0.311879 gflops, 53.793999 (ms)
+0.302303 gflops, 55.498001 (ms)
+0.303797 gflops, 55.224998 (ms)
+0.310787 gflops, 53.983002 (ms)
+0.309920 gflops, 54.133999 (ms)
+0.312192 gflops, 53.740002 (ms)
+method_8a_base, threads: 4, Max Gflops: 0.312192, min time: 53.740002 (ms)
+============== METHOD 8a Base, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+before generate
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+before bandwidth
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 18249
+after bandwidth
+after bandwidthQ
+*** nb_subdomains: 1
+0.592228 gflops, 28.329000 (ms)
+0.586719 gflops, 28.594999 (ms)
+0.592793 gflops, 28.302000 (ms)
+0.588179 gflops, 28.524000 (ms)
+0.591810 gflops, 28.349001 (ms)
+0.592311 gflops, 28.325001 (ms)
+0.592499 gflops, 28.316000 (ms)
+method_8a_base, threads: 8, Max Gflops: 0.592793, min time: 28.302000 (ms)
+============== METHOD 8a Base, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+before generate
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+before bandwidth
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 18249
+after bandwidth
+after bandwidthQ
+*** nb_subdomains: 1
+1.158248 gflops, 14.485000 (ms)
+1.146455 gflops, 14.634000 (ms)
+1.145985 gflops, 14.640000 (ms)
+1.146768 gflops, 14.630000 (ms)
+1.137670 gflops, 14.747000 (ms)
+1.154581 gflops, 14.531000 (ms)
+1.161535 gflops, 14.444000 (ms)
+method_8a_base, threads: 16, Max Gflops: 1.161535, min time: 14.444000 (ms)
+============== METHOD 8a Base, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+before generate
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+before bandwidth
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 18249
+after bandwidth
+after bandwidthQ
+*** nb_subdomains: 1
+2.328229 gflops, 7.206000 (ms)
+2.330816 gflops, 7.198000 (ms)
+2.331464 gflops, 7.196000 (ms)
+2.325969 gflops, 7.213000 (ms)
+2.334059 gflops, 7.188000 (ms)
+2.346464 gflops, 7.150000 (ms)
+2.327260 gflops, 7.209000 (ms)
+method_8a_base, threads: 32, Max Gflops: 2.346464, min time: 7.150000 (ms)
+============== METHOD 8a Base, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+before generate
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+before bandwidth
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 18249
+after bandwidth
+after bandwidthQ
+*** nb_subdomains: 1
+4.781196 gflops, 3.509000 (ms)
+4.677228 gflops, 3.587000 (ms)
+4.763548 gflops, 3.522000 (ms)
+4.794860 gflops, 3.499000 (ms)
+4.681143 gflops, 3.584000 (ms)
+4.778472 gflops, 3.511000 (ms)
+4.767609 gflops, 3.519000 (ms)
+method_8a_base, threads: 64, Max Gflops: 4.794860, min time: 3.499000 (ms)
+============== METHOD 8a Base, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+before generate
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+before bandwidth
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 18249
+after bandwidth
+after bandwidthQ
+*** nb_subdomains: 1
+6.729730 gflops, 2.493000 (ms)
+7.022694 gflops, 2.389000 (ms)
+7.034472 gflops, 2.385000 (ms)
+7.061118 gflops, 2.376000 (ms)
+7.019755 gflops, 2.390000 (ms)
+6.861847 gflops, 2.445000 (ms)
+7.008027 gflops, 2.394000 (ms)
+method_8a_base, threads: 96, Max Gflops: 7.061118, min time: 2.376000 (ms)
+============== METHOD 8a Base, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+before generate
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+before bandwidth
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 18249
+after bandwidth
+after bandwidthQ
+*** nb_subdomains: 1
+7.869238 gflops, 2.132000 (ms)
+9.123011 gflops, 1.839000 (ms)
+9.123011 gflops, 1.839000 (ms)
+9.108152 gflops, 1.842000 (ms)
+9.142897 gflops, 1.835000 (ms)
+8.128496 gflops, 2.064000 (ms)
+9.137918 gflops, 1.836000 (ms)
+method_8a_base, threads: 128, Max Gflops: 9.142897, min time: 1.835000 (ms)
+============== METHOD 8a Base, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+before generate
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+before bandwidth
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 18249
+after bandwidth
+after bandwidthQ
+*** nb_subdomains: 1
+11.088709 gflops, 1.513000 (ms)
+11.074070 gflops, 1.515000 (ms)
+11.096043 gflops, 1.512000 (ms)
+10.401250 gflops, 1.613000 (ms)
+11.103386 gflops, 1.511000 (ms)
+11.140249 gflops, 1.506000 (ms)
+11.103386 gflops, 1.511000 (ms)
+method_8a_base, threads: 160, Max Gflops: 11.140249, min time: 1.506000 (ms)
+============== METHOD 8a Base, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+before generate
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+before bandwidth
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 18249
+after bandwidth
+after bandwidthQ
+*** nb_subdomains: 1
+11.781753 gflops, 1.424000 (ms)
+12.436780 gflops, 1.349000 (ms)
+12.501651 gflops, 1.342000 (ms)
+12.768048 gflops, 1.314000 (ms)
+12.738964 gflops, 1.317000 (ms)
+12.738964 gflops, 1.317000 (ms)
+12.758339 gflops, 1.315000 (ms)
+method_8a_base, threads: 192, Max Gflops: 12.768048, min time: 1.314000 (ms)
+============== METHOD 8a Base, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+before generate
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+before bandwidth
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 18249
+after bandwidth
+after bandwidthQ
+*** nb_subdomains: 1
+14.098500 gflops, 1.190000 (ms)
+14.051270 gflops, 1.194000 (ms)
+11.459847 gflops, 1.464000 (ms)
+14.074845 gflops, 1.192000 (ms)
+14.016053 gflops, 1.197000 (ms)
+14.016053 gflops, 1.197000 (ms)
+14.004354 gflops, 1.198000 (ms)
+method_8a_base, threads: 224, Max Gflops: 14.098500, min time: 1.190000 (ms)
+============== METHOD 8a Base, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+before generate
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+before bandwidth
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 18249
+after bandwidth
+after bandwidthQ
+*** nb_subdomains: 1
+14.873418 gflops, 1.128000 (ms)
+14.873418 gflops, 1.128000 (ms)
+14.899836 gflops, 1.126000 (ms)
+14.755688 gflops, 1.137000 (ms)
+14.755688 gflops, 1.137000 (ms)
+14.860245 gflops, 1.129000 (ms)
+14.886616 gflops, 1.127000 (ms)
+method_8a_base, threads: 240, Max Gflops: 14.899836, min time: 1.126000 (ms)
+====================================
+Timers [All times in ms (1/1000 s)]: 
+====================================
+
+[Timer] [method_0] Matrix-Vector multiply         |  avg:     3.3359  |  tot:  1291.0111  |  count=   387
+Inside empty ProjectSettings destructor
