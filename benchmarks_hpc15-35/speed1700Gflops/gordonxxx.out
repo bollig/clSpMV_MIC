@@ -1,0 +1,356 @@
+argv[0]= ./linux/release/spmv_openmp_mic
+argv[1]= matrix/ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
+argv[2]= 1
+filename= matrix/ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
+choice= 1
+argv[0]= 1
+[ProjectSettings]   Reading config file: test.conf
+[Project Settings] 	asci_binary = binary
+asci_binary= binary
+[Project Settings] 	in_format = ELL
+filename = matrix/ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
+choice= 1
+spmv in ell format using OpenNP in Native mode
+[ProjectSettings]   Reading config file: test.conf
+[Project Settings] 	asci_binary = binary
+[Project Settings] 	sparsity = SUPERCOMPACT
+[Project Settings] 	diag_sep = 80000
+[Project Settings] 	inner_bandwidth = 2000
+[Project Settings] 	sort_col_indices = 0
+[Project Settings] 	n3d = 128
+[Project Settings] 	random_seed = 1
+seed: 1380680776
+[Project Settings] 	use_subdomains = 0
+sparsity = SUPERCOMPACT
+[Project Settings] 	in_format = ELL
+
+Read ELLPACK file
+col_id, nb rows: 262144
+
+bandwidth::max bandwidth: 20202
+Inside empty ProjectSettings destructor
+i= 0
+============== METHOD 8a Base Gflops, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+SUPERCOMPACT
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+*** nb_subdomains: 1
+-9.399062 gflops, -456.957001 (ms)
+-9.401778 gflops, -456.825012 (ms)
+7.922934 gflops, 542.093018 (ms)
+-9.400132 gflops, -456.904999 (ms)
+7.922131 gflops, 542.148010 (ms)
+-9.400090 gflops, -456.907013 (ms)
+7.921648 gflops, 542.181030 (ms)
+method_8a_base_gflops, threads: 1, Max Gflops: 7.922934, min time: 542.093018 (ms)
+i= 1
+============== METHOD 8a Base Gflops, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+SUPERCOMPACT
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+*** nb_subdomains: 1
+15.507537 gflops, 276.959991 (ms)
+15.447689 gflops, 278.032990 (ms)
+15.495339 gflops, 277.178009 (ms)
+-5.951181 gflops, -721.700012 (ms)
+15.481599 gflops, 277.424011 (ms)
+15.412987 gflops, 278.658997 (ms)
+-5.949953 gflops, -721.848999 (ms)
+method_8a_base_gflops, threads: 2, Max Gflops: 15.507537, min time: 276.959991 (ms)
+i= 2
+============== METHOD 8a Base Gflops, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+SUPERCOMPACT
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+*** nb_subdomains: 1
+30.383404 gflops, 141.358994 (ms)
+30.420200 gflops, 141.188004 (ms)
+30.452986 gflops, 141.035995 (ms)
+30.288696 gflops, 141.800995 (ms)
+30.459034 gflops, 141.007996 (ms)
+30.566988 gflops, 140.509995 (ms)
+-5.008708 gflops, -857.500000 (ms)
+method_8a_base_gflops, threads: 4, Max Gflops: 30.566988, min time: 140.509995 (ms)
+i= 3
+============== METHOD 8a Base Gflops, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+SUPERCOMPACT
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+*** nb_subdomains: 1
+60.117397 gflops, 71.443001 (ms)
+60.041763 gflops, 71.532997 (ms)
+59.796837 gflops, 71.825996 (ms)
+-4.631706 gflops, -927.296997 (ms)
+60.387032 gflops, 71.124001 (ms)
+59.986416 gflops, 71.598999 (ms)
+60.085438 gflops, 71.481003 (ms)
+method_8a_base_gflops, threads: 8, Max Gflops: 60.387032, min time: 71.124001 (ms)
+i= 4
+============== METHOD 8a Base Gflops, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+SUPERCOMPACT
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+*** nb_subdomains: 1
+116.438950 gflops, 36.886002 (ms)
+116.695213 gflops, 36.805000 (ms)
+117.573708 gflops, 36.529999 (ms)
+118.042259 gflops, 36.384998 (ms)
+117.143990 gflops, 36.664001 (ms)
+117.948235 gflops, 36.414001 (ms)
+115.602165 gflops, 37.153000 (ms)
+method_8a_base_gflops, threads: 16, Max Gflops: 118.042259, min time: 36.384998 (ms)
+i= 5
+============== METHOD 8a Base Gflops, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+SUPERCOMPACT
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+*** nb_subdomains: 1
+240.466232 gflops, 17.861000 (ms)
+236.000183 gflops, 18.198999 (ms)
+239.607666 gflops, 17.924999 (ms)
+239.821716 gflops, 17.909000 (ms)
+239.367279 gflops, 17.943001 (ms)
+240.573975 gflops, 17.853001 (ms)
+239.407318 gflops, 17.940001 (ms)
+method_8a_base_gflops, threads: 32, Max Gflops: 240.573975, min time: 17.853001 (ms)
+i= 6
+============== METHOD 8a Base Gflops, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+SUPERCOMPACT
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+*** nb_subdomains: 1
+479.188568 gflops, 8.963000 (ms)
+483.014740 gflops, 8.892000 (ms)
+486.571594 gflops, 8.827000 (ms)
+479.616669 gflops, 8.955000 (ms)
+479.670197 gflops, 8.954000 (ms)
+482.906158 gflops, 8.894000 (ms)
+479.028259 gflops, 8.966000 (ms)
+method_8a_base_gflops, threads: 64, Max Gflops: 486.571594, min time: 8.827000 (ms)
+i= 7
+============== METHOD 8a Base Gflops, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+SUPERCOMPACT
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+*** nb_subdomains: 1
+725.256226 gflops, 5.922000 (ms)
+709.560120 gflops, 6.053000 (ms)
+725.378723 gflops, 5.921000 (ms)
+714.755798 gflops, 6.009000 (ms)
+709.794617 gflops, 6.051000 (ms)
+725.133789 gflops, 5.923000 (ms)
+711.558533 gflops, 6.036000 (ms)
+method_8a_base_gflops, threads: 96, Max Gflops: 725.378723, min time: 5.921000 (ms)
+i= 8
+============== METHOD 8a Base Gflops, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+SUPERCOMPACT
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+*** nb_subdomains: 1
+966.029480 gflops, 4.446000 (ms)
+941.053284 gflops, 4.564000 (ms)
+965.812317 gflops, 4.447000 (ms)
+941.465881 gflops, 4.562000 (ms)
+966.246826 gflops, 4.445000 (ms)
+942.085388 gflops, 4.559000 (ms)
+966.681824 gflops, 4.443000 (ms)
+method_8a_base_gflops, threads: 128, Max Gflops: 966.681824, min time: 4.443000 (ms)
+i= 9
+============== METHOD 8a Base Gflops, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+SUPERCOMPACT
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+*** nb_subdomains: 1
+1184.818604 gflops, 3.625000 (ms)
+1228.889160 gflops, 3.495000 (ms)
+1228.889160 gflops, 3.495000 (ms)
+1198.707031 gflops, 3.583000 (ms)
+1228.537598 gflops, 3.496000 (ms)
+1228.186279 gflops, 3.497000 (ms)
+1089.540161 gflops, 3.942000 (ms)
+method_8a_base_gflops, threads: 160, Max Gflops: 1228.889160, min time: 3.495000 (ms)
+i= 10
+============== METHOD 8a Base Gflops, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+SUPERCOMPACT
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+*** nb_subdomains: 1
+1432.133057 gflops, 2.999000 (ms)
+1381.907104 gflops, 3.108000 (ms)
+1431.655762 gflops, 3.000000 (ms)
+1430.701904 gflops, 3.002000 (ms)
+1432.610840 gflops, 2.998000 (ms)
+1254.371338 gflops, 3.424000 (ms)
+1430.701904 gflops, 3.002000 (ms)
+method_8a_base_gflops, threads: 192, Max Gflops: 1432.610840, min time: 2.998000 (ms)
+i= 11
+============== METHOD 8a Base Gflops, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+SUPERCOMPACT
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+*** nb_subdomains: 1
+1665.361450 gflops, 2.579000 (ms)
+1666.007446 gflops, 2.578000 (ms)
+1665.361450 gflops, 2.579000 (ms)
+1602.599731 gflops, 2.680000 (ms)
+1664.070923 gflops, 2.581000 (ms)
+1666.654053 gflops, 2.577000 (ms)
+1663.426514 gflops, 2.582000 (ms)
+method_8a_base_gflops, threads: 224, Max Gflops: 1666.654053, min time: 2.577000 (ms)
+i= 12
+============== METHOD 8a Base Gflops, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 262144
+generateBase:: offsets_multi: 0, 8388608
+nb_rows= 262144
+nb_vec= 1
+nb_mat= 1
+nz= 32
+inside generate_vector: = 
+======= Reconstruct col_id matrix for special effects =====
+SUPERCOMPACT
+inside generate_ell_matrix_data_novec: = getRandf()
+Two transposes in generate_solution, Base
+inside transpose1
+inside transpose1
+*** nb_subdomains: 1
+1780.666382 gflops, 2.412000 (ms)
+1778.454346 gflops, 2.415000 (ms)
+1522.498047 gflops, 2.821000 (ms)
+1781.404907 gflops, 2.411000 (ms)
+1780.666382 gflops, 2.412000 (ms)
+1709.099609 gflops, 2.513000 (ms)
+1778.454346 gflops, 2.415000 (ms)
+method_8a_base_gflops, threads: 240, Max Gflops: 1781.404907, min time: 2.411000 (ms)

@@ -1,0 +1,109 @@
+MicInfo Utility Log
+
+Created Tue Oct  1 22:13:29 2013
+
+
+	System Info
+		HOST OS			: Linux
+		OS Version		: 2.6.32-279.5.2.el6.x86_64
+		Driver Version		: 6720-13
+		MPSS Version		: 2.1.6720-13
+		Host Physical Memory	: 65923 MB
+
+Device No: 0, Device Name: mic0
+
+	Version
+		Flash Version 		 : 2.1.02.0386
+		SMC Firmware Version	 : 1.14.4616
+		SMC Boot Loader Version	 : 1.8.4326
+		uOS Version 		 : 2.6.38.8-g5f2543d
+		Device Serial Number 	 : ADKC32700435
+
+	Board
+		Vendor ID 		 : 0x8086
+		Device ID 		 : 0x2250
+		Subsystem ID 		 : 0x2500
+		Coprocessor Stepping ID	 : 3
+		PCIe Width 		 : Insufficient Privileges
+		PCIe Speed 		 : Insufficient Privileges
+		PCIe Max payload size	 : Insufficient Privileges
+		PCIe Max read req size	 : Insufficient Privileges
+		Coprocessor Model	 : 0x01
+		Coprocessor Model Ext	 : 0x00
+		Coprocessor Type	 : 0x00
+		Coprocessor Family	 : 0x0b
+		Coprocessor Family Ext	 : 0x00
+		Coprocessor Stepping 	 : B1
+		Board SKU 		 : INVALID SKU
+		ECC Mode 		 : Enabled
+		SMC HW Revision 	 : Product 225W Passive CS
+
+	Cores
+		Total No of Active Cores : 60
+		Voltage 		 : 931000 uV
+		Frequency		 : 1052631 kHz
+
+	Thermal
+		Fan Speed Control 	 : N/A
+		Fan RPM 		 : N/A
+		Fan PWM 		 : N/A
+		Die Temp		 : 38 C
+
+	GDDR
+		GDDR Vendor		 : Elpida
+		GDDR Version		 : 0x1
+		GDDR Density		 : 2048 Mb
+		GDDR Size		 : 7936 MB
+		GDDR Technology		 : GDDR5 
+		GDDR Speed		 : 5.000000 GT/s 
+		GDDR Frequency		 : 2500000 kHz
+		GDDR Voltage		 : 1501000 uV
+
+Device No: 1, Device Name: mic1
+
+	Version
+		Flash Version 		 : 2.1.02.0386
+		SMC Firmware Version	 : 1.14.4616
+		SMC Boot Loader Version	 : 1.8.4326
+		uOS Version 		 : 2.6.38.8-g5f2543d
+		Device Serial Number 	 : ADKC31900274
+
+	Board
+		Vendor ID 		 : 0x8086
+		Device ID 		 : 0x2250
+		Subsystem ID 		 : 0x2500
+		Coprocessor Stepping ID	 : 3
+		PCIe Width 		 : Insufficient Privileges
+		PCIe Speed 		 : Insufficient Privileges
+		PCIe Max payload size	 : Insufficient Privileges
+		PCIe Max read req size	 : Insufficient Privileges
+		Coprocessor Model	 : 0x01
+		Coprocessor Model Ext	 : 0x00
+		Coprocessor Type	 : 0x00
+		Coprocessor Family	 : 0x0b
+		Coprocessor Family Ext	 : 0x00
+		Coprocessor Stepping 	 : B1
+		Board SKU 		 : B1PRQ-5110P/5120D
+		ECC Mode 		 : Enabled
+		SMC HW Revision 	 : Product 225W Passive CS
+
+	Cores
+		Total No of Active Cores : 60
+		Voltage 		 : 942000 uV
+		Frequency		 : 1052631 kHz
+
+	Thermal
+		Fan Speed Control 	 : N/A
+		Fan RPM 		 : N/A
+		Fan PWM 		 : N/A
+		Die Temp		 : 42 C
+
+	GDDR
+		GDDR Vendor		 : Elpida
+		GDDR Version		 : 0x1
+		GDDR Density		 : 2048 Mb
+		GDDR Size		 : 7936 MB
+		GDDR Technology		 : GDDR5 
+		GDDR Speed		 : 5.000000 GT/s 
+		GDDR Frequency		 : 2500000 kHz
+		GDDR Voltage		 : 1501000 uV
