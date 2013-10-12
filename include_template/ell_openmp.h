@@ -151,6 +151,7 @@ public:
     T l2norm(T*, int n);
 
 	virtual void run();
+    virtual void runSingleAlgo();
     void gather_test(int do_transpose);
 	void method_3(int nb=0);
 	void method_4(int nb=0);
@@ -231,8 +232,35 @@ protected:
 
 //----------------------------------------------------------------------
 template <typename T>
+void ELL_OPENMP<T>::runSingleAlgo()
+{
+    // 244 on S2, 240 on S3
+    int num_threads_v[] = {1,2,4,8,16,32,64,96,128,160,192,224,240};
+    int max_threads = 240;
+    int nb_slots = 13;
+    //nb_slots = 1; num_s_v[0] = 244; // for testing
+
+    int count = 0;
+    int max_nb_runs = 1;
+
+    //for (int i=0; i < nb_slots; i++) {
+    for (int i=0; i < 1; i++) {
+        //setNbThreads(num_threads_v[i]);
+        setNbThreads(max_threads);
+        method_8a_multi(4);
+    }
+    return;
+
+    exit(0);
+}
+//----------------------------------------------------------------------
+template <typename T>
 void ELL_OPENMP<T>::run()
 {
+	runSingleAlgo();  // single problem size, single algorithm
+    exit(0);
+
+
     // 244 on S2, 240 on S3
     int num_threads_v[] = {1,2,4,8,16,32,64,96,128,160,192,224,240};
     int nb_slots = 13;
