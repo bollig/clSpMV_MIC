@@ -1,0 +1,3 @@
+all:
+    icpc -std=c++0x -I./include_template binary_to_ascii.cpp 
+
