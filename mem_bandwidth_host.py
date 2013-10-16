@@ -12,12 +12,14 @@ KMC= "export KMP_AFFINITY=granularity=fine,scatter"
 KMC= "export KMP_AFFINITY=scatter"
 KMC= "export KMP_AFFINITY=granularity=fine,compact"
 KMC= "export KMP_AFFINITY=compact"
-LIB = "export LD_LIBRARY_PATH=/opt/intel/composer_xe_2013/lib/mic/"
+#LIB= "export LD_LIBRARY_PATH=/opt/intel/composer_xe_2013/lib/mic/"
+LIB= "export JUNK="
 EXEC= "./linux/release/mem_test_host"
 
 def make_cmd_host(outfile):
     OMP= "%s;%s;%s" % (THREADS, SCHEDULE, KMC)
     INNER= "%s; %s; %s > %s " % (OMP, LIB, EXEC, outfile)
+    INNER= "%s; %s > %s " % (OMP, EXEC, outfile)
     #CMD="(ssh S2-mic0 %s)" % INNER
     CMD="(%s)" % INNER
     return(CMD)

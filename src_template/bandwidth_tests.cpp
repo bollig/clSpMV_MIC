@@ -467,7 +467,7 @@ int varyRows()
     std::vector<int> nb_rows(7); 
     nb_rows.resize(0);
     int count=0;
-    for (int i=2; i < 66; i+=2) {
+    for (int i=2; i < 128; i+=4) {
         nb_rows.push_back(i);  
         count++;
     }
