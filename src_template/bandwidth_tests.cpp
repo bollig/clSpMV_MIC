@@ -1,5 +1,6 @@
 #include "bandwidth_tests.h"
 #include "timer_eb.h"
+#include "util.h"
 #include <vector>
 #include <algorithm>
 
@@ -66,12 +67,13 @@ void MemoryBandwidth::initialize()
     }
 
     else if (col_id_type_s == "random") {
+<<<<<<< HEAD
         Util u;
 
         for (int i=0; i < nb_rows; i++) {
-        //for (int i=0; i < nb_rows; i+=16) {
-            col_id_t[i]   = u.getRand(nb_rows);
+            col_id_t[i] = u.getRand(nb_rows);
 #if 0
+            col_id_t[i]   = (i+16*0);
             col_id_t[i+1] = (i+16*1) % nb_rows;
             col_id_t[i+2] = (i+16*2) % nb_rows;
             col_id_t[i+3] = (i+16*3) % nb_rows;
@@ -200,6 +202,7 @@ void MemoryBandwidth::benchRead()
     int nr = nb_rows;
     __m512 sum = _mm512_setzero_ps();
 
+// Unroll loop to speed up.  TRY IT OUT. 
 #pragma omp for
    for (int i=0; i < nr; i += 16) {
         sum = _mm512_add_ps(_mm512_load_ps(vec_vt+i), sum);
@@ -498,3 +501,4 @@ int main()
     varyRows();
     return(0);
 }
+//----------------------------------------------------------------------
