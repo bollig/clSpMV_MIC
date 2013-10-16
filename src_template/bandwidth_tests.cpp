@@ -66,8 +66,12 @@ void MemoryBandwidth::initialize()
     }
 
     else if (col_id_type_s == "random") {
-        for (int i=0; i < nb_rows; i+=16) {
-            col_id_t[i]   = (i+16*0);
+        Util u;
+
+        for (int i=0; i < nb_rows; i++) {
+        //for (int i=0; i < nb_rows; i+=16) {
+            col_id_t[i]   = u.getRand(nb_rows);
+#if 0
             col_id_t[i+1] = (i+16*1) % nb_rows;
             col_id_t[i+2] = (i+16*2) % nb_rows;
             col_id_t[i+3] = (i+16*3) % nb_rows;
@@ -83,6 +87,7 @@ void MemoryBandwidth::initialize()
             col_id_t[i+13] = (i+16*13) % nb_rows;
             col_id_t[i+14] = (i+16*14) % nb_rows;
             col_id_t[i+15] = (i+16*15) % nb_rows;
+#endif
         }
     }
     printf("end initialize: nb rows: %d\n", nb_rows);
