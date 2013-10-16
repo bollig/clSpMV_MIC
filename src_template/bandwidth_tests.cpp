@@ -195,6 +195,7 @@ void MemoryBandwidth::benchRead()
     int nr = nb_rows;
     __m512 sum = _mm512_setzero_ps();
 
+// Unroll loop to speed up.  TRY IT OUT. 
 #pragma omp for
    for (int i=0; i < nr; i += 16) {
         sum = _mm512_add_ps(_mm512_load_ps(vec_vt+i), sum);
