@@ -431,7 +431,10 @@ int main()
 {
     std::vector<int> ell_col_id;
     //std::string filename = "matrix/ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_8x_8y_8z.bmtx";
-    std::string filename = "matrix/ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_8x_8y_8z.bmtx";
+    //std::string filename = "matrix/ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_8x_8y_8z.bmtx";
+    std::string filename = "ell_kd-tree_rcm_sym_0_x_weights_direct__no_hv_stsize_32_2d_23x_23y_1z.bmtx";
+    //std::string filename = "ell_kd-tree_x_weights_direct__no_hv_stsize_32_2d_23x_23y_1z.bmtx";
+
 	RBFFD_IO<float> io;
     int stencil_size;
     int nb_rows;
