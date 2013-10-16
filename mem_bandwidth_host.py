@@ -37,7 +37,7 @@ bench=["read_write_cpp","write_cpp","read_cpp"]
 bench=["gather", "unpack", "gather_cpp"]
 bench=["gather"]
 bench=["read", "read_cpp", "read_write_cpp", "read_write", "write", "write_cpp"]
-nb_rows=[2,4,8,16,32]
+nb_rows=[2,4,8,16,32,64,128,256]
 nb_rows=[0]  # vary rows within the test bandwidth program
 ###
 for b in bench:
