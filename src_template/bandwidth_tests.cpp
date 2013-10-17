@@ -67,11 +67,8 @@ void MemoryBandwidth::initialize()
     }
 
     else if (col_id_type_s == "random") {
-<<<<<<< HEAD
-        Util u;
-
         for (int i=0; i < nb_rows; i++) {
-            col_id_t[i] = u.getRand(nb_rows);
+            col_id_t[i] = getRand(nb_rows);
 #if 0
             col_id_t[i]   = (i+16*0);
             col_id_t[i+1] = (i+16*1) % nb_rows;
@@ -475,7 +472,7 @@ int varyRows()
     std::vector<int> nb_rows(7); 
     nb_rows.resize(0);
     int count=0;
-    for (int i=2; i < 128; i+=4) {
+    for (int i=70; i < 90; i+=10) {
         nb_rows.push_back(i);  
         count++;
     }
