@@ -15,7 +15,7 @@ EXEC= "./linux/release/memory_tests"
 def make_cmd(outfile):
     OMP= "%s;%s;%s" % (THREADS, SCHEDULE, KMC)
     INNER= "\'cd mic; %s; %s; %s > %s \'" % (OMP, LIB, EXEC, outfile)
-    CMD="(ssh S2-mic0 %s)" % INNER
+    CMD="(ssh S3-mic0 %s)" % INNER #on frodo.
     return(CMD)
 
 bench=["read","write", "read_write", "read_write_cpp"]
