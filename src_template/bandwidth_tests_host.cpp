@@ -2,8 +2,20 @@
 #include "timer_eb.h"
 #include <vector>
 #include <algorithm>
+#include <util.h>
 
 namespace spmv {
+
+void MemoryBandwidthHost::evictFromCache()
+{
+// evict data from cache
+#pragma omp parallel
+{
+    evict_array_from_cache(&vec_vt[0], sizeof(float)*nb_rows);
+    evict_array_from_cache(&result_vt[0], sizeof(float)*nb_rows);
+    evict_array_from_cache(&col_id_t[0], sizeof(int)*nb_rows);
+}
+}
 
 //----------------------------------------------------------------------
 MemoryBandwidthHost::MemoryBandwidthHost()
@@ -102,6 +114,7 @@ void MemoryBandwidthHost::run()
     bw.resize(0);
 
     for (int i=0; i < nb_iter; i++) {
+        evictFromCache();
         //tm["spmv"]->start();
         //benchReadWriteCpp();
 #if 1
@@ -135,8 +148,8 @@ void MemoryBandwidthHost::run()
     //for (int i=0; i < 7; i++) { printf("bw[%d] = %f\n", i, bw[i]); }
     // 2nd highest bandwidth (in case highest one is an outlier)
     //printf("r/w, max bandwidth= %f (gbytes/sec)\n", bw[sz-1]);
-    printf("rows: %d (x 128^3), max bandwidth= %f (gbytes/sec)\n", nb_rows/(128*128*128), bw[sz-2]);
-    printf("nb_rows: %d,mx_bw: %f\n", nb_rows/(128*128*128), bw[sz-2]);
+    printf("rows: %d (x 100^3), max bandwidth= %f (gbytes/sec)\n", nb_rows/(100*100*100), bw[sz-2]);
+    printf("nb_rows: %d,mx_bw: %f\n", nb_rows/(100*100*100), bw[sz-2]);
 }
 //----------------------------------------------------------------------
 void MemoryBandwidthHost::benchWriteCpp()
@@ -461,13 +474,13 @@ int varyRows()
     std::vector<int> nb_rows(7); 
     nb_rows.resize(0);
     int count=0;
-    for (int i=2; i < 66; i+=2) {
+    for (int i=5; i < 100; i+=5) {
         nb_rows.push_back(i);  
         count++;
     }
     //std::copy(nbr, nbr+count, nb_rows.begin());
     spmv::MemoryBandwidthHost mem;
-    int mult = 128*128*128;
+    int mult = 100*100*100;
 
     for (int i=0; i < nb_rows.size(); i++) {
         printf("--------------------------------\n");
