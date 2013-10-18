@@ -148,6 +148,7 @@ public:
     void spmv_serial_row(ell_matrix<int, T>& mat, std::vector<T>& v, std::vector<T>& result);
     void spmv_serial_row(ell_matrix<int, T>& mat, std::vector<T>& data, std::vector<T>& v, std::vector<T>& result);
     void spmv_serial_row(int* col_id, T* data, T* v, T* res, int nbz, int nb_rows) ;
+    void spmv_serial_omp(ell_matrix<int, T>& mat, std::vector<T>& v, std::vector<T>& result);
     T l2norm(std::vector<T>& v);
     T l2norm(T*, int n);
 
@@ -249,6 +250,7 @@ ELL_OPENMP_HOST<T>::ELL_OPENMP_HOST(std::string filename, int ntimes) :
 {
     int offset = 3;
     tm["spmv"] = new EB::Timer("[method_0] Matrix-Vector multiply", offset);
+    tm["spmv_serial"] = new EB::Timer("[serial] Matrix-Vector multiply", offset);
 
     // Read relevant parameters
 	ProjectSettings pj("test.conf");
@@ -777,6 +779,63 @@ void ELL_OPENMP_HOST<T>::checkAllSerialSolutions(T* data_t, int* col_id_t, T* ve
     _mm_free(d);
 }
 //----------------------------------------------------------------------
+template <typename T>
+void ELL_OPENMP_HOST<T>::spmv_serial_omp(ell_matrix<int, T>& mat, std::vector<T>& v, std::vector<T>& result)
+{
+    T accumulant;
+    int vecid;
+    int aligned = mat.ell_height_aligned;
+    int nz = mat.ell_num;
+    std::vector<int>& col_id = mat.ell_col_id;
+    std::vector<T>& data = mat.ell_data;
+    std::fill(result.begin(), result.end(), (T) 0.);
+
+    for (int it=0; it < 10; it++) {
+      tm["spmv_serial"]->start();
+      for (int s=0; s < nb_subdomains; s++) {
+          printf("s= %d\n", s);
+        //printf("iter %d, subdom %d\n", it, s);
+// Should all 4 subdomains be contained in a single omp parallel pragma?
+
+
+#pragma omp parallel
+#pragma omp for
+    for (int row=0; row < v.size(); row++) {
+        int matoffset = row;
+        float accumulant = 0.;
+
+#pragma omp simd
+        for (int i = 0; i < nz; i++) {
+            vecid = col_id[matoffset];
+            float d= data[matoffset];
+            accumulant += data[matoffset] * v[vecid];
+            matoffset += aligned;
+        }
+        result[row] = accumulant;
+    }
+
+    printf("exit omp parallel\n");
+     }
+        tm["spmv_serial"]->end();  // time for each matrix/vector multiply
+        if (it < 3) continue;
+        elapsed = tm["spmv"]->getTime();
+        gflops = rd.nb_mats * rd.nb_vecs * 2.*rd.stencil_size*rd.nb_rows*1e-9 / (1e-3*elapsed); // assumes count of 1
+        printf("%f gflops, %f (ms)\n", gflops, elapsed);
+        if (gflops > max_gflops) {
+            max_gflops = gflops;
+            min_elapsed = elapsed;
+        }
+   }
+
+   printf("%s, threads: %d, Max Gflops: %f, min time: %f (ms)\n", method_name.c_str(), num_threads, max_gflops, min_elapsed);
+    result_vt = subdomains[0].result_vt;
+    data_t = subdomains[0].data_t;
+    col_id_t = subdomains[0].col_id_t;
+    vec_vt = subdomains[0].vec_vt;
+   //checkSolutions(); // code works ok
+   freeInputMatricesAndVectorsMulti();
+}
+//-------------------------------------------------
 template <typename T>
 void ELL_OPENMP_HOST<T>::spmv_serial(ell_matrix<int, T>& mat, std::vector<T>& v, std::vector<T>& result)
 {
@@ -1428,7 +1487,8 @@ void spmv_ell_openmp_host(std::string filename)
     // input file type is in the configuration file (test.conf)
     ELL_OPENMP_HOST<T> ell_ocl(filename, ntimes);
 
-    int num_threads_v[] = {1,2,4,8,16,32};
+    //int num_threads_v[] = {1,2,4,8,16,32};
+    int num_threads_v[] = {10,12,14,16,18,20,32};
     //omp_set_num_threads(this->num_threads);
     for (int i=0; i < 6; i++) {
         omp_set_num_threads(num_threads_v[i]);
