@@ -11,6 +11,7 @@ set(SOURCES
     ${D}/util.cpp 
     ${D}/projectsettings.cpp 
     ${D}/timer_eb.cpp 
+    ${D}/timer_ge.cpp 
     ${D}/runs.cpp 
     ${D}/mmio.cpp 
     ${D}/rcm.cpp 
