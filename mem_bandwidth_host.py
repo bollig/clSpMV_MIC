@@ -8,6 +8,8 @@ THREADS= "export OMP_NUM_THREADS=32"
 THREADS= "export OMP_NUM_THREADS=16"
 SCHEDULE= "export OMP_SCHEDULE=dynamic,64"
 SCHEDULE= "export OMP_SCHEDULE=static,64"
+SCHEDULE= "export OMP_SCHEDULE=dynamic,64"
+
 KMC= "export KMP_AFFINITY=granularity=fine,scatter"
 KMC= "export KMP_AFFINITY=scatter"
 KMC= "export KMP_AFFINITY=granularity=fine,compact"
@@ -30,7 +32,6 @@ bench=["read_write_cpp"]
 bench=["write", "read", "read_write", "read_write_cpp", "read_write_cpp_alone"]
 bench=["read_write_cpp_alone", "read_write"]
 col=["compact", "reverse", "random"]
-col=["compact"]
 bench=["write", "read", "read_write", "gather", "unpack", "read_write_cpp", "gather_cpp", "read_write_cpp_alone"]
 bench=["read", "read_cpp"]
 bench=["write", "write_cpp"]
@@ -39,6 +40,7 @@ bench=["read_write_cpp","write_cpp","read_cpp"]
 bench=["gather", "unpack", "gather_cpp"]
 bench=["gather"]
 bench=["read", "read_cpp", "read_write_cpp", "read_write", "write", "write_cpp"]
+col=["compact"]
 nb_rows=[2,4,8,16,32,64,128,256]
 nb_rows=[0]  # vary rows within the test bandwidth program
 ###

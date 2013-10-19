@@ -6,6 +6,7 @@
 
 .SUFFIXES : .cl
 
+# 
 # Basic directory setup for SDK
 # (override directories only if they are not already defined)
 

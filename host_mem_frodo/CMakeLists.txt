@@ -10,6 +10,7 @@ set(SOURCES
     ${D}/bandwidth_tests_host.cpp
     ${D}/projectsettings.cpp 
     ${D}/timer_eb.cpp 
+    ${D}/util.cpp 
 )
 
 include_directories( . 
