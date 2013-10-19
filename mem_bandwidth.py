@@ -2,9 +2,11 @@
 import os
 
 # not clear the threads command is working
-THREADS= "export OMP_NUM_THREADS=244"
-SCHEDULE= "export OMP_SCHEDULE=dynamic,64"
+# if set to 244, I get inefficiencies. (performance cut by 2)
+#THREADS= "export OMP_NUM_THREADS=236"
+THREADS= "export OMP_NUM_THREADS=240"
 SCHEDULE= "export OMP_SCHEDULE=static,64"
+SCHEDULE= "export OMP_SCHEDULE=dynamic,64"
 KMC= "export KMP_AFFINITY=granularity=fine,scatter"
 KMC= "export KMP_AFFINITY=scatter"
 KMC= "export KMP_AFFINITY=granularity=fine,compact"
@@ -34,7 +36,13 @@ bench=["gather", "unpack", "gather_cpp"]
 bench=["gather"]
 bench=["unpack", "gather_cpp"]
 col=["compact", "reverse", "random"]
+col=["compact"]
+col=["compact", "random"]
+bench=["read_cpp"]
+bench=["gather","unpack","gather_cpp"]
+col=["random"]
 bench=["read", "read_cpp", "read_write_cpp", "read_write", "write", "write_cpp","gather","unpack","gather_cpp"]
+col=["compact"]
 nb_rows=[2,4,8,16,32,64,128]
 nb_rows=[0]  # vary rows within the test bandwidth program
 ###

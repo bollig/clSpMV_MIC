@@ -53,6 +53,7 @@ public:
     void benchUnpack();
     void benchReadWriteCpp();
     void benchReadWriteCppAlone();
+    void evictFromCache();
 
 private:
     __m512  permute(__m512 v1, _MM_PERM_ENUM perm);

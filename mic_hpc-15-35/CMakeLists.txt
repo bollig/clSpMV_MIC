@@ -37,7 +37,7 @@ FIND_LIBRARY(LIBOMP iomp5 PATH
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../../linux/release)  # relative to cwd
 
 
-set(EXEC spmv_openmp_mic)
+set(EXEC memorytests)
 ADD_EXECUTABLE(${EXEC} ${SOURCES})
 TARGET_LINK_LIBRARIES ( ${EXEC}
     ${LIBOMP}

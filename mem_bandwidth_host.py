@@ -2,10 +2,10 @@
 import os
 
 # not clear the threads command is working
-THREADS= "export OMP_NUM_THREADS=16"
 THREADS= "export OMP_NUM_THREADS=8"
 THREADS= "export OMP_NUM_THREADS=1"
 THREADS= "export OMP_NUM_THREADS=32"
+THREADS= "export OMP_NUM_THREADS=16"
 SCHEDULE= "export OMP_SCHEDULE=dynamic,64"
 SCHEDULE= "export OMP_SCHEDULE=static,64"
 KMC= "export KMP_AFFINITY=granularity=fine,scatter"

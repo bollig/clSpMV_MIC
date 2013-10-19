@@ -22,6 +22,7 @@ unsigned int getRandMax();
 unsigned int getRand(unsigned int upper);
 double getRandf();
 void setSeed();
+void evict_array_from_cache(void* ptr, size_t size);
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
