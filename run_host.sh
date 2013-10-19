@@ -17,6 +17,7 @@ F=ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_96x_96y_96z.bmtx
 export F=$F
 #no speedup past 16
 export OMP_THREAD=32  # TIMING IS independent of number processors!!!
+export OMP_THREAD=1  # TIMING IS independent of number processors!!!
 # 2nd argument must be as low as possible in random case
 export OMP_SCHEDULE=guided,64
 export OMP_SCHEDULE=dynamic,64
