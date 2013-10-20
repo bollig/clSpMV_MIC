@@ -1,0 +1,60 @@
+MicInfo Utility Log
+
+Created Sat Oct 19 21:56:19 2013
+
+
+	System Info
+		HOST OS			: Linux
+		OS Version		: 2.6.32-358.14.1.el6.x86_64
+		Driver Version		: 6720-19
+		MPSS Version		: 2.1.6720-19
+		Host Physical Memory	: 132115 MB
+
+Device No: 0, Device Name: mic0
+
+	Version
+		Flash Version 		 : 2.1.03.0386
+		SMC Firmware Version	 : 1.15.4830
+		SMC Boot Loader Version	 : 1.7.4172
+		uOS Version 		 : 2.6.38.8-gefd324e
+		Device Serial Number 	 : ADKC25103560
+
+	Board
+		Vendor ID 		 : 0x8086
+		Device ID 		 : 0x2250
+		Subsystem ID 		 : 0x2500
+		Coprocessor Stepping ID	 : 3
+		PCIe Width 		 : Insufficient Privileges
+		PCIe Speed 		 : Insufficient Privileges
+		PCIe Max payload size	 : Insufficient Privileges
+		PCIe Max read req size	 : Insufficient Privileges
+		Coprocessor Model	 : 0x01
+		Coprocessor Model Ext	 : 0x00
+		Coprocessor Type	 : 0x00
+		Coprocessor Family	 : 0x0b
+		Coprocessor Family Ext	 : 0x00
+		Coprocessor Stepping 	 : B1
+		Board SKU 		 : B1PRQ-5110P/5120D
+		ECC Mode 		 : Enabled
+		SMC HW Revision 	 : Product 225W Passive CS
+
+	Cores
+		Total No of Active Cores : 60
+		Voltage 		 : 1001000 uV
+		Frequency		 : 1052631 kHz
+
+	Thermal
+		Fan Speed Control 	 : N/A
+		Fan RPM 		 : N/A
+		Fan PWM 		 : N/A
+		Die Temp		 : 53 C
+
+	GDDR
+		GDDR Vendor		 : Elpida
+		GDDR Version		 : 0x1
+		GDDR Density		 : 2048 Mb
+		GDDR Size		 : 7936 MB
+		GDDR Technology		 : GDDR5 
+		GDDR Speed		 : 5.000000 GT/s 
+		GDDR Frequency		 : 2500000 kHz
+		GDDR Voltage		 : 1501000 uV
