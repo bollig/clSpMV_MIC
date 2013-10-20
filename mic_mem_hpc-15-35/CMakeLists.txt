@@ -9,6 +9,7 @@ set(D ../src_template/)
 set(SOURCES 
     ${D}/bandwidth_tests.cpp
     ${D}/timer_eb.cpp
+    ${D}/timer_ge.cpp
     ${D}/util.cpp
     ${D}/projectsettings.cpp
 )
@@ -22,7 +23,7 @@ include_directories(
 set(CMAKE_CXX_FLAGS "-std=c++0x -O3 -openmp -mmic -DNDEBUG")
 set(CMAKE_EXE_LINKER_FLAGS "-mmic")
 
-add_definitions(-std=c++0x -O3 -openmp -mmic) 
+add_definitions(-std=c++0x -O3 -openmp -mmic -DMIC) 
 #add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 set(USRLIBDIR /usr/lib64)

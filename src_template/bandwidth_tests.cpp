@@ -109,6 +109,7 @@ void MemoryBandwidth::run()
 
     //omp_set_num_threads(num_threads[i]);
     //omp_set_num_threads(244);
+    //omp_set_num_threads(1);
     max_bandwidth = 0.; 
     min_elapsed = 0.; 
     nb_bytes_per_row = 0;
@@ -334,7 +335,7 @@ void MemoryBandwidth::benchReadWriteCpp()
 //----------------------------------------------------------------------
 void MemoryBandwidth::benchGatherCpp()
 {
-    //printf("== benchGatherCpp ==\n");
+    printf("== benchGatherCpp ==\n");
     nb_bytes_per_row = 12;
     __assume_aligned(result_vt, 64);
     __assume_aligned(vec_vt, 64);
@@ -491,6 +492,7 @@ int varyRows()
     //}
     //for (int i=10; i <= 200; i+=10) {
     for (int i=100; i <= 150; i+=10) {
+    //for (int i=1; i <= 5; i+=1) {
     // there is a sudden decrease of performance with 30, 60, 90 10^6 rows
     //for (int i=55; i <= 65; i+=1) {
         nb_rows.push_back(i);  
