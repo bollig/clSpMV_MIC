@@ -13,6 +13,7 @@ const size_t CACHELINE = 64;
 void evict_array_from_cache (void* ptr, size_t size)
 {
     void* ptrend = ptr + size;
+    //printf("enter evict_array_fro_cache\n");
     for (; ptr< ptrend; ptr += CACHELINE) {
 #ifdef MIC
         _mm_clevict(ptr,   _MM_HINT_T0);
@@ -20,14 +21,14 @@ void evict_array_from_cache (void* ptr, size_t size)
 #else
         _mm_clflush(ptr);
 #endif
-}
+    }
 }
 
 
 void setSeed()
 {
     long c = time(NULL);
-    printf("seed: %d\n", c);
+    //printf("seed: %d\n", c);
     srand(c);
 }
 

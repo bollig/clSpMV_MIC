@@ -57,11 +57,11 @@ CC         := gcc
 LINK       := g++ -g
 
 # -restrict: allow use of RESTRICT keyword to disambibuate pointers. 
-OPT        := -O3 -openmp-report2 -LNO:simd_verbose=ON  
+OPT        := -O3 -openmp-report2 -LNO:simd_verbose=ON   -unroll4
 #-funroll-loops 
 #-opt-prefetch=4 -opt-threads_per_core=4
 MMIC       :=  
-MMIC       := -mmic
+MMIC       := -mmic -DMIC
 CXX        := icpc  -openmp $(MMIC)  -diag-enable openmp  ${OPT}
 CC         := icc ${OPT}
 LINK       := icpc  -openmp $(MMIC)  ${OPT}
@@ -224,7 +224,7 @@ openmp: $(COMMONOBJS) $(OPENMPOBJS)
 	#$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_openmp -std=c++0x -O2 $(COMMONOBJS) $(OPENMPOBJS) $(LIB)
 	$(VERBOSE)$(LINK) -o $(TARGETDIR)/spmv_openmp -std=c++0x $(COMMONOBJS) $(OPENMPOBJS) $(LIB)
 
-memorytests: $(MEM_COMMONOBJS) $(MEMORYOBJS)
+memory_tests: $(MEM_COMMONOBJS) $(MEMORYOBJS)
 	echo "gordon"
 	echo "$(MEMORYOBJS)"
 	echo "$(MEM_COMMONOBJS)"

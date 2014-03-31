@@ -6,6 +6,16 @@
 
 namespace spmv {
 
+void MemoryBandwidth::evictFromCache()
+{
+// evict data from cache
+#pragma omp parallel
+{
+    evict_array_from_cache(&vec_vt[0], sizeof(float)*nb_rows);
+    evict_array_from_cache(&result_vt[0], sizeof(float)*nb_rows);
+    evict_array_from_cache(&col_id_t[0], sizeof(int)*nb_rows);
+}
+}
 //----------------------------------------------------------------------
 MemoryBandwidth::MemoryBandwidth()
 {
@@ -49,9 +59,10 @@ void MemoryBandwidth::initialize()
 {
     printf("initialize, entered\n");
     printf("initialize: nb rows: %d\n", nb_rows);
-    vec_vt = (float*) _mm_malloc(sizeof(float)*nb_rows, 64);
-    result_vt = (float*) _mm_malloc(sizeof(float)*nb_rows, 64);
-    col_id_t = (int*) _mm_malloc(sizeof(int)*nb_rows, 64);
+    int offset = 0; //128*128*128;
+    vec_vt = (float*) _mm_malloc(sizeof(float)*(nb_rows+offset), 64);
+    result_vt = (float*) _mm_malloc(sizeof(float)*(nb_rows+offset), 64);
+    col_id_t = (int*) _mm_malloc(sizeof(int)*(nb_rows+offset), 64);
     nb_iter = 10;
 
     if (col_id_type_s == "compact") {
@@ -67,7 +78,6 @@ void MemoryBandwidth::initialize()
     }
 
     else if (col_id_type_s == "random") {
-
         for (int i=0; i < nb_rows; i++) {
             col_id_t[i] = getRand(nb_rows);
 #if 0
@@ -99,16 +109,19 @@ void MemoryBandwidth::run()
 
     //omp_set_num_threads(num_threads[i]);
     //omp_set_num_threads(244);
+    //omp_set_num_threads(1);
     max_bandwidth = 0.; 
     min_elapsed = 0.; 
     nb_bytes_per_row = 0;
 
     std::vector<float> bw;
     bw.resize(0);
+    //
 
     for (int i=0; i < nb_iter; i++) {
         //tm["spmv"]->start();
         //benchReadWriteCpp();
+        evictFromCache();
 #if 1
         if (experiment_s == "write") benchWrite();
         else if (experiment_s == "write_cpp") benchWriteCpp();
@@ -140,8 +153,8 @@ void MemoryBandwidth::run()
     //for (int i=0; i < 7; i++) { printf("bw[%d] = %f\n", i, bw[i]); }
     // 2nd highest bandwidth (in case highest one is an outlier)
     //printf("r/w, max bandwidth= %f (gbytes/sec)\n", bw[sz-1]);
-    printf("rows: %d (x 128^3), max bandwidth= %f (gbytes/sec)\n", nb_rows/(128*128*128), bw[sz-2]);
-    printf("nb_rows: %d,mx_bw: %f\n", nb_rows/(128*128*128), bw[sz-2]);
+    printf("rows: %d (x 100^3), max bandwidth= %f (gbytes/sec)\n", nb_rows/(100*100*100), bw[sz-2]);
+    printf("nb_rows: %d,mx_bw: %f\n", nb_rows/(100*100*100), bw[sz-2]);
 }
 //----------------------------------------------------------------------
 void MemoryBandwidth::benchWriteCpp()
@@ -168,7 +181,7 @@ void MemoryBandwidth::benchWriteCpp()
 //----------------------------------------------------------------------
 void MemoryBandwidth::benchReadCpp()
 {
-    //printf("== benchReadCpp ==\n");
+    printf("== benchReadCpp ==\n");
     nb_bytes_per_row = 4;
     __assume_aligned(result_vt, 64);
     __assume_aligned(vec_vt, 64);
@@ -181,7 +194,8 @@ void MemoryBandwidth::benchReadCpp()
 #pragma ivdep
 #pragma omp for
    for (int i=0; i < nr; i++) {
-        sum += vec_vt[i];
+        sum += vec_vt[i]; 
+        //sum += vec_vt[i+1048576]; // 64*128*128
         //_mm512_storenrngo_ps(result_vt+i, sum);
     }
    result_vt[0] = sum;
@@ -321,7 +335,7 @@ void MemoryBandwidth::benchReadWriteCpp()
 //----------------------------------------------------------------------
 void MemoryBandwidth::benchGatherCpp()
 {
-    //printf("== benchGatherCpp ==\n");
+    printf("== benchGatherCpp ==\n");
     nb_bytes_per_row = 12;
     __assume_aligned(result_vt, 64);
     __assume_aligned(vec_vt, 64);
@@ -473,17 +487,25 @@ int varyRows()
     std::vector<int> nb_rows(7); 
     nb_rows.resize(0);
     int count=0;
-    for (int i=2; i < 128; i+=4) {
+    //for (int i=1; i <= 10; i+=2) {
+        //nb_rows.push_back(i);  
+    //}
+    //for (int i=10; i <= 200; i+=10) {
+    for (int i=100; i <= 150; i+=10) {
+    //for (int i=1; i <= 5; i+=1) {
+    // there is a sudden decrease of performance with 30, 60, 90 10^6 rows
+    //for (int i=55; i <= 65; i+=1) {
         nb_rows.push_back(i);  
         count++;
     }
     //std::copy(nbr, nbr+count, nb_rows.begin());
     spmv::MemoryBandwidth mem;
-    int mult = 128*128*128;
+    //int mult = 128*128*128;
+    int mult = 100*100*100;
 
     for (int i=0; i < nb_rows.size(); i++) {
         printf("--------------------------------\n");
-        printf("i= %d, rows: %d\n" , i), nb_rows[i];
+        printf("i= %d, rows: %d\n" , i, nb_rows[i]);
         mem.setNbRows(mult*nb_rows[i]);
         mem.initialize();
         mem.run();
