@@ -11,7 +11,7 @@ if [ $HOSTNAME = "S2" -o $HOSTNAME = "S3" ] ; then
 	export LD_PRELOAD=
     source /opt/intel/composer_xe_2013.5.192/bin/compilervars.sh intel64
 
-elif [ $HOSTNAME = "casiornis" -o $HOSTNAME = "cas013" ] ; then
+elif [ $HOSTNAME = "casiornis" -o $HOSTNAME = "cas013"  -o $HOSTNAME = "cas014" ] ; then
 	echo $HOSTNAME
 	module load intel
     module load intel/cluster

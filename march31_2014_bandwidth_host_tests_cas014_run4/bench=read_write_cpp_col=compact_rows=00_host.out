@@ -1,0 +1,270 @@
+[ProjectSettings]   Reading config file: ./test.conf
+[Project Settings] 	USE_PYTHON_SCRIPT = 1
+use_script: 1
+[ProjectSettings]   Reading config file: bench.conf
+[Project Settings] 	bandwidth_experiment = read_write_cpp
+[Project Settings] 	col_id_type = compact
+[Project Settings] 	nb_rows = 0
+constructor: nb_rows= 0
+Inside empty ProjectSettings destructor
+--------------------------------
+i= 0, rows: 641269264
+initialize, entered
+initialize: nb rows: 4194304
+end initialize: nb rows: 4194304
+*** run: nb_rows= 4194304
+rows: 2 (x 128^3), max bandwidth= 360.800323 (gbytes/sec)
+nb_rows: 2,mx_bw: 360.800323
+--------------------------------
+i= 1, rows: 641269264
+initialize, entered
+initialize: nb rows: 8388608
+end initialize: nb rows: 8388608
+*** run: nb_rows= 8388608
+rows: 4 (x 128^3), max bandwidth= 56.871918 (gbytes/sec)
+nb_rows: 4,mx_bw: 56.871918
+--------------------------------
+i= 2, rows: 641269264
+initialize, entered
+initialize: nb rows: 12582912
+end initialize: nb rows: 12582912
+*** run: nb_rows= 12582912
+rows: 6 (x 128^3), max bandwidth= 53.345680 (gbytes/sec)
+nb_rows: 6,mx_bw: 53.345680
+--------------------------------
+i= 3, rows: 641269264
+initialize, entered
+initialize: nb rows: 16777216
+end initialize: nb rows: 16777216
+*** run: nb_rows= 16777216
+rows: 8 (x 128^3), max bandwidth= 50.878590 (gbytes/sec)
+nb_rows: 8,mx_bw: 50.878590
+--------------------------------
+i= 4, rows: 641269264
+initialize, entered
+initialize: nb rows: 20971520
+end initialize: nb rows: 20971520
+*** run: nb_rows= 20971520
+rows: 10 (x 128^3), max bandwidth= 51.606323 (gbytes/sec)
+nb_rows: 10,mx_bw: 51.606323
+--------------------------------
+i= 5, rows: 641269264
+initialize, entered
+initialize: nb rows: 25165824
+end initialize: nb rows: 25165824
+*** run: nb_rows= 25165824
+rows: 12 (x 128^3), max bandwidth= 51.635445 (gbytes/sec)
+nb_rows: 12,mx_bw: 51.635445
+--------------------------------
+i= 6, rows: 641269264
+initialize, entered
+initialize: nb rows: 29360128
+end initialize: nb rows: 29360128
+*** run: nb_rows= 29360128
+rows: 14 (x 128^3), max bandwidth= 52.022377 (gbytes/sec)
+nb_rows: 14,mx_bw: 52.022377
+--------------------------------
+i= 7, rows: 641269264
+initialize, entered
+initialize: nb rows: 33554432
+end initialize: nb rows: 33554432
+*** run: nb_rows= 33554432
+rows: 16 (x 128^3), max bandwidth= 51.296665 (gbytes/sec)
+nb_rows: 16,mx_bw: 51.296665
+--------------------------------
+i= 8, rows: 641269264
+initialize, entered
+initialize: nb rows: 37748736
+end initialize: nb rows: 37748736
+*** run: nb_rows= 37748736
+rows: 18 (x 128^3), max bandwidth= 51.472622 (gbytes/sec)
+nb_rows: 18,mx_bw: 51.472622
+--------------------------------
+i= 9, rows: 641269264
+initialize, entered
+initialize: nb rows: 41943040
+end initialize: nb rows: 41943040
+*** run: nb_rows= 41943040
+rows: 20 (x 128^3), max bandwidth= 51.519165 (gbytes/sec)
+nb_rows: 20,mx_bw: 51.519165
+--------------------------------
+i= 10, rows: 641269264
+initialize, entered
+initialize: nb rows: 46137344
+end initialize: nb rows: 46137344
+*** run: nb_rows= 46137344
+rows: 22 (x 128^3), max bandwidth= 52.947746 (gbytes/sec)
+nb_rows: 22,mx_bw: 52.947746
+--------------------------------
+i= 11, rows: 641269264
+initialize, entered
+initialize: nb rows: 50331648
+end initialize: nb rows: 50331648
+*** run: nb_rows= 50331648
+rows: 24 (x 128^3), max bandwidth= 54.331833 (gbytes/sec)
+nb_rows: 24,mx_bw: 54.331833
+--------------------------------
+i= 12, rows: 641269264
+initialize, entered
+initialize: nb rows: 54525952
+end initialize: nb rows: 54525952
+*** run: nb_rows= 54525952
+rows: 26 (x 128^3), max bandwidth= 56.709259 (gbytes/sec)
+nb_rows: 26,mx_bw: 56.709259
+--------------------------------
+i= 13, rows: 641269264
+initialize, entered
+initialize: nb rows: 58720256
+end initialize: nb rows: 58720256
+*** run: nb_rows= 58720256
+rows: 28 (x 128^3), max bandwidth= 57.568882 (gbytes/sec)
+nb_rows: 28,mx_bw: 57.568882
+--------------------------------
+i= 14, rows: 641269264
+initialize, entered
+initialize: nb rows: 62914560
+end initialize: nb rows: 62914560
+*** run: nb_rows= 62914560
+rows: 30 (x 128^3), max bandwidth= 58.784916 (gbytes/sec)
+nb_rows: 30,mx_bw: 58.784916
+--------------------------------
+i= 15, rows: 641269264
+initialize, entered
+initialize: nb rows: 67108864
+end initialize: nb rows: 67108864
+*** run: nb_rows= 67108864
+rows: 32 (x 128^3), max bandwidth= 59.218056 (gbytes/sec)
+nb_rows: 32,mx_bw: 59.218056
+--------------------------------
+i= 16, rows: 641269264
+initialize, entered
+initialize: nb rows: 71303168
+end initialize: nb rows: 71303168
+*** run: nb_rows= 71303168
+rows: 34 (x 128^3), max bandwidth= 60.420013 (gbytes/sec)
+nb_rows: 34,mx_bw: 60.420013
+--------------------------------
+i= 17, rows: 641269264
+initialize, entered
+initialize: nb rows: 75497472
+end initialize: nb rows: 75497472
+*** run: nb_rows= 75497472
+rows: 36 (x 128^3), max bandwidth= 61.498806 (gbytes/sec)
+nb_rows: 36,mx_bw: 61.498806
+--------------------------------
+i= 18, rows: 641269264
+initialize, entered
+initialize: nb rows: 79691776
+end initialize: nb rows: 79691776
+*** run: nb_rows= 79691776
+rows: 38 (x 128^3), max bandwidth= 61.770584 (gbytes/sec)
+nb_rows: 38,mx_bw: 61.770584
+--------------------------------
+i= 19, rows: 641269264
+initialize, entered
+initialize: nb rows: 83886080
+end initialize: nb rows: 83886080
+*** run: nb_rows= 83886080
+rows: 40 (x 128^3), max bandwidth= 61.954269 (gbytes/sec)
+nb_rows: 40,mx_bw: 61.954269
+--------------------------------
+i= 20, rows: 641269264
+initialize, entered
+initialize: nb rows: 88080384
+end initialize: nb rows: 88080384
+*** run: nb_rows= 88080384
+rows: 42 (x 128^3), max bandwidth= 63.100483 (gbytes/sec)
+nb_rows: 42,mx_bw: 63.100483
+--------------------------------
+i= 21, rows: 641269264
+initialize, entered
+initialize: nb rows: 92274688
+end initialize: nb rows: 92274688
+*** run: nb_rows= 92274688
+rows: 44 (x 128^3), max bandwidth= 63.136971 (gbytes/sec)
+nb_rows: 44,mx_bw: 63.136971
+--------------------------------
+i= 22, rows: 641269264
+initialize, entered
+initialize: nb rows: 96468992
+end initialize: nb rows: 96468992
+*** run: nb_rows= 96468992
+rows: 46 (x 128^3), max bandwidth= 63.686413 (gbytes/sec)
+nb_rows: 46,mx_bw: 63.686413
+--------------------------------
+i= 23, rows: 641269264
+initialize, entered
+initialize: nb rows: 100663296
+end initialize: nb rows: 100663296
+*** run: nb_rows= 100663296
+rows: 48 (x 128^3), max bandwidth= 64.065742 (gbytes/sec)
+nb_rows: 48,mx_bw: 64.065742
+--------------------------------
+i= 24, rows: 641269264
+initialize, entered
+initialize: nb rows: 104857600
+end initialize: nb rows: 104857600
+*** run: nb_rows= 104857600
+rows: 50 (x 128^3), max bandwidth= 64.997734 (gbytes/sec)
+nb_rows: 50,mx_bw: 64.997734
+--------------------------------
+i= 25, rows: 641269264
+initialize, entered
+initialize: nb rows: 109051904
+end initialize: nb rows: 109051904
+*** run: nb_rows= 109051904
+rows: 52 (x 128^3), max bandwidth= 64.926338 (gbytes/sec)
+nb_rows: 52,mx_bw: 64.926338
+--------------------------------
+i= 26, rows: 641269264
+initialize, entered
+initialize: nb rows: 113246208
+end initialize: nb rows: 113246208
+*** run: nb_rows= 113246208
+rows: 54 (x 128^3), max bandwidth= 65.205818 (gbytes/sec)
+nb_rows: 54,mx_bw: 65.205818
+--------------------------------
+i= 27, rows: 641269264
+initialize, entered
+initialize: nb rows: 117440512
+end initialize: nb rows: 117440512
+*** run: nb_rows= 117440512
+rows: 56 (x 128^3), max bandwidth= 65.023468 (gbytes/sec)
+nb_rows: 56,mx_bw: 65.023468
+--------------------------------
+i= 28, rows: 641269264
+initialize, entered
+initialize: nb rows: 121634816
+end initialize: nb rows: 121634816
+*** run: nb_rows= 121634816
+rows: 58 (x 128^3), max bandwidth= 66.173309 (gbytes/sec)
+nb_rows: 58,mx_bw: 66.173309
+--------------------------------
+i= 29, rows: 641269264
+initialize, entered
+initialize: nb rows: 125829120
+end initialize: nb rows: 125829120
+*** run: nb_rows= 125829120
+rows: 60 (x 128^3), max bandwidth= 66.413734 (gbytes/sec)
+nb_rows: 60,mx_bw: 66.413734
+--------------------------------
+i= 30, rows: 641269264
+initialize, entered
+initialize: nb rows: 130023424
+end initialize: nb rows: 130023424
+*** run: nb_rows= 130023424
+rows: 62 (x 128^3), max bandwidth= 66.623161 (gbytes/sec)
+nb_rows: 62,mx_bw: 66.623161
+--------------------------------
+i= 31, rows: 641269264
+initialize, entered
+initialize: nb rows: 134217728
+end initialize: nb rows: 134217728
+*** run: nb_rows= 134217728
+rows: 64 (x 128^3), max bandwidth= 66.849815 (gbytes/sec)
+nb_rows: 64,mx_bw: 66.849815
+====================================
+Timers [All times in ms (1/1000 s)]: 
+====================================
+
+[Timer] memory benchmarks                         |  avg:     0.2906  |  tot:    92.1062  |  count=   317

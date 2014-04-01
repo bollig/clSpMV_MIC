@@ -1,6 +1,8 @@
 #!/usr/bin/python
 import os
 
+HOSTNAME = os.getenv('HOSTNAME')
+
 # not clear the threads command is working
 THREADS= "export OMP_NUM_THREADS=8"
 THREADS= "export OMP_NUM_THREADS=1"
@@ -59,5 +61,8 @@ for b in bench:
            fd.close()
            CMD = make_cmd_host(out_file)
            print CMD
+           host = "hostname = %s" % HOSTNAME
            os.system(CMD)
+           #CMD1 = "cat %s >> %s" % (host, out_file)
+           #os.system(CMD1)
 #----------------------------------------------------------------------
