@@ -22,7 +22,7 @@ include_directories( .
     ..//ViennaCL-1.4.2
 ) 
 
-add_definitions(-std=c++0x -O2 -openmp)
+add_definitions(-std=c++0x -O2 -openmp -g)
 #add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 set(USRLIBDIR /usr/lib64)
@@ -40,5 +40,5 @@ set(EXEC spmv_openmp_host)
 ADD_EXECUTABLE(${EXEC} ${SOURCES})
 TARGET_LINK_LIBRARIES ( ${EXEC}
     ${LIBOMP}
-    ${LIBTBB}
+    #${LIBTBB}
 )

@@ -1,7 +1,12 @@
-#!/bin/sh
+#!/bin/sh 
+
+# run a single case, with parameters determined by the file name. 
+
+
 F=random_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtx
 F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtx
 F=compact_x_weights_direct__no_hv_stsize_32_3d_48x_48y_48z.mtx
+F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 F=compact_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 F=random_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.mtxb
 F=random_x_weights_direct__no_hv_stsize_16_2d_8x_8y_1z.mtxb
@@ -12,6 +17,7 @@ F=ell_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
 F=ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_128x_128y_128z.bmtx
 F=ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_192x_192y_192z.bmtx
 F=ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_128x_128y_128z.bmtx
+# core dump
 F=ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_96x_96y_96z.bmtx
 
 export F=$F
@@ -36,6 +42,12 @@ export KMP_AFFINITY=compact
 #/opt/intel/mic/bin/micnativeloadex ./linux/release/memory_tests > aaa.gordon
 #(ssh S2-mic0 'cd mic;  export LD_LIBRARY_PATH=/opt/intel/composer_xe_2013/lib/mic/; ./linux/release/memory_tests > aaa.gordon')
 
-(export OMP_THREAD=1; ./linux/release/spmv_openmp_host  matrix/$F 1)
+output=$F
+output+="_"
+output+=$HOSTNAME
+echo $output
+
+(export OMP_THREAD=10; ./linux/release/spmv_openmp_host  matrix/$F 1 )
+#(export OMP_THREAD=10; ./linux/release/spmv_openmp_host  matrix/$F 1 > $output)
 
 

@@ -144,11 +144,24 @@ public:
 	~ELL_OPENMP_HOST<T>() {
 	}
 
+    void evictFromCache(const Subdomain& dom, int nb_rows, int nb_mat, int nb_vec, int nz)
+    {
+        evict_array_from_cache(dom.vec_vt, sizeof(float)*nb_rows*nb_vec);
+        evict_array_from_cache(dom.result_vt, sizeof(float)*nb_rows*nb_vec*nb_mat);
+        evict_array_from_cache(dom.col_id_t, sizeof(int)*nb_rows*nz); // 32 nonzeros
+        evict_array_from_cache(dom.data_t, sizeof(int)*nb_rows*nz); // 32 nonzeros
+    }
+
+
     void evictFromCache(int nb_rows, int nb_mat, int nb_vec, int nz)
     {
     // evict data from cache
     #pragma omp parallel
     {
+        //printf("evict from cache\n");
+        //printf("nb_rows= %d\n", nb_rows);
+        //printf("nb_vec= %d\n", nb_vec);
+        //printf("nb_mat= %d\n", nb_mat);
         evict_array_from_cache(vec_vt, sizeof(float)*nb_rows*nb_vec);
         evict_array_from_cache(result_vt, sizeof(float)*nb_rows*nb_vec*nb_mat);
         evict_array_from_cache(col_id_t, sizeof(int)*nb_rows*nz); // 32 nonzeros
@@ -214,19 +227,27 @@ template <typename T>
 void ELL_OPENMP_HOST<T>::run()
 {
 
+    num_threads = omp_get_num_threads();
+    printf("(OUTSIDE PARALLEL) num_threads (omp_get_num_threads)= %d\n", num_threads);
+
 #pragma omp parallel
 {
 #pragma omp single
-    num_threads = omp_get_num_threads();
+    {
+    int loc_num_threads = omp_get_num_threads();
+    printf("num_threads (omp_get_num_threads)= %d\n", loc_num_threads);
+    }
     //num_threads = 1; printf("CHANGE back to general\n");
 }
     int count = 0;
     int max_nb_runs = 1;
 
-    method_8a_base_cpp(4);
-    method_8a_multi_novec(4);
-    method_8a_multi(4);
-    method_8a_multi_optimal(4);
+    // on cas03/cascade: segmentation fault
+    method_8a_base_cpp(4); // seems to work
+    //method_8a_multi_novec(4); // does not work, but should
+    //method_8a_multi(4); // requires AVX to be defined. Not implemented. 
+#define AVX  1
+    //method_8a_multi_optimal(4); // does not work
     return;
 
     if (rd.use_subdomains == 0 || nb_subdomains == 1) {
@@ -640,9 +661,12 @@ printf("nz= %d\n", nz);
     // Must now work on alignmentf vectors. 
     // Produces the correct serial result
     for (int it=0; it < 10; it++) {
-        evictFromCache(rd.nb_rows, rd.nb_mats, rd.nb_vecs, nz);
+        // This will not work in multi case because data allocated is in subdomain 
+        // datastructure and evicFromCache deletes variables not in subdomain structure. 
+        //evictFromCache(rd.nb_rows, rd.nb_mats, rd.nb_vecs, nz);
         tm["spmv"]->start();
         for (int s=0; s < nb_subdomains; s++) {
+            evictFromCache(subdomains[s], rd.nb_rows, rd.nb_mats, rd.nb_vecs, nz);
 
 #pragma omp parallel firstprivate(nz)
 {
@@ -654,6 +678,7 @@ printf("nz= %d\n", nz);
         float data[4];
         float vec[4];
         float tens[16];
+
 
         // SOMETHING WRONG with dom.data_t since when = 1, solution is correct, when = rando, 
         // solution is not correct. DO NOT KNOW WHY. 
@@ -1660,8 +1685,10 @@ void spmv_ell_openmp_host(std::string filename)
     int num_threads_v[] = {1,10,12,14,16,18,20,32};
     //omp_set_num_threads(this->num_threads);
     for (int i=0; i < 6; i++) {
+        printf("---------------------------------------\n");
+        printf("*** ITERATION %d ***\n", i);
         omp_set_num_threads(num_threads_v[i]);
-        printf("num threads: %d\n", num_threads_v[i]);
+        printf("set num threads to %d +++\n", num_threads_v[i]);
 	    ell_ocl.run();
     }
 }
@@ -1768,6 +1795,8 @@ void ELL_OPENMP_HOST<T>::generateInputMatricesAndVectorsMulti()
 
         Subdomain& s = subdomains[i];
 
+        printf("generateMulti: vec_vt allocate: nb_vec, vec_size= %d, %d\n", nb_vec, vec_size);
+        printf("generateMulti: nb_mat= %d \n", nb_mat);
         s.vec_vt    = (float*) _mm_malloc(sizeof(float) * nb_vec * vec_size, 32);
         s.result_vt = (float*) _mm_malloc(sizeof(float) * nb_vec * nb_mat * nb_rows, 32);
         s.col_id_t  = (int*)   _mm_malloc(sizeof(int)   * tot_nz, 16);
@@ -1813,6 +1842,7 @@ template <typename T>
 void ELL_OPENMP_HOST<T>::freeInputMatricesAndVectorsMulti()
 {
     for (int s=0; s < nb_subdomains; s++) {
+        //printf("subdomain loop: s= %d\n", s); # only 1 subdomain
         Subdomain& dom = subdomains[s];
         _mm_free(dom.result_vt);
         _mm_free(dom.vec_vt);

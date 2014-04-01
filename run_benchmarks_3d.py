@@ -8,6 +8,7 @@ sparsity = ["compact", "random"]
 sparsity = ["random"]
 #nb_nodes_per_stencil = [16,31,32,33,64]
 nb_nodes_per_stencil = [32]
+hostname = "%s" % os.getenv("HOSTNAME")
 
 case = [5,7,9,10]
 workgroup_size = [1]
@@ -34,7 +35,7 @@ def run_cases():
 
     for f in files:
         for c in case:
-            CMD="./linux/release/spmv_all matrix/%s %s 5 > output/%s_case%s" % (f, c, f,c)
+            CMD="./linux/release/spmv_all matrix/%s %s 5 > output/%s_case%s_%s" % (f, c, f,c, hostname)
             print(CMD + "\n")
             os.system(CMD)
 #----------------------------------------------------------------------

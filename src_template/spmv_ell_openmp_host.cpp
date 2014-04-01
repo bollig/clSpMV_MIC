@@ -42,6 +42,10 @@
 
 int main(int argc, char* argv[])
 {
+    RunData rd;
+
+    rd.print();
+
     if (argc < 2)
     {
 		printf("\nUsage: spmv_all input_matrix.mtx method execution_times");

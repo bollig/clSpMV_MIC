@@ -1,0 +1,8 @@
+April 1, 2014, cas014, MSI
+run_host.sh. On front end. 
+base_cpp works and multi_novec (means no AVX) works. 
+   (mult_novec uses multidomain structure because nb_mat=4). 
+   (base: nb_mat=1).
+However, when running both together, there is a seg fault after running 
+  the multidomain case. The base case works fine. 
+----------------------------------------------------------------------
