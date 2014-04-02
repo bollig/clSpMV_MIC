@@ -498,7 +498,7 @@ void ELL_OPENMP_HOST<T>::method_8a_base_cpp(int nbit)
         
    //checkSolutions();
  
-    printf("col_id[0] =%d\n", col_id_t[0]);
+    //printf("col_id[0] =%d\n", col_id_t[0]);
     float gflops;
     float max_gflops = 0.;
     float elapsed = 0.; 

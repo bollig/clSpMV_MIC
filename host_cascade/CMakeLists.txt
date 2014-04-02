@@ -22,7 +22,8 @@ include_directories( .
     ..//ViennaCL-1.4.2
 ) 
 
-add_definitions(-std=c++0x -O2 -openmp -g)
+add_definitions(-std=c++0x -O2 -openmp )
+add_definitions(-g)
 #add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 set(USRLIBDIR /usr/lib64)
