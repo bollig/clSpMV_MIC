@@ -1,0 +1,335 @@
+=====================================
+Input Node file: 
+kernel_path: 
+kernel_name: 
+asci_binary: 
+data type: 
+co_processor: 
+cpu_processor: 
+sparse_format: 
+nb_sockets: 635572616
+nb_cores: 32767
+nb_coprocessors: 1
+nb_nodes: 674168024
+nb_nodes_per_stencil: 63
+kernel_exec_time: 0.000000 (ms)
+argv[0]= ./linux/release/spmv_openmp_host
+argv[1]= matrix/ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_96x_96y_96z.bmtx
+argv[2]= 1
+filename= matrix/ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_96x_96y_96z.bmtx
+choice= 1
+argv[0]= 1
+[ProjectSettings]   Reading config file: test.conf
+[Project Settings] 	asci_binary = binary
+asci_binary= binary
+[Project Settings] 	in_format = ELL
+filename = matrix/ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_96x_96y_96z.bmtx
+choice= 1
+spmv in ell format using OpenNP in Native mode
+host
+[ProjectSettings]   Reading config file: test.conf
+[Project Settings] 	asci_binary = binary
+[Project Settings] 	sparsity = NONE
+[Project Settings] 	diag_sep = 80000
+[Project Settings] 	inner_bandwidth = 2000
+[Project Settings] 	sort_col_indices = 0
+[Project Settings] 	n3d = 128
+[Project Settings] 	random_seed = 1
+[Project Settings] 	use_subdomains = 0
+sparsity = NONE
+[Project Settings] 	in_format = ELL
+format == ELL ************
+before load
+** nb_rows= 884736
+stencil_size= 32
+
+Read ELLPACK file
+Inside empty ProjectSettings destructor
+---------------------------------------
+*** ITERATION 0 ***
+set num threads to 1 +++
+num_threads (omp_get_num_threads)= 1
+============== METHOD 8a Multi Optimal, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 884736
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 884736
+vec_size= 884736
+nb_mat= 4
+nb nonzeros per row= 32
+tot_nz= 28311552
+generateMulti: vec_vt allocate: nb_vec, vec_size= 4, 884736
+generateMulti: nb_mat= 4 
+before col_id_t
+offsets: 0, 28311552
+before generate vector
+enter generate_vector
+sz= 3538944
+before generate col_id
+======= Reconstruct col_id matrix for special effects =====
+before generate data
+col_id, nb rows: 884736
+
+1 max bandwidth: 45029
+*** nb_subdomains: 1
+exit omp parallel
+exit omp parallel
+exit omp parallel
+exit omp parallel
+8.161080 gflops, 111.011002 (ms)
+exit omp parallel
+8.133240 gflops, 111.390999 (ms)
+exit omp parallel
+8.160051 gflops, 111.025002 (ms)
+exit omp parallel
+8.149188 gflops, 111.172997 (ms)
+exit omp parallel
+7.767230 gflops, 116.639999 (ms)
+exit omp parallel
+7.751148 gflops, 116.882004 (ms)
+exit omp parallel
+7.763569 gflops, 116.695000 (ms)
+method_8a_multi_optimal, threads: 1, Max Gflops: 8.161080, min time: 111.011002 (ms)
+---------------------------------------
+*** ITERATION 1 ***
+set num threads to 2 +++
+num_threads (omp_get_num_threads)= 2
+============== METHOD 8a Multi Optimal, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 884736
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 884736
+vec_size= 884736
+nb_mat= 4
+nb nonzeros per row= 32
+tot_nz= 28311552
+generateMulti: vec_vt allocate: nb_vec, vec_size= 4, 884736
+generateMulti: nb_mat= 4 
+before col_id_t
+offsets: 0, 28311552
+before generate vector
+enter generate_vector
+sz= 3538944
+before generate col_id
+======= Reconstruct col_id matrix for special effects =====
+before generate data
+col_id, nb rows: 884736
+
+1 max bandwidth: 45029
+*** nb_subdomains: 1
+exit omp parallel
+exit omp parallel
+exit omp parallel
+exit omp parallel
+15.229709 gflops, 59.487000 (ms)
+exit omp parallel
+15.803818 gflops, 57.326000 (ms)
+exit omp parallel
+15.229964 gflops, 59.486000 (ms)
+exit omp parallel
+15.221776 gflops, 59.518002 (ms)
+exit omp parallel
+15.350214 gflops, 59.020000 (ms)
+exit omp parallel
+15.247651 gflops, 59.417000 (ms)
+exit omp parallel
+15.221520 gflops, 59.519001 (ms)
+method_8a_multi_optimal, threads: 2, Max Gflops: 15.803818, min time: 57.326000 (ms)
+---------------------------------------
+*** ITERATION 2 ***
+set num threads to 4 +++
+num_threads (omp_get_num_threads)= 4
+============== METHOD 8a Multi Optimal, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 884736
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 884736
+vec_size= 884736
+nb_mat= 4
+nb nonzeros per row= 32
+tot_nz= 28311552
+generateMulti: vec_vt allocate: nb_vec, vec_size= 4, 884736
+generateMulti: nb_mat= 4 
+before col_id_t
+offsets: 0, 28311552
+before generate vector
+enter generate_vector
+sz= 3538944
+before generate col_id
+======= Reconstruct col_id matrix for special effects =====
+before generate data
+col_id, nb rows: 884736
+
+1 max bandwidth: 45029
+*** nb_subdomains: 1
+exit omp parallel
+exit omp parallel
+exit omp parallel
+exit omp parallel
+-0.936979 gflops, -966.905029 (ms)
+exit omp parallel
+28.484238 gflops, 31.806000 (ms)
+exit omp parallel
+28.227749 gflops, 32.095001 (ms)
+exit omp parallel
+28.208414 gflops, 32.117001 (ms)
+exit omp parallel
+28.213686 gflops, 32.111000 (ms)
+exit omp parallel
+28.219837 gflops, 32.104000 (ms)
+exit omp parallel
+28.231270 gflops, 32.091000 (ms)
+method_8a_multi_optimal, threads: 4, Max Gflops: 28.484238, min time: 31.806000 (ms)
+---------------------------------------
+*** ITERATION 3 ***
+set num threads to 8 +++
+num_threads (omp_get_num_threads)= 8
+============== METHOD 8a Multi Optimal, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 884736
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 884736
+vec_size= 884736
+nb_mat= 4
+nb nonzeros per row= 32
+tot_nz= 28311552
+generateMulti: vec_vt allocate: nb_vec, vec_size= 4, 884736
+generateMulti: nb_mat= 4 
+before col_id_t
+offsets: 0, 28311552
+before generate vector
+enter generate_vector
+sz= 3538944
+before generate col_id
+======= Reconstruct col_id matrix for special effects =====
+before generate data
+col_id, nb rows: 884736
+
+1 max bandwidth: 45029
+*** nb_subdomains: 1
+exit omp parallel
+exit omp parallel
+exit omp parallel
+exit omp parallel
+46.081875 gflops, 19.660000 (ms)
+exit omp parallel
+46.353016 gflops, 19.545000 (ms)
+exit omp parallel
+46.088909 gflops, 19.657000 (ms)
+exit omp parallel
+46.289066 gflops, 19.572001 (ms)
+exit omp parallel
+46.182884 gflops, 19.617001 (ms)
+exit omp parallel
+46.070156 gflops, 19.665001 (ms)
+exit omp parallel
+-0.925134 gflops, -979.284973 (ms)
+method_8a_multi_optimal, threads: 8, Max Gflops: 46.353016, min time: 19.545000 (ms)
+---------------------------------------
+*** ITERATION 4 ***
+set num threads to 16 +++
+num_threads (omp_get_num_threads)= 16
+============== METHOD 8a Multi Optimal, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 884736
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 884736
+vec_size= 884736
+nb_mat= 4
+nb nonzeros per row= 32
+tot_nz= 28311552
+generateMulti: vec_vt allocate: nb_vec, vec_size= 4, 884736
+generateMulti: nb_mat= 4 
+before col_id_t
+offsets: 0, 28311552
+before generate vector
+enter generate_vector
+sz= 3538944
+before generate col_id
+======= Reconstruct col_id matrix for special effects =====
+before generate data
+col_id, nb rows: 884736
+
+1 max bandwidth: 45029
+*** nb_subdomains: 1
+exit omp parallel
+exit omp parallel
+exit omp parallel
+exit omp parallel
+34.460617 gflops, 26.290001 (ms)
+exit omp parallel
+34.460617 gflops, 26.290001 (ms)
+exit omp parallel
+34.304039 gflops, 26.410000 (ms)
+exit omp parallel
+34.369106 gflops, 26.360001 (ms)
+exit omp parallel
+34.262524 gflops, 26.441999 (ms)
+exit omp parallel
+34.514442 gflops, 26.249001 (ms)
+exit omp parallel
+34.348259 gflops, 26.375999 (ms)
+method_8a_multi_optimal, threads: 16, Max Gflops: 34.514442, min time: 26.249001 (ms)
+---------------------------------------
+*** ITERATION 5 ***
+set num threads to 32 +++
+num_threads (omp_get_num_threads)= 32
+============== METHOD 8a Multi Optimal, 1 domain  ===================
+nb subdomains= 1
+nb_rows_multi = 884736
+inside generate Multi
+generate: nb_subdomains = 1
+subdomain 0
+nb_rows= 884736
+vec_size= 884736
+nb_mat= 4
+nb nonzeros per row= 32
+tot_nz= 28311552
+generateMulti: vec_vt allocate: nb_vec, vec_size= 4, 884736
+generateMulti: nb_mat= 4 
+before col_id_t
+offsets: 0, 28311552
+before generate vector
+enter generate_vector
+sz= 3538944
+before generate col_id
+======= Reconstruct col_id matrix for special effects =====
+before generate data
+col_id, nb rows: 884736
+
+1 max bandwidth: 45029
+*** nb_subdomains: 1
+exit omp parallel
+exit omp parallel
+exit omp parallel
+exit omp parallel
+31.078512 gflops, 29.150999 (ms)
+exit omp parallel
+31.112665 gflops, 29.118999 (ms)
+exit omp parallel
+30.992393 gflops, 29.232000 (ms)
+exit omp parallel
+31.201601 gflops, 29.035999 (ms)
+exit omp parallel
+31.047623 gflops, 29.180000 (ms)
+exit omp parallel
+31.161892 gflops, 29.073000 (ms)
+exit omp parallel
+31.051880 gflops, 29.176001 (ms)
+method_8a_multi_optimal, threads: 32, Max Gflops: 31.201601, min time: 29.035999 (ms)
+====================================
+Timers [All times in ms (1/1000 s)]: 
+====================================
+
+[Timer] [method_0] Matrix-Vector multiply         |  avg:    -9.4730  |  tot:  -539.9630  |  count=    57
+Inside empty ProjectSettings destructor

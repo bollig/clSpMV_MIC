@@ -14,19 +14,20 @@ F=ell_ell_x_weights_direct__no_hv_stsize_16_3d_8x_8y_1z.bmtx
 F=ell_ell_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
 F=ell_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
 F=ell_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
+# not available on cascade
 F=ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_128x_128y_128z.bmtx
 F=ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_192x_192y_192z.bmtx
-F=ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_128x_128y_128z.bmtx
 # core dump
 F=ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_96x_96y_96z.bmtx
+F=ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
 
 export F=$F
 #no speedup past 16
 export OMP_THREAD=32  # TIMING IS independent of number processors!!!
 export OMP_THREAD=1  # TIMING IS independent of number processors!!!
 # 2nd argument must be as low as possible in random case
-export OMP_SCHEDULE=dynamic,64
 export OMP_SCHEDULE=guided,64
+export OMP_SCHEDULE=dynamic,64
 export KMP_AFFINITY=scatter
 export KMP_AFFINITY=compact
 
