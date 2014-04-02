@@ -227,15 +227,15 @@ template <typename T>
 void ELL_OPENMP_HOST<T>::run()
 {
 
-    num_threads = omp_get_num_threads();
-    printf("(OUTSIDE PARALLEL) num_threads (omp_get_num_threads)= %d\n", num_threads);
+    //num_threads = omp_get_num_threads();
+    //printf("(OUTSIDE PARALLEL) num_threads (omp_get_num_threads)= %d\n", num_threads);
 
 #pragma omp parallel
 {
 #pragma omp single
     {
-    int loc_num_threads = omp_get_num_threads();
-    printf("num_threads (omp_get_num_threads)= %d\n", loc_num_threads);
+    num_threads = omp_get_num_threads();
+    printf("num_threads (omp_get_num_threads)= %d\n", num_threads);
     }
     //num_threads = 1; printf("CHANGE back to general\n");
 }
@@ -244,7 +244,7 @@ void ELL_OPENMP_HOST<T>::run()
 
     // on cas03/cascade: segmentation fault
     method_8a_base_cpp(4); // seems to work
-    //method_8a_multi_novec(4); // does not work, but should
+    method_8a_multi_novec(4); // does not work, but should
     //method_8a_multi(4); // requires AVX to be defined. Not implemented. 
 #define AVX  1
     //method_8a_multi_optimal(4); // does not work
@@ -561,7 +561,8 @@ void ELL_OPENMP_HOST<T>::method_8a_base_cpp(int nbit)
             min_elapsed = elapsed;
         }
 } // end it loop
-   freeInputMatricesAndVectorsMulti();
+   //freeInputMatricesAndVectorsMulti(); // error since not multidomain (nb_mat=1)
+   freeInputMatricesAndVectors();
    printf("%s, threads: %d, Max Gflops: %f, min time: %f (ms)\n", method_name.c_str(), num_threads, max_gflops, min_elapsed);
     
     rd.nb_mats = old_mats;
@@ -1681,8 +1682,8 @@ void spmv_ell_openmp_host(std::string filename)
     // input file type is in the configuration file (test.conf)
     ELL_OPENMP_HOST<T> ell_ocl(filename, ntimes);
 
-    //int num_threads_v[] = {1,2,4,8,16,32};
-    int num_threads_v[] = {1,10,12,14,16,18,20,32};
+    int num_threads_v[] = {1,2,4,8,16,32};
+    //int num_threads_v[] = {1,10,12,14,16,18,20,32};
     //omp_set_num_threads(this->num_threads);
     for (int i=0; i < 6; i++) {
         printf("---------------------------------------\n");

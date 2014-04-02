@@ -45,9 +45,13 @@ export KMP_AFFINITY=compact
 output=$F
 output+="_"
 output+=$HOSTNAME
+output+="_"
+output+=$KMP_AFFINITY
+output+="_"
+output+=$OMP_SCHEDULE
 echo $output
 
-(export OMP_THREAD=10; ./linux/release/spmv_openmp_host  matrix/$F 1 )
-#(export OMP_THREAD=10; ./linux/release/spmv_openmp_host  matrix/$F 1 > $output)
+#(export OMP_THREAD=10; ./linux/release/spmv_openmp_host  matrix/$F 1 )
+(export OMP_THREAD=10; ./linux/release/spmv_openmp_host  matrix/$F 1 > $output)
 
 
