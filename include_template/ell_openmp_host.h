@@ -243,11 +243,11 @@ void ELL_OPENMP_HOST<T>::run()
     int max_nb_runs = 1;
 
     // on cas03/cascade: segmentation fault
-    //method_8a_base_cpp(4); // seems to work
-    //method_8a_multi_novec(4); // does not work, but should
+    method_8a_base_cpp(4); // seems to work
+    method_8a_multi_novec(4); // does not work, but should
 #define AVX  1
-    //method_8a_multi(4); // requires AVX to be defined. Not implemented. 
-    method_8a_multi_optimal(4); // does not work
+    method_8a_multi(4); // requires AVX to be defined. Not implemented. 
+    method_8a_multi_optimal(4); // seems to work
     return;
 
     if (rd.use_subdomains == 0 || nb_subdomains == 1) {
