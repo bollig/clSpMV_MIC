@@ -1,0 +1,224 @@
+READ INPUT FILE: 
+coo_matrix info
+matrixInfo: width= 1000000, height= 1000000, nnz= 32000000
+coo_row_id sz: 32000000, coo_col_id sz: 32000000, coo_data sz: 32000000
+befpre spmv_ell
+** GORDON, spmv_ell
+Getting the platform
+
+-------------MIC Device OpenCL Configuration------------
+
+
+# 1 - print current configuration at MIC device startup
+CL_CONFIG_MIC_DEVICE_PRINT_CONFIG=1
+
+
+# 1 - gather info for GPA
+CL_CONFIG_USE_GPA=0
+
+# 1 - try to vectorize kernel during compilation
+CL_CONFIG_USE_VECTORIZER=1
+
+# 1 - connect to VTune on device
+CL_CONFIG_USE_VTUNE=1
+
+
+# 1 - deadloop on device during startup, wait for debugger
+CL_CONFIG_MIC_DEVICE_STOP_AT_LOAD=0
+
+# 1 - wrap kernels with try/catch
+CL_CONFIG_MIC_DEVICE_SAFE_KERNEL_EXECUTION=1
+
+
+# 1 - do not allow TBB workers to switch between HW threads
+CL_CONFIG_MIC_DEVICE_USE_AFFINITY=1
+
+# 0 - create 1 TBB worker per each HW thread per core, !=0 - limit TBB workers to the given number per core
+CL_CONFIG_MIC_DEVICE_THREADS_PER_CORE=0
+
+# 0 - use all MIC cores, !=0 - use specified number of cores
+CL_CONFIG_MIC_DEVICE_NUM_CORES=0
+
+# 1 - do not use 0 (system) MIC core
+CL_CONFIG_MIC_DEVICE_IGNORE_CORE_0=1
+
+# 1 - do not use last MIC core
+CL_CONFIG_MIC_DEVICE_IGNORE_LAST_CORE=1
+
+# 0 - disabled, !=0 - minimum size of buffer in kilobytes to use 2MB pages
+CL_CONFIG_MIC_DEVICE_2MB_BUF_MINSIZE_KB=512
+
+# must not be 0, recommended number of WGs to schedule for same thread
+CL_CONFIG_MIC_DEVICE_TBB_GRAIN_SIZE=1
+
+# affinity - tbb:affinity_partitioner, other - tbb::auto_partitioner
+CL_CONFIG_MIC_DEVICE_TBB_SCHEDULER=auto
+
+# default_TBB_tile - optimize by square tiles using TBB default implementation, columns - optimize columns, rows - optimize rows, tiles - optimize square tiles
+CL_CONFIG_MIC_DEVICE_TBB_BLOCK_OPTIMIZATION=rows
+
+# 1 - do not allow TBB workers to leave arena. Deadlocks if more than a single queue.
+CL_CONFIG_MIC_DEVICE_TBB_TRAP_WORKERS=0
+
+# 1 - perform host->device transfer only when really required
+CL_CONFIG_MIC_DEVICE_LAZY_TRANSFER=0
+
+
+# Restricts the process to use only the MIC cards specified as the value of the variable
+OFFLOAD_DEVICES=
+
+--------------------------------------------------------
+
+[initialize] Using CL device: 0
+	Device Name: Intel(R) Many Integrated Core Acceleration Card
+	Driver Version: 1.2
+	Vendor: 32902
+	Max Compute Units: 240
+	Max Work Item Dimensions: 3
+
+MatInfo: Width 1000000 Height 1000000 NNZ 32000000
+Max Offset 31 Min Offset -31
+Histogram: <-15: 256 -15~-1 14999760 < 0-15 15999775 > 16 1000209
+Cacheline usage per row: max 3 min 2 avg 2.937440
+nnz= 32000000
+rownum= 1000000
+vecsize= 1000000
+ellnum= 32
+============== METHOD 0 ===================
+****** kernel_name: gpu_ell ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_ell
+kernel_source_file = spmv_ell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+**** method_0, sizeof(T): 4
+1
+2
+3
+4
+5
+6
+GPU execution time = 10.00 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 8.25 ms
+GPU execution time = 7.98 ms
+GPU execution time = 7.90 ms
+GPU execution time = 7.87 ms
+GPU execution time = 7.83 ms
+GPU execution time = 7.88 ms
+GPU execution time = 8.22 ms
+GPU execution time = 7.90 ms
+ntimes= 5, time_in_msec= 41.370153, nnz= 32000000
+
+ELL cpu time 8.274031 ms GFLOPS 7.735045 code 0 
+
+
+ELL float cpu time 8.274031 ms GFLOPS 7.735045 code 0 
+
+============== METHOD 1 ===================
+****** kernel_name: gpu_ell_v4 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_ell_v4
+kernel_source_file = spmv_ell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+GPU execution time = 4.86 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 5.72 ms
+GPU execution time = 5.13 ms
+GPU execution time = 4.91 ms
+GPU execution time = 5.66 ms
+GPU execution time = 4.99 ms
+GPU execution time = 5.01 ms
+GPU execution time = 4.91 ms
+GPU execution time = 4.99 ms
+ntimes= 5, time_in_msec= 27.238131, nnz= 32000000
+
+ELL float4 cpu time 5.447626 ms GFLOPS 11.748237 code 1 
+
+GORDON: after ell_ocl.run
+
+------------------------------------------------------------------------
+ELL best time 5.447626 ms best method 1
+------------------------------------------------------------------------
+** GORDON, spmv_ell
+[initialize] Using CL device: 0
+	Device Name: Intel(R) Many Integrated Core Acceleration Card
+	Driver Version: 1.2
+	Vendor: 32902
+	Max Compute Units: 240
+	Max Work Item Dimensions: 3
+
+MatInfo: Width 1000000 Height 1000000 NNZ 32000000
+Max Offset 31 Min Offset -31
+Histogram: <-15: 256 -15~-1 14999760 < 0-15 15999775 > 16 1000209
+Cacheline usage per row: max 3 min 2 avg 2.937440
+nnz= 32000000
+rownum= 1000000
+vecsize= 1000000
+ellnum= 32
+============== METHOD 0 ===================
+****** kernel_name: gpu_ell_d ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_ell_d
+kernel_source_file = spmv_ell_d.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+**** method_0, sizeof(T): 8
+1
+2
+3
+4
+5
+6
+GPU execution time = 12.67 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 11.13 ms
+GPU execution time = 10.98 ms
+GPU execution time = 10.88 ms
+GPU execution time = 10.85 ms
+GPU execution time = 10.82 ms
+GPU execution time = 10.90 ms
+GPU execution time = 10.97 ms
+GPU execution time = 10.93 ms
+ntimes= 5, time_in_msec= 56.025982, nnz= 32000000
+
+ELL cpu time 11.205196 ms GFLOPS 5.711636 code 0 
+
+
+ELL double cpu time 11.205196 ms GFLOPS 5.711636 code 0 
+
+============== METHOD 1 ===================
+****** kernel_name: gpu_ell_v4_d ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_ell_v4_d
+kernel_source_file = spmv_ell_d.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+GPU execution time = 7.87 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 7.09 ms
+GPU execution time = 7.12 ms
+GPU execution time = 5.99 ms
+GPU execution time = 6.98 ms
+GPU execution time = 6.07 ms
+GPU execution time = 6.02 ms
+GPU execution time = 6.11 ms
+GPU execution time = 6.03 ms
+ntimes= 5, time_in_msec= 32.264948, nnz= 32000000
+
+ELL double4 cpu time 6.452990 ms GFLOPS 9.917884 code 1 
+
+GORDON: after ell_ocl.run
+
+------------------------------------------------------------------------
+ELL best time 6.452990 ms best method 1
+------------------------------------------------------------------------

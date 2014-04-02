@@ -1,0 +1,165 @@
+READ INPUT FILE: 
+coo_matrix info
+matrixInfo: width= 121192, height= 121192, nnz= 2624331
+coo_row_id sz: 2624331, coo_col_id sz: 2624331, coo_data sz: 2624331
+GORDON, spmv_sell
+Getting the platform
+
+-------------MIC Device OpenCL Configuration------------
+
+
+# 1 - print current configuration at MIC device startup
+CL_CONFIG_MIC_DEVICE_PRINT_CONFIG=1
+
+
+# 1 - gather info for GPA
+CL_CONFIG_USE_GPA=0
+
+# 1 - try to vectorize kernel during compilation
+CL_CONFIG_USE_VECTORIZER=1
+
+# 1 - connect to VTune on device
+CL_CONFIG_USE_VTUNE=1
+
+
+# 1 - deadloop on device during startup, wait for debugger
+CL_CONFIG_MIC_DEVICE_STOP_AT_LOAD=0
+
+# 1 - wrap kernels with try/catch
+CL_CONFIG_MIC_DEVICE_SAFE_KERNEL_EXECUTION=1
+
+
+# 1 - do not allow TBB workers to switch between HW threads
+CL_CONFIG_MIC_DEVICE_USE_AFFINITY=1
+
+# 0 - create 1 TBB worker per each HW thread per core, !=0 - limit TBB workers to the given number per core
+CL_CONFIG_MIC_DEVICE_THREADS_PER_CORE=0
+
+# 0 - use all MIC cores, !=0 - use specified number of cores
+CL_CONFIG_MIC_DEVICE_NUM_CORES=0
+
+# 1 - do not use 0 (system) MIC core
+CL_CONFIG_MIC_DEVICE_IGNORE_CORE_0=1
+
+# 1 - do not use last MIC core
+CL_CONFIG_MIC_DEVICE_IGNORE_LAST_CORE=1
+
+# 0 - disabled, !=0 - minimum size of buffer in kilobytes to use 2MB pages
+CL_CONFIG_MIC_DEVICE_2MB_BUF_MINSIZE_KB=512
+
+# must not be 0, recommended number of WGs to schedule for same thread
+CL_CONFIG_MIC_DEVICE_TBB_GRAIN_SIZE=1
+
+# affinity - tbb:affinity_partitioner, other - tbb::auto_partitioner
+CL_CONFIG_MIC_DEVICE_TBB_SCHEDULER=auto
+
+# default_TBB_tile - optimize by square tiles using TBB default implementation, columns - optimize columns, rows - optimize rows, tiles - optimize square tiles
+CL_CONFIG_MIC_DEVICE_TBB_BLOCK_OPTIMIZATION=rows
+
+# 1 - do not allow TBB workers to leave arena. Deadlocks if more than a single queue.
+CL_CONFIG_MIC_DEVICE_TBB_TRAP_WORKERS=0
+
+# 1 - perform host->device transfer only when really required
+CL_CONFIG_MIC_DEVICE_LAZY_TRANSFER=0
+
+
+# Restricts the process to use only the MIC cards specified as the value of the variable
+OFFLOAD_DEVICES=
+
+--------------------------------------------------------
+
+[initialize] Using CL device: 0
+	Device Name: Intel(R) Many Integrated Core Acceleration Card
+	Driver Version: 1.2
+	Vendor: 32902
+	Max Compute Units: 240
+	Max Work Item Dimensions: 3
+
+MatInfo: Width 121192 Height 121192 NNZ 2624331
+Max Offset 121040 Min Offset -121040
+Histogram: <-15: 1021338 -15~-1 240906 < 0-15 340749 > 16 1021338
+Cacheline usage per row: max 40 min 0 avg 9.237219
+coo_matrix info
+matrixInfo: width= 121192, height= 121192, nnz= 2624331
+coo_row_id sz: 2624331, coo_col_id sz: 2624331, coo_data sz: 2624331
+dest: width= 121192, height=121192, nnz= 2624331
+coo2sell, height= 121192
+matrixInfo: width= 121192, height= 121192, nnz= 2624331
+nnz= 2624331
+slicenum= 3788
+================ METHOD_0_WARP =========================
+gsize 121216 rownum 121192 slicenum 3788 sliceheight 32 datasize 3124000 nnz 2624331 vecsize 121192 
+****** kernel_name: gpu_sell_warp ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sell_warp
+kernel_source_file = spmv_sell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+GPU execution time = 3.34 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 121192
+GPU execution time = 1.34 ms
+GPU execution time = 1.28 ms
+GPU execution time = 1.18 ms
+GPU execution time = 1.40 ms
+GPU execution time = 1.37 ms
+GPU execution time = 1.26 ms
+GPU execution time = 1.33 ms
+GPU execution time = 1.31 ms
+
+SELL double cpu warp time 1.593828 ms GFLOPS 3.293117 code 0 
+
+
+------------------------------------------------------------------------
+SELL double best time 1.593828 ms best method 0 GFLOPS 3.293117
+------------------------------------------------------------------------
+GORDON: after ell_ocl.run
+GORDON, spmv_sell
+[initialize] Using CL device: 0
+	Device Name: Intel(R) Many Integrated Core Acceleration Card
+	Driver Version: 1.2
+	Vendor: 32902
+	Max Compute Units: 240
+	Max Work Item Dimensions: 3
+
+MatInfo: Width 121192 Height 121192 NNZ 2624331
+Max Offset 121040 Min Offset -121040
+Histogram: <-15: 1021338 -15~-1 240906 < 0-15 340749 > 16 1021338
+Cacheline usage per row: max 40 min 0 avg 9.237219
+coo_matrix info
+matrixInfo: width= 121192, height= 121192, nnz= 2624331
+coo_row_id sz: 2624331, coo_col_id sz: 2624331, coo_data sz: 2624331
+dest: width= 121192, height=121192, nnz= 2624331
+coo2sell, height= 121192
+matrixInfo: width= 121192, height= 121192, nnz= 2624331
+nnz= 2624331
+slicenum= 3788
+================ METHOD_0_WARP =========================
+gsize 121216 rownum 121192 slicenum 3788 sliceheight 32 datasize 3124000 nnz 2624331 vecsize 121192 
+****** kernel_name: gpu_sell_warp_d ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sell_warp_d
+kernel_source_file = spmv_sell_d.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+GPU execution time = 3.44 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 121192
+GPU execution time = 1.87 ms
+GPU execution time = 1.81 ms
+GPU execution time = 1.85 ms
+GPU execution time = 1.56 ms
+GPU execution time = 1.61 ms
+GPU execution time = 1.76 ms
+GPU execution time = 1.70 ms
+GPU execution time = 1.49 ms
+
+SELL float cpu warp time 1.902008 ms GFLOPS 2.759537 code 0 
+
+
+------------------------------------------------------------------------
+SELL float best time 1.902008 ms best method 0 GFLOPS 2.759537
+------------------------------------------------------------------------
+GORDON: after ell_ocl.run

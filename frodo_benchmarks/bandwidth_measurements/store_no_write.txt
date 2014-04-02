@@ -1,0 +1,42 @@
+
+_mm_prefetch((char*)(adj+p)+PREFETCH_DISTANCE, _MM_HINT_NTA);
+
+ time: 41.493999 (ms)
+ r/w, max bandwidth= 12.847490 (gbytes/sec), time: 20.893999 (ms)
+ r/w, max bandwidth= 25.209942 (gbytes/sec), time: 10.648000 (ms)
+ r/w, max bandwidth= 46.953899 (gbytes/sec), time: 5.717000 (ms)
+ r/w, max bandwidth= 84.840530 (gbytes/sec), time: 3.164000 (ms)
+ r/w, max bandwidth= 97.471115 (gbytes/sec), time: 2.754000 (ms)
+ r/w, max bandwidth= 126.441574 (gbytes/sec), time: 2.123000 (ms)
+ r/w, max bandwidth= 116.306519 (gbytes/sec), time: 2.308000 (ms)
+ r/w, max bandwidth= 129.304169 (gbytes/sec), time: 2.076000 (ms)
+ r/w, max bandwidth= 122.294060 (gbytes/sec), time: 2.195000 (ms)
+ r/w, max bandwidth= 126.859856 (gbytes/sec), time: 2.116000 (ms)
+ r/w, max bandwidth= 125.144730 (gbytes/sec), time: 2.145000 (ms)
+
+#pragma omp parallel{
+#pragma omp for
+#pragma noprefetch
+for (int r=0; r  < nb_rows; r += 16) {            const __m512
+    v1_old = _mm512_load_ps(vec_vt + r);
+   _mm512_storenrngo_ps(result_vt+r, v1_old);                           
+}
+
+
+export OMP_SCHEDULE=static,64  # no influence 2.5 Gf
+export KMP_AFFINITY=compact  # 22 GF
+export OMP_SCHEDULE=dynamic,64  # 27 Gflop/random (and scatter). 22Gflop with copact
+r/w, max bandwidth= 3.257633 (gbytes/sec), time: 82.402000 (ms)
+r/w, max bandwidth= 4.271933 (gbytes/sec), time: 62.837002 (ms)
+r/w, max bandwidth= 4.789898 (gbytes/sec), time: 56.042000 (ms)
+r/w, max bandwidth= 9.444968 (gbytes/sec), time: 28.421000 (ms)
+r/w, max bandwidth= 18.643940 (gbytes/sec), time: 14.398000 (ms)
+r/w, max bandwidth= 35.834393 (gbytes/sec), time: 7.491000 (ms)
+r/w, max bandwidth= 65.696388 (gbytes/sec), time: 4.086000 (ms)
+r/w, max bandwidth= 86.147453 (gbytes/sec), time: 3.116000 (ms)
+r/w, max bandwidth= 102.339096 (gbytes/sec), time: 2.623000 (ms)
+r/w, max bandwidth= 117.631660 (gbytes/sec), time: 2.282000 (ms)
+r/w, max bandwidth= 123.475365 (gbytes/sec), time: 2.174000 (ms)
+r/w, max bandwidth= 127.341293 (gbytes/sec), time: 2.108000 (ms)
+r/w, max bandwidth= 127.100121 (gbytes/sec), time: 2.112000 (ms)
+

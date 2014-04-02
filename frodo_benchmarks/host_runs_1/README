@@ -1,0 +1,6 @@
+September 2, 2013
+export OMP_SCHEDULE=dynamic,64
+export OMP_SCHEDULE=guided,64
+export KMP_AFFINITY=scatter
+export KMP_AFFINITY=compact
+

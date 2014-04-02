@@ -1,0 +1,7 @@
+make sure by setting KMP_AFFINITY to verbose that the first 61 openmp threads map to different cores.
+max number threads: 244
+nb core active: 1
+nb threads active per core: 2
+(tid: 0, core: 0), timeof[i] sec to download 1023410176 bytes. BW: 8.0763e+08 bytes/s
+(tid: 1, core: 0), timeof[i] sec to download 1023410176 bytes. BW: 7.97635e+08 bytes/s
+aggregated:1.60527e+09

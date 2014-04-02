@@ -8,6 +8,7 @@ if [ $HOSTNAME = "S2" -o $HOSTNAME = "S3" ] ; then
 	export OPENCL_ROOT=/opt/intel/opencl-1.2-3.0.67279/
 	# preload does not work
 	#export LD_PRELOAD=$OPENCL_ROOT/lib64/libtbb_preview.so
+	#export LD_PRELOAD=/opt/intel/old/composer_xe_2013.1.117/tbb/lib/intel64/libtbb_preview.so
 	export LD_PRELOAD=
     source /opt/intel/composer_xe_2013.5.192/bin/compilervars.sh intel64
 

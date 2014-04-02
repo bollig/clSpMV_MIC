@@ -1,0 +1,42 @@
+Transfer of 134 Mbytes. Use _mm_load_ps and _mm_store_ps
+r/w, max bandwidth= 1.959011 (gbytes/sec), time: 137.026001 (ms)
+r/w, max bandwidth= 3.906675 (gbytes/sec), time: 68.711998 (ms)
+r/w, max bandwidth= 7.757129 (gbytes/sec), time: 34.605000 (ms)
+r/w, max bandwidth= 15.388412 (gbytes/sec), time: 17.444000 (ms)
+r/w, max bandwidth= 29.020048 (gbytes/sec), time: 9.250000 (ms)
+r/w, max bandwidth= 55.154190 (gbytes/sec), time: 4.867000 (ms)
+r/w, max bandwidth= 75.318588 (gbytes/sec), time: 3.564000 (ms)
+r/w, max bandwidth= 95.223640 (gbytes/sec), time: 2.819000 (ms)
+r/w, max bandwidth= 88.359261 (gbytes/sec), time: 3.038000 (ms)
+r/w, max bandwidth= 95.494644 (gbytes/sec), time: 2.811000 (ms)
+r/w, max bandwidth= 89.270187 (gbytes/sec), time: 3.007000 (ms)
+r/w, max bandwidth= 93.531517 (gbytes/sec), time: 2.870000 (ms)
+r/w, max bandwidth= 96.075684 (gbytes/sec), time: 2.794000 (ms)
+-
+
+#pragma omp parallel                                                                                                   
+{                                                                                                            
+#pragma omp for                                                                                        
+       for (int r=0; r  < nb_rows; r += 16) {                         
+           //printf("r = %d\n", r);                            
+             //if (r > 1000) exit(0);                          
+            const __m512 v1_old = _mm512_load_ps(vec_vt + r);  
+            //print_ps(v1_old, "v1_old");                                                
+             _mm512_store_ps(result_vt + r, v1_old);                                         
+           //continue;                                                                                             
+        }                                                                           
+}                                                                
+       tm["spmv"]->end();                                                            
+       elapsed = tm["spmv"]->getTime();                                                                      
+       float gbytes = nb_rows*sizeof(float) * 2 * 1.e-9;                                               
+       float bandwidth = gbytes / (elapsed*1.e-3);                                             
+        if (bandwidth > max_bandwidth) {                     
+            max_bandwidth = bandwidth;           
+            min_elapsed = elapsed;                                                   
+        }                                                                            
+    }                                                                                
+    _mm_free(vec_vt);                                                                            
+    printf("read and write of %f Mbytes, using _mm512_store_ps and _m512_load_ps,\n",          
+            nb_rows*sizeof(float)*1.e-6);                                                                      
+    printf("16 at a time\n");                                                                                  
+    printf("r/w, max bandwidth= %f (gbytes/sec), time: %f (ms)\n", max_bandwidth, min_elapsed);        

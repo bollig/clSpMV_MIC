@@ -1,0 +1,66 @@
+July 24, 2013
+128^3, method_8a
+[ProjectSettings]   Reading config file: test.conf
+[Project Settings]  asci_binary = binary
+[Project Settings]  sparsity = RANDOM_WITH_DIAG
+[Project Settings]  diag_sep = 100000
+[Project Settings]  inner_bandwidth = 80000
+AFFINITY=dynamic,128
+140Gfops
+
+[Project Settings]  asci_binary = binary
+[Project Settings]  sparsity = COMPACT
+[Project Settings]  diag_sep = 100000
+[Project Settings]  inner_bandwidth = 80000
+AFFINITY=dynamic,128
+Code freezes for some reason (memory related no doubt)
+
+96^3
+[Project Settings]  sparsity = RANDOM_WITH_DIAG
+[Project Settings]  diag_sep = 8000
+[Project Settings]  inner_bandwidth = 4000
+100 Gflops, 180 processors
+130 Gflops, 240 processors
+
+96^3
+[Project Settings]    sparsity = RANDOM_WITH_DIAG
+[Project Settings]  diag_sep = 20000
+[Project Settings]  inner_bandwidth = 8000
+131 Gflops
+
+96^3
+[Project Settings]    sparsity = RANDOM
+77 Gflops, dynamic,128, AFFINITY=compact
+55 Gflops, dynamic,128, AFFINITY=scatter
+
+
+96^3
+[Project Settings]    sparsity = RANDOM_WITH_DIAG
+[Project Settings]  diag_sep = 20000
+[Project Settings]  inner_bandwidth = 8000
+120 Gflops, dynamic,128, AFFINITY=scatter
+Gflops, dynamic,128, AFFINITY=compact
+
+96^3
+[Project Settings]    sparsity = RANDOM_WITH_DIAG
+[Project Settings]  diag_sep = 20000
+[Project Settings]  inner_bandwidth = 4000
+123 Gflops, dynamic,128, AFFINITY=scatter, 240 cores
+135 Gflops, dynamic,128, AFFINITY=compact, 240 cores
+
+64^3
+[Project Settings]    sparsity = RANDOM_WITH_DIAG
+[Project Settings]  diag_sep = 20000
+[Project Settings]  inner_bandwidth = 4000
+97 Gflops, dynamic,128, AFFINITY=scatter, 240 cores
+130 Gflops, dynamic,128, AFFINITY=compact, 240 cores
+
+IMPORTANT TO ALWAYS USE KMP_AFFINITY=compact for maximum speed. (WHY IS THAT?)
+
+64^3
+[Project Settings]  sparsity = COMPACT
+55 Gflops, AFFINITY=scatter, dynamic=64
+110 Gflops, AFFINITY=compact, dynamic=64
+Aug. 5, 2013 (after OS upgrade)
+173 Gflops, AFFINITY=random, static=64
+

@@ -1,0 +1,468 @@
+READ INPUT FILE: 
+coo_matrix info
+matrixInfo: width= 1000000, height= 1000000, nnz= 10000000
+coo_row_id sz: 10000000, coo_col_id sz: 10000000, coo_data sz: 10000000
+Getting the platform
+
+-------------MIC Device OpenCL Configuration------------
+
+
+# 1 - print current configuration at MIC device startup
+CL_CONFIG_MIC_DEVICE_PRINT_CONFIG=1
+
+
+# 1 - gather info for GPA
+CL_CONFIG_USE_GPA=0
+
+# 1 - try to vectorize kernel during compilation
+CL_CONFIG_USE_VECTORIZER=1
+
+# 1 - connect to VTune on device
+CL_CONFIG_USE_VTUNE=1
+
+
+# 1 - deadloop on device during startup, wait for debugger
+CL_CONFIG_MIC_DEVICE_STOP_AT_LOAD=0
+
+# 1 - wrap kernels with try/catch
+CL_CONFIG_MIC_DEVICE_SAFE_KERNEL_EXECUTION=1
+
+
+# 1 - do not allow TBB workers to switch between HW threads
+CL_CONFIG_MIC_DEVICE_USE_AFFINITY=1
+
+# 0 - create 1 TBB worker per each HW thread per core, !=0 - limit TBB workers to the given number per core
+CL_CONFIG_MIC_DEVICE_THREADS_PER_CORE=0
+
+# 0 - use all MIC cores, !=0 - use specified number of cores
+CL_CONFIG_MIC_DEVICE_NUM_CORES=0
+
+# 1 - do not use 0 (system) MIC core
+CL_CONFIG_MIC_DEVICE_IGNORE_CORE_0=1
+
+# 1 - do not use last MIC core
+CL_CONFIG_MIC_DEVICE_IGNORE_LAST_CORE=1
+
+# 0 - disabled, !=0 - minimum size of buffer in kilobytes to use 2MB pages
+CL_CONFIG_MIC_DEVICE_2MB_BUF_MINSIZE_KB=512
+
+# must not be 0, recommended number of WGs to schedule for same thread
+CL_CONFIG_MIC_DEVICE_TBB_GRAIN_SIZE=1
+
+# affinity - tbb:affinity_partitioner, other - tbb::auto_partitioner
+CL_CONFIG_MIC_DEVICE_TBB_SCHEDULER=auto
+
+# default_TBB_tile - optimize by square tiles using TBB default implementation, columns - optimize columns, rows - optimize rows, tiles - optimize square tiles
+CL_CONFIG_MIC_DEVICE_TBB_BLOCK_OPTIMIZATION=rows
+
+# 1 - do not allow TBB workers to leave arena. Deadlocks if more than a single queue.
+CL_CONFIG_MIC_DEVICE_TBB_TRAP_WORKERS=0
+
+# 1 - perform host->device transfer only when really required
+CL_CONFIG_MIC_DEVICE_LAZY_TRANSFER=0
+
+
+# Restricts the process to use only the MIC cards specified as the value of the variable
+OFFLOAD_DEVICES=
+
+--------------------------------------------------------
+
+[initialize] Using CL device: 0
+	Device Name: Intel(R) Many Integrated Core Acceleration Card
+	Driver Version: 1.2
+	Vendor: 32902
+	Max Compute Units: 240
+	Max Work Item Dimensions: 3
+
+MatInfo: Width 1000000 Height 1000000 NNZ 10000000
+Max Offset 9 Min Offset -9
+Histogram: <-15: 0 -15~-1 4000005 < 0-15 5999995 > 16 0
+Cacheline usage per row: max 2 min 1 avg 1.562491
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_bell14 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell14
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ globalsize= 1000192,1, blocksize= 256,1
+GPU execution time = 6.02 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 1.98 ms
+GPU execution time = 1.98 ms
+GPU execution time = 1.95 ms
+GPU execution time = 2.00 ms
+GPU execution time = 2.01 ms
+GPU execution time = 1.94 ms
+GPU execution time = 1.96 ms
+GPU execution time = 2.06 ms
+ntimes= 5, time_in_msec= 11.263132, nnz= 10000000
+
+BELL 1x4 block cpu time 2.252626 ms GFLOPS 8.878525 code 0 
+
+======== METHOD 1 ======================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell14_mad
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+GPU execution time = 3.06 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.01 ms
+GPU execution time = 2.07 ms
+GPU execution time = 2.03 ms
+GPU execution time = 2.02 ms
+GPU execution time = 2.03 ms
+GPU execution time = 2.01 ms
+GPU execution time = 2.04 ms
+GPU execution time = 2.02 ms
+
+BELL 1x4 block mad cpu time 2.351427 ms GFLOPS 8.505473 code 1 
+
+BELL info: block row num 1000000 ell num 4 
+
+------------------------------------------------------------------------
+BELL best time 2.252626 ms best method 0 GFLOPS 8.878525
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_bell24 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell24
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ globalsize= 500224,1, blocksize= 256,1
+GPU execution time = 3.29 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 1.89 ms
+GPU execution time = 1.88 ms
+GPU execution time = 1.90 ms
+GPU execution time = 1.93 ms
+GPU execution time = 1.83 ms
+GPU execution time = 1.86 ms
+GPU execution time = 1.84 ms
+GPU execution time = 1.82 ms
+ntimes= 5, time_in_msec= 10.913849, nnz= 10000000
+
+BELL 2x4 block cpu time 2.182770 ms GFLOPS 9.162670 code 0 
+
+======== METHOD 1 ======================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell24_mad
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+GPU execution time = 3.19 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 1.86 ms
+GPU execution time = 1.83 ms
+GPU execution time = 1.81 ms
+GPU execution time = 1.91 ms
+GPU execution time = 1.86 ms
+GPU execution time = 1.98 ms
+GPU execution time = 1.88 ms
+GPU execution time = 1.83 ms
+
+BELL 2x4 block mad cpu time 2.228785 ms GFLOPS 8.973501 code 1 
+
+BELL info: block row num 500000 ell num 4 
+
+------------------------------------------------------------------------
+BELL best time 2.182770 ms best method 0 GFLOPS 9.162670
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_bell44 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell44
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ globalsize= 250112,1, blocksize= 256,1
+GPU execution time = 3.56 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.03 ms
+GPU execution time = 2.01 ms
+GPU execution time = 2.07 ms
+GPU execution time = 2.00 ms
+GPU execution time = 2.13 ms
+GPU execution time = 2.02 ms
+GPU execution time = 2.03 ms
+GPU execution time = 2.24 ms
+ntimes= 5, time_in_msec= 12.118816, nnz= 10000000
+
+BELL 4x4 block cpu time 2.423763 ms GFLOPS 8.251631 code 0 
+
+======== METHOD 1 ======================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell44_mad
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+GPU execution time = 3.61 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.14 ms
+GPU execution time = 2.11 ms
+GPU execution time = 2.06 ms
+GPU execution time = 2.32 ms
+GPU execution time = 2.08 ms
+GPU execution time = 2.04 ms
+GPU execution time = 2.07 ms
+GPU execution time = 2.07 ms
+
+BELL 4x4 block mad cpu time 2.446985 ms GFLOPS 8.173323 code 1 
+
+BELL info: block row num 250000 ell num 5 
+
+------------------------------------------------------------------------
+BELL best time 2.423763 ms best method 0 GFLOPS 8.251631
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_bell84 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell84
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ globalsize= 125184,1, blocksize= 256,1
+GPU execution time = 3.70 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.56 ms
+GPU execution time = 2.61 ms
+GPU execution time = 2.53 ms
+GPU execution time = 2.52 ms
+GPU execution time = 2.59 ms
+GPU execution time = 2.51 ms
+GPU execution time = 2.50 ms
+GPU execution time = 2.47 ms
+ntimes= 5, time_in_msec= 14.247894, nnz= 10000000
+
+BELL 8x4 block cpu time 2.849579 ms GFLOPS 7.018581 code 0 
+
+======== METHOD 1 ======================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell84_mad
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+GPU execution time = 3.80 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.60 ms
+GPU execution time = 2.71 ms
+GPU execution time = 2.57 ms
+GPU execution time = 2.58 ms
+GPU execution time = 2.60 ms
+GPU execution time = 2.58 ms
+GPU execution time = 2.60 ms
+GPU execution time = 2.56 ms
+
+BELL 8x4 block mad cpu time 2.922392 ms GFLOPS 6.843709 code 1 
+
+BELL info: block row num 125000 ell num 6 
+
+------------------------------------------------------------------------
+BELL best time 2.849579 ms best method 0 GFLOPS 7.018581
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_bell18 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell18
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ globalsize= 1000192,1, blocksize= 256,1
+GPU execution time = 3.89 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.49 ms
+GPU execution time = 2.47 ms
+GPU execution time = 2.46 ms
+GPU execution time = 2.46 ms
+GPU execution time = 2.56 ms
+GPU execution time = 2.47 ms
+GPU execution time = 2.47 ms
+GPU execution time = 2.44 ms
+ntimes= 5, time_in_msec= 14.034033, nnz= 10000000
+
+BELL 1x8 block cpu time 2.806807 ms GFLOPS 7.125536 code 0 
+
+======== METHOD 1 ======================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell18_mad
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+GPU execution time = 3.55 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.46 ms
+GPU execution time = 2.41 ms
+GPU execution time = 2.41 ms
+GPU execution time = 2.40 ms
+GPU execution time = 2.49 ms
+GPU execution time = 2.38 ms
+GPU execution time = 2.46 ms
+GPU execution time = 2.38 ms
+
+BELL 1x8 block mad cpu time 2.754021 ms GFLOPS 7.262110 code 1 
+
+BELL info: block row num 1000000 ell num 3 
+
+------------------------------------------------------------------------
+BELL best time 2.754021 ms best method 1 GFLOPS 7.262110
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_bell28 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell28
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ globalsize= 500224,1, blocksize= 256,1
+GPU execution time = 3.76 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.36 ms
+GPU execution time = 2.30 ms
+GPU execution time = 2.43 ms
+GPU execution time = 2.30 ms
+GPU execution time = 2.28 ms
+GPU execution time = 2.38 ms
+GPU execution time = 2.43 ms
+GPU execution time = 2.29 ms
+ntimes= 5, time_in_msec= 13.397932, nnz= 10000000
+
+BELL 2x8 block cpu time 2.679586 ms GFLOPS 7.463838 code 0 
+
+======== METHOD 1 ======================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell28_mad
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+GPU execution time = 3.98 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.44 ms
+GPU execution time = 2.35 ms
+GPU execution time = 2.44 ms
+GPU execution time = 2.45 ms
+GPU execution time = 2.42 ms
+GPU execution time = 2.43 ms
+GPU execution time = 2.44 ms
+GPU execution time = 2.46 ms
+
+BELL 2x8 block mad cpu time 2.788830 ms GFLOPS 7.171467 code 1 
+
+BELL info: block row num 500000 ell num 3 
+
+------------------------------------------------------------------------
+BELL best time 2.679586 ms best method 0 GFLOPS 7.463838
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_bell48 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell48
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ globalsize= 250112,1, blocksize= 256,1
+GPU execution time = 3.76 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.26 ms
+GPU execution time = 2.30 ms
+GPU execution time = 2.36 ms
+GPU execution time = 2.26 ms
+GPU execution time = 2.26 ms
+GPU execution time = 2.27 ms
+GPU execution time = 2.36 ms
+GPU execution time = 2.22 ms
+ntimes= 5, time_in_msec= 12.985945, nnz= 10000000
+
+BELL 4x8 block cpu time 2.597189 ms GFLOPS 7.700633 code 0 
+
+======== METHOD 1 ======================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell48_mad
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+GPU execution time = 3.76 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.58 ms
+GPU execution time = 2.29 ms
+GPU execution time = 2.40 ms
+GPU execution time = 2.32 ms
+GPU execution time = 2.57 ms
+GPU execution time = 2.29 ms
+GPU execution time = 2.60 ms
+GPU execution time = 2.31 ms
+
+BELL 4x8 block mad cpu time 2.751398 ms GFLOPS 7.269032 code 1 
+
+BELL info: block row num 250000 ell num 3 
+
+------------------------------------------------------------------------
+BELL best time 2.597189 ms best method 0 GFLOPS 7.700633
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_bell88 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell88
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ globalsize= 125184,1, blocksize= 256,1
+GPU execution time = 3.91 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.54 ms
+GPU execution time = 2.53 ms
+GPU execution time = 2.49 ms
+GPU execution time = 2.60 ms
+GPU execution time = 2.49 ms
+GPU execution time = 2.47 ms
+GPU execution time = 2.56 ms
+GPU execution time = 2.52 ms
+ntimes= 5, time_in_msec= 13.921022, nnz= 10000000
+
+BELL 8x8 block cpu time 2.784204 ms GFLOPS 7.183380 code 0 
+
+======== METHOD 1 ======================================================
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_bell88_mad
+kernel_source_file = spmv_bell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+GPU execution time = 3.76 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.73 ms
+GPU execution time = 2.66 ms
+GPU execution time = 2.64 ms
+GPU execution time = 2.62 ms
+GPU execution time = 2.64 ms
+GPU execution time = 2.61 ms
+GPU execution time = 2.62 ms
+GPU execution time = 2.71 ms
+
+BELL 8x8 block mad cpu time 2.979803 ms GFLOPS 6.711853 code 1 
+
+BELL info: block row num 125000 ell num 3 
+
+------------------------------------------------------------------------
+BELL best time 2.784204 ms best method 0 GFLOPS 7.183380
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+BELL best time 2.784204 ms best method 0
+------------------------------------------------------------------------

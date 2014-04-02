@@ -1,0 +1,41 @@
+r/w, max bandwidth= 5.470125 (gbytes/sec), time: 49.073002 (ms)
+r/w, max bandwidth= 10.916891 (gbytes/sec), time: 24.589001 (ms)
+r/w, max bandwidth= 21.540319 (gbytes/sec), time: 12.462000 (ms)
+r/w, max bandwidth= 42.015251 (gbytes/sec), time: 6.389000 (ms)
+r/w, max bandwidth= 74.010323 (gbytes/sec), time: 3.627000 (ms)
+r/w, max bandwidth= 105.227531 (gbytes/sec), time: 2.551000 (ms)
+r/w, max bandwidth= 117.477219 (gbytes/sec), time: 2.285000 (ms)
+r/w, max bandwidth= 136.538895 (gbytes/sec), time: 1.966000 (ms)
+r/w, max bandwidth= 120.482704 (gbytes/sec), time: 2.228000 (ms)
+r/w, max bandwidth= 133.816269 (gbytes/sec), time: 2.006000 (ms)
+r/w, max bandwidth= 126.680252 (gbytes/sec), time: 2.119000 (ms)
+r/w, max bandwidth= 133.020554 (gbytes/sec), time: 2.018000 (ms)
+r/w, max bandwidth= 131.715134 (gbytes/sec), time: 2.038000 (ms)
+~/src/clSpMV_MIC $ 
+
+for (int r=0; r  < nb_rows; r++) {                                                                                               
+   result_vt[r] = vec_vt[r];
+}
+
+--------------------------
+r/w, max bandwidth= 1.961903 (gbytes/sec), time: 136.824005 (ms)
+r/w, max bandwidth= 3.901905 (gbytes/sec), time: 68.795998 (ms)
+r/w, max bandwidth= 7.776004 (gbytes/sec), time: 34.521000 (ms)
+r/w, max bandwidth= 15.456638 (gbytes/sec), time: 17.367001 (ms)
+r/w, max bandwidth= 30.208807 (gbytes/sec), time: 8.886000 (ms)
+r/w, max bandwidth= 57.260120 (gbytes/sec), time: 4.688000 (ms)
+r/w, max bandwidth= 75.594322 (gbytes/sec), time: 3.551000 (ms)
+r/w, max bandwidth= 93.498932 (gbytes/sec), time: 2.871000 (ms)
+r/w, max bandwidth= 85.762123 (gbytes/sec), time: 3.130000 (ms)
+r/w, max bandwidth= 96.420784 (gbytes/sec), time: 2.784000 (ms)
+r/w, max bandwidth= 89.958260 (gbytes/sec), time: 2.984000 (ms)
+r/w, max bandwidth= 95.021393 (gbytes/sec), time: 2.825000 (ms)
+r/w, max bandwidth= 94.220940 (gbytes/sec), time: 2.849000 (ms)
+
+for (int r=0; r < nb_rows; r+=16) {
+    _mm512_store_ps(result_vt + r, _mm512_load_ps(vec_vt+r));
+}
+
+// same results as using two lines
+----------------------------------------------------------------------
+

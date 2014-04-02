@@ -1,0 +1,563 @@
+READ INPUT FILE: 
+coo_matrix info
+matrixInfo: width= 1000000, height= 1000000, nnz= 10000000
+coo_row_id sz: 10000000, coo_col_id sz: 10000000, coo_data sz: 10000000
+Getting the platform
+
+-------------MIC Device OpenCL Configuration------------
+
+
+# 1 - print current configuration at MIC device startup
+CL_CONFIG_MIC_DEVICE_PRINT_CONFIG=1
+
+
+# 1 - gather info for GPA
+CL_CONFIG_USE_GPA=0
+
+# 1 - try to vectorize kernel during compilation
+CL_CONFIG_USE_VECTORIZER=1
+
+# 1 - connect to VTune on device
+CL_CONFIG_USE_VTUNE=1
+
+
+# 1 - deadloop on device during startup, wait for debugger
+CL_CONFIG_MIC_DEVICE_STOP_AT_LOAD=0
+
+# 1 - wrap kernels with try/catch
+CL_CONFIG_MIC_DEVICE_SAFE_KERNEL_EXECUTION=1
+
+
+# 1 - do not allow TBB workers to switch between HW threads
+CL_CONFIG_MIC_DEVICE_USE_AFFINITY=1
+
+# 0 - create 1 TBB worker per each HW thread per core, !=0 - limit TBB workers to the given number per core
+CL_CONFIG_MIC_DEVICE_THREADS_PER_CORE=0
+
+# 0 - use all MIC cores, !=0 - use specified number of cores
+CL_CONFIG_MIC_DEVICE_NUM_CORES=0
+
+# 1 - do not use 0 (system) MIC core
+CL_CONFIG_MIC_DEVICE_IGNORE_CORE_0=1
+
+# 1 - do not use last MIC core
+CL_CONFIG_MIC_DEVICE_IGNORE_LAST_CORE=1
+
+# 0 - disabled, !=0 - minimum size of buffer in kilobytes to use 2MB pages
+CL_CONFIG_MIC_DEVICE_2MB_BUF_MINSIZE_KB=512
+
+# must not be 0, recommended number of WGs to schedule for same thread
+CL_CONFIG_MIC_DEVICE_TBB_GRAIN_SIZE=1
+
+# affinity - tbb:affinity_partitioner, other - tbb::auto_partitioner
+CL_CONFIG_MIC_DEVICE_TBB_SCHEDULER=auto
+
+# default_TBB_tile - optimize by square tiles using TBB default implementation, columns - optimize columns, rows - optimize rows, tiles - optimize square tiles
+CL_CONFIG_MIC_DEVICE_TBB_BLOCK_OPTIMIZATION=rows
+
+# 1 - do not allow TBB workers to leave arena. Deadlocks if more than a single queue.
+CL_CONFIG_MIC_DEVICE_TBB_TRAP_WORKERS=0
+
+# 1 - perform host->device transfer only when really required
+CL_CONFIG_MIC_DEVICE_LAZY_TRANSFER=0
+
+
+# Restricts the process to use only the MIC cards specified as the value of the variable
+OFFLOAD_DEVICES=
+
+--------------------------------------------------------
+
+[initialize] Using CL device: 0
+	Device Name: Intel(R) Many Integrated Core Acceleration Card
+	Driver Version: 1.2
+	Vendor: 32902
+	Max Compute Units: 240
+	Max Work Item Dimensions: 3
+
+MatInfo: Width 1000000 Height 1000000 NNZ 10000000
+Max Offset 9 Min Offset -9
+Histogram: <-15: 0 -15~-1 4000005 < 0-15 5999995 > 16 0
+Cacheline usage per row: max 2 min 1 avg 1.562491
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell14 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell14
+kernel_source_file = spmv_sbell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 1000064,1, blocksize= 128,1
+GPU execution time = 4.07 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 1.89 ms
+GPU execution time = 1.95 ms
+GPU execution time = 1.89 ms
+GPU execution time = 1.88 ms
+GPU execution time = 1.87 ms
+GPU execution time = 1.95 ms
+GPU execution time = 1.88 ms
+GPU execution time = 1.87 ms
+ntimes= 5, time_in_msec= 10.812044, nnz= 10000000
+
+BELL double  1x4 block cpu time 2.162409 ms GFLOPS 9.248945 code 0 
+
+SBELL info: block row num 1000000 slice num 31250 total block num 4000000 
+
+------------------------------------------------------------------------
+SBELL double best time 2.162409 ms best method 0 GFLOPS 9.248945
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell24 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell24
+kernel_source_file = spmv_sbell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 500096,1, blocksize= 128,1
+GPU execution time = 3.56 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 1.79 ms
+GPU execution time = 1.73 ms
+GPU execution time = 1.80 ms
+GPU execution time = 1.79 ms
+GPU execution time = 1.76 ms
+GPU execution time = 1.69 ms
+GPU execution time = 1.71 ms
+GPU execution time = 1.84 ms
+ntimes= 5, time_in_msec= 10.296106, nnz= 10000000
+
+BELL double  2x4 block cpu time 2.059221 ms GFLOPS 9.712409 code 0 
+
+SBELL info: block row num 500000 slice num 15625 total block num 2000000 
+
+------------------------------------------------------------------------
+SBELL double best time 2.059221 ms best method 0 GFLOPS 9.712409
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell44 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell44
+kernel_source_file = spmv_sbell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 250112,1, blocksize= 128,1
+GPU execution time = 4.00 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 1.67 ms
+GPU execution time = 1.69 ms
+GPU execution time = 1.69 ms
+GPU execution time = 1.62 ms
+GPU execution time = 2.03 ms
+GPU execution time = 1.65 ms
+GPU execution time = 1.64 ms
+GPU execution time = 1.61 ms
+ntimes= 5, time_in_msec= 10.041952, nnz= 10000000
+
+BELL double  4x4 block cpu time 2.008390 ms GFLOPS 9.958223 code 0 
+
+SBELL info: block row num 250000 slice num 7813 total block num 1000096 
+
+------------------------------------------------------------------------
+SBELL double best time 2.008390 ms best method 0 GFLOPS 9.958223
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell84 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell84
+kernel_source_file = spmv_sbell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 125056,1, blocksize= 128,1
+GPU execution time = 3.33 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 1.78 ms
+GPU execution time = 1.75 ms
+GPU execution time = 1.94 ms
+GPU execution time = 1.90 ms
+GPU execution time = 1.77 ms
+GPU execution time = 1.75 ms
+GPU execution time = 1.85 ms
+GPU execution time = 1.84 ms
+ntimes= 5, time_in_msec= 10.835886, nnz= 10000000
+
+BELL double  8x4 block cpu time 2.167177 ms GFLOPS 9.228595 code 0 
+
+SBELL info: block row num 125000 slice num 3907 total block num 625152 
+
+------------------------------------------------------------------------
+SBELL double best time 2.167177 ms best method 0 GFLOPS 9.228595
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell18 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell18
+kernel_source_file = spmv_sbell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 1000064,1, blocksize= 128,1
+GPU execution time = 3.85 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.54 ms
+GPU execution time = 2.63 ms
+GPU execution time = 2.49 ms
+GPU execution time = 2.48 ms
+GPU execution time = 2.48 ms
+GPU execution time = 2.56 ms
+GPU execution time = 2.48 ms
+GPU execution time = 2.50 ms
+ntimes= 5, time_in_msec= 14.288902, nnz= 10000000
+
+BELL double  1x8 block cpu time 2.857780 ms GFLOPS 6.998438 code 0 
+
+SBELL info: block row num 1000000 slice num 31250 total block num 3000000 
+
+------------------------------------------------------------------------
+SBELL double best time 2.857780 ms best method 0 GFLOPS 6.998438
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell28 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell28
+kernel_source_file = spmv_sbell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 500096,1, blocksize= 128,1
+GPU execution time = 4.18 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.51 ms
+GPU execution time = 2.39 ms
+GPU execution time = 2.39 ms
+GPU execution time = 2.36 ms
+GPU execution time = 2.45 ms
+GPU execution time = 2.39 ms
+GPU execution time = 2.34 ms
+GPU execution time = 2.34 ms
+ntimes= 5, time_in_msec= 13.478994, nnz= 10000000
+
+BELL double  2x8 block cpu time 2.695799 ms GFLOPS 7.418951 code 0 
+
+SBELL info: block row num 500000 slice num 15625 total block num 1500000 
+
+------------------------------------------------------------------------
+SBELL double best time 2.695799 ms best method 0 GFLOPS 7.418951
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell48 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell48
+kernel_source_file = spmv_sbell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 250112,1, blocksize= 128,1
+GPU execution time = 3.61 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.06 ms
+GPU execution time = 2.08 ms
+GPU execution time = 1.98 ms
+GPU execution time = 2.03 ms
+GPU execution time = 1.92 ms
+GPU execution time = 2.02 ms
+GPU execution time = 2.04 ms
+GPU execution time = 2.00 ms
+ntimes= 5, time_in_msec= 11.370897, nnz= 10000000
+
+BELL double  4x8 block cpu time 2.274179 ms GFLOPS 8.794381 code 0 
+
+SBELL info: block row num 250000 slice num 7813 total block num 750048 
+
+------------------------------------------------------------------------
+SBELL double best time 2.274179 ms best method 0 GFLOPS 8.794381
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell88 ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell88
+kernel_source_file = spmv_sbell.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 125056,1, blocksize= 128,1
+GPU execution time = 3.78 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.48 ms
+GPU execution time = 2.46 ms
+GPU execution time = 2.51 ms
+GPU execution time = 2.53 ms
+GPU execution time = 2.34 ms
+GPU execution time = 2.42 ms
+GPU execution time = 2.42 ms
+GPU execution time = 2.62 ms
+ntimes= 5, time_in_msec= 13.798952, nnz= 10000000
+
+BELL double  8x8 block cpu time 2.759790 ms GFLOPS 7.246927 code 0 
+
+SBELL info: block row num 125000 slice num 3907 total block num 375072 
+
+------------------------------------------------------------------------
+SBELL double best time 2.759790 ms best method 0 GFLOPS 7.246927
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+SBELL best time 2.759790 ms best method 0
+------------------------------------------------------------------------
+[initialize] Using CL device: 0
+	Device Name: Intel(R) Many Integrated Core Acceleration Card
+	Driver Version: 1.2
+	Vendor: 32902
+	Max Compute Units: 240
+	Max Work Item Dimensions: 3
+
+MatInfo: Width 1000000 Height 1000000 NNZ 10000000
+Max Offset 9 Min Offset -9
+Histogram: <-15: 0 -15~-1 4000005 < 0-15 5999995 > 16 0
+Cacheline usage per row: max 2 min 1 avg 1.562491
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell14_d ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell14_d
+kernel_source_file = spmv_sbell_d.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 1000064,1, blocksize= 128,1
+GPU execution time = 4.37 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.72 ms
+GPU execution time = 2.67 ms
+GPU execution time = 2.70 ms
+GPU execution time = 2.77 ms
+GPU execution time = 2.68 ms
+GPU execution time = 2.68 ms
+GPU execution time = 2.77 ms
+GPU execution time = 2.67 ms
+ntimes= 5, time_in_msec= 15.232801, nnz= 10000000
+
+BELL float  1x4 block cpu time 3.046560 ms GFLOPS 6.564781 code 0 
+
+SBELL info: block row num 1000000 slice num 31250 total block num 4000000 
+
+------------------------------------------------------------------------
+SBELL float best time 3.046560 ms best method 0 GFLOPS 6.564781
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell24_d ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell24_d
+kernel_source_file = spmv_sbell_d.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 500096,1, blocksize= 128,1
+GPU execution time = 4.61 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 3.05 ms
+GPU execution time = 2.97 ms
+GPU execution time = 3.00 ms
+GPU execution time = 2.97 ms
+GPU execution time = 2.92 ms
+GPU execution time = 2.96 ms
+GPU execution time = 3.02 ms
+GPU execution time = 2.93 ms
+ntimes= 5, time_in_msec= 16.523123, nnz= 10000000
+
+BELL float  2x4 block cpu time 3.304625 ms GFLOPS 6.052125 code 0 
+
+SBELL info: block row num 500000 slice num 15625 total block num 2000000 
+
+------------------------------------------------------------------------
+SBELL float best time 3.304625 ms best method 0 GFLOPS 6.052125
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell44_d ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell44_d
+kernel_source_file = spmv_sbell_d.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 250112,1, blocksize= 128,1
+GPU execution time = 4.25 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 2.93 ms
+GPU execution time = 2.79 ms
+GPU execution time = 2.84 ms
+GPU execution time = 2.89 ms
+GPU execution time = 2.73 ms
+GPU execution time = 2.69 ms
+GPU execution time = 2.93 ms
+GPU execution time = 2.79 ms
+ntimes= 5, time_in_msec= 15.774012, nnz= 10000000
+
+BELL float  4x4 block cpu time 3.154802 ms GFLOPS 6.339541 code 0 
+
+SBELL info: block row num 250000 slice num 7813 total block num 1000096 
+
+------------------------------------------------------------------------
+SBELL float best time 3.154802 ms best method 0 GFLOPS 6.339541
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell84_d ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell84_d
+kernel_source_file = spmv_sbell_d.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 125056,1, blocksize= 128,1
+GPU execution time = 5.09 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 3.94 ms
+GPU execution time = 3.48 ms
+GPU execution time = 3.98 ms
+GPU execution time = 3.75 ms
+GPU execution time = 3.52 ms
+GPU execution time = 3.62 ms
+GPU execution time = 3.51 ms
+GPU execution time = 3.61 ms
+ntimes= 5, time_in_msec= 19.785881, nnz= 10000000
+
+BELL float  8x4 block cpu time 3.957176 ms GFLOPS 5.054109 code 0 
+
+SBELL info: block row num 125000 slice num 3907 total block num 625152 
+
+------------------------------------------------------------------------
+SBELL float best time 3.957176 ms best method 0 GFLOPS 5.054109
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell18_d ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell18_d
+kernel_source_file = spmv_sbell_d.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 1000064,1, blocksize= 128,1
+GPU execution time = 5.56 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 4.01 ms
+GPU execution time = 3.96 ms
+GPU execution time = 3.96 ms
+GPU execution time = 3.88 ms
+GPU execution time = 4.00 ms
+GPU execution time = 3.93 ms
+GPU execution time = 3.97 ms
+GPU execution time = 3.87 ms
+ntimes= 5, time_in_msec= 21.397829, nnz= 10000000
+
+BELL float  1x8 block cpu time 4.279566 ms GFLOPS 4.673371 code 0 
+
+SBELL info: block row num 1000000 slice num 31250 total block num 3000000 
+
+------------------------------------------------------------------------
+SBELL float best time 4.279566 ms best method 0 GFLOPS 4.673371
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell28_d ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell28_d
+kernel_source_file = spmv_sbell_d.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 500096,1, blocksize= 128,1
+GPU execution time = 5.28 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 3.84 ms
+GPU execution time = 3.87 ms
+GPU execution time = 3.78 ms
+GPU execution time = 3.87 ms
+GPU execution time = 3.85 ms
+GPU execution time = 3.77 ms
+GPU execution time = 3.84 ms
+GPU execution time = 3.79 ms
+ntimes= 5, time_in_msec= 20.848036, nnz= 10000000
+
+BELL float  2x8 block cpu time 4.169607 ms GFLOPS 4.796615 code 0 
+
+SBELL info: block row num 500000 slice num 15625 total block num 1500000 
+
+------------------------------------------------------------------------
+SBELL float best time 4.169607 ms best method 0 GFLOPS 4.796615
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell48_d ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell48_d
+kernel_source_file = spmv_sbell_d.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 250112,1, blocksize= 128,1
+GPU execution time = 5.27 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 4.01 ms
+GPU execution time = 4.12 ms
+GPU execution time = 3.79 ms
+GPU execution time = 4.10 ms
+GPU execution time = 3.99 ms
+GPU execution time = 3.91 ms
+GPU execution time = 3.77 ms
+GPU execution time = 3.89 ms
+ntimes= 5, time_in_msec= 21.374941, nnz= 10000000
+
+BELL float  4x8 block cpu time 4.274988 ms GFLOPS 4.678376 code 0 
+
+SBELL info: block row num 250000 slice num 7813 total block num 750048 
+
+------------------------------------------------------------------------
+SBELL float best time 4.274988 ms best method 0 GFLOPS 4.678376
+------------------------------------------------------------------------
+======== METHOD 0 ======================================================
+****** kernel_name: gpu_sbell88_d ******
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++       LOAD KERNEL                           +++++++++
+kernel_name= gpu_sbell88_d
+kernel_source_file = spmv_sbell_d.cl
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[CLBaseClass::loadProgram] ENABLE DOUBLE PRECISION IN KERNELS
+ globalsize= 125056,1, blocksize= 128,1
+GPU execution time = 5.97 ms
+
+Correctness Check: Distance 0.000000e+00 max diff 0.000000e+00 max diff ratio 0.000000e+00 vec size 1000000
+GPU execution time = 4.51 ms
+GPU execution time = 4.78 ms
+GPU execution time = 4.47 ms
+GPU execution time = 4.56 ms
+GPU execution time = 4.90 ms
+GPU execution time = 4.96 ms
+GPU execution time = 4.49 ms
+GPU execution time = 4.48 ms
+ntimes= 5, time_in_msec= 25.146008, nnz= 10000000
+
+BELL float  8x8 block cpu time 5.029202 ms GFLOPS 3.976774 code 0 
+
+SBELL info: block row num 125000 slice num 3907 total block num 375072 
+
+------------------------------------------------------------------------
+SBELL float best time 5.029202 ms best method 0 GFLOPS 3.976774
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+SBELL best time 5.029202 ms best method 0
+------------------------------------------------------------------------
