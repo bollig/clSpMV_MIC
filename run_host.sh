@@ -25,8 +25,8 @@ export F=$F
 export OMP_THREAD=32  # TIMING IS independent of number processors!!!
 export OMP_THREAD=1  # TIMING IS independent of number processors!!!
 # 2nd argument must be as low as possible in random case
-export OMP_SCHEDULE=guided,64
 export OMP_SCHEDULE=dynamic,64
+export OMP_SCHEDULE=guided,64
 export KMP_AFFINITY=scatter
 export KMP_AFFINITY=compact
 

@@ -243,11 +243,11 @@ void ELL_OPENMP_HOST<T>::run()
     int max_nb_runs = 1;
 
     // on cas03/cascade: segmentation fault
-    method_8a_base_cpp(4); // seems to work
-    method_8a_multi_novec(4); // does not work, but should
-    //method_8a_multi(4); // requires AVX to be defined. Not implemented. 
+    //method_8a_base_cpp(4); // seems to work
+    //method_8a_multi_novec(4); // does not work, but should
 #define AVX  1
-    //method_8a_multi_optimal(4); // does not work
+    //method_8a_multi(4); // requires AVX to be defined. Not implemented. 
+    method_8a_multi_optimal(4); // does not work
     return;
 
     if (rd.use_subdomains == 0 || nb_subdomains == 1) {
@@ -769,9 +769,10 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
     // Must now work on alignmentf vectors. 
     // Produces the correct serial result
     for (int it=0; it < 10; it++) {
-        evictFromCache(rd.nb_rows, rd.nb_mats, rd.nb_vecs, nz);
-      tm["spmv"]->start();
       for (int s=0; s < nb_subdomains; s++) {
+          // do not time eviction process
+        evictFromCache(subdomains[s], rd.nb_rows, rd.nb_mats, rd.nb_vecs, nz);
+        tm["spmv"]->start();
           printf("s= %d\n", s);
         //printf("iter %d, subdom %d\n", it, s);
 // Should all 4 subdomains be contained in a single omp parallel pragma?
@@ -780,13 +781,13 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
 
 #pragma omp parallel firstprivate(nz)
 {
-    printf("inside omp\n");
+    //printf("inside omp\n");
     const int nb_rows = nb_rows_multi[s];
     const int nb_mat = 4;
     const int nb_vec = 4;
     const int nz = rd.stencil_size;
     const Subdomain& dom = subdomains[s];
-    printf("before first vec statement\n");
+    //printf("before first vec statement\n");
 
 
     __m256 v1_old = _mm256_setzero_ps();
@@ -813,9 +814,9 @@ void ELL_OPENMP_HOST<T>::method_8a_multi(int nbit)
         _mm256_store_ps(dom.result_vt+nb_mat*nb_vec*r+8, accu2);
     }
 } // omp parallel
-    printf("exit omp parallel\n");
-     }
+    //printf("exit omp parallel\n");
         tm["spmv"]->end();  // time for each matrix/vector multiply
+     }
         if (it < 3) continue;
         elapsed = tm["spmv"]->getTime();
         gflops = rd.nb_mats * rd.nb_vecs * 2.*rd.stencil_size*rd.nb_rows*1e-9 / (1e-3*elapsed); // assumes count of 1
@@ -861,9 +862,9 @@ void ELL_OPENMP_HOST<T>::method_8a_multi_optimal(int nbit)
     // Must now work on alignmentf vectors. 
     // Produces the correct serial result
     for (int it=0; it < 10; it++) {
-        evictFromCache(rd.nb_rows, rd.nb_mats, rd.nb_vecs, nz);
-      tm["spmv"]->start();
       for (int s=0; s < nb_subdomains; s++) {
+        evictFromCache(subdomains[s], rd.nb_rows, rd.nb_mats, rd.nb_vecs, nz);
+        tm["spmv"]->start();
         //printf("iter %d, subdom %d\n", it, s);
 // Should all 4 subdomains be contained in a single omp parallel pragma?
 
@@ -930,8 +931,8 @@ void ELL_OPENMP_HOST<T>::method_8a_multi_optimal(int nbit)
     }
 } // omp parallel
     printf("exit omp parallel\n");
-     }
         tm["spmv"]->end();  // time for each matrix/vector multiply
+     }
         if (it < 3) continue;
         elapsed = tm["spmv"]->getTime();
         gflops = rd.nb_mats * rd.nb_vecs * 2.*rd.stencil_size*rd.nb_rows*1e-9 / (1e-3*elapsed); // assumes count of 1

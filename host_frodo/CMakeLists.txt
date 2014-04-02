@@ -38,5 +38,5 @@ set(EXEC spmv_openmp_host)
 ADD_EXECUTABLE(${EXEC} ${SOURCES})
 TARGET_LINK_LIBRARIES ( ${EXEC}
     ${LIBOMP}
-    #${LIBTBB}
+    ${LIBTBB}
 )
