@@ -19,7 +19,8 @@ F=ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_128x_128y_128z.bmtx
 # core dump
 F=ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_64x_64y_64z.bmtx
 F=ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_96x_96y_96z.bmtx
-F=ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_128x_128y_128z.bmtx # no such file on cascade
+F=ell_kd-tree_x_weights_direct__no_hv_stsize_32_3d_128x_128y_128z.bmtx 
+F=ell_kd-tree_rcm_sym_1_x_weights_direct__no_hv_stsize_32_3d_128x_128y_128z.bmtx
 
 export F=$F
 #no speedup past 16
@@ -52,6 +53,6 @@ output+="_"
 output+=$OMP_SCHEDULE
 echo $output
 
-(export OMP_THREAD=10; ./linux/release/spmv_openmp_host  matrix/$F 1 )
-#(export OMP_THREAD=10; ./linux/release/spmv_openmp_host  matrix/$F 1 > $output)
+#(export OMP_THREAD=10; ./linux/release/spmv_openmp_host  matrix/$F 1 )
+(export OMP_THREAD=10; ./linux/release/spmv_openmp_host  matrix/$F 1 > $output)
 
