@@ -1,3 +1,23 @@
+E5-2600
+Frodo: 2 GHz: 
+32 CPUs total. 
+8 cores. 
+Each core: 256kB L2
+8 flops per cycle. ==> 2E9*8 = 16 Gflops per processor. 
+8 cores ==> 16*8 = 128 Gflops. 
+Total of 2 sockets per node ==> 256 Gflops and there are 2 nodes (= 32 cores) ==> 512 Gflops. 
+Cache: 20. MB per core ==> E5-2600
+Cache: 12. MB per core ==> E5-5600
+
+Memory performance: 75 GByte/sec for 2P E5-2560 (8c 2GHZ) (that means 16 cores total?). 
+Memory performance: 42 GByte/sec for 2P E5-5650 (6c 2.6GHZ) (that means 16 cores total?). 
+
+
+
+
+E5-5600: 125 Gflops per 12 cores. 
+
+
 processor	: 0
 vendor_id	: GenuineIntel
 cpu family	: 6

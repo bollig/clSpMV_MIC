@@ -1,3 +1,5 @@
+2.6 GHz, 32 cores. 
+
 processor	: 0
 vendor_id	: GenuineIntel
 cpu family	: 6
